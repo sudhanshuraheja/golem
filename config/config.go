@@ -8,8 +8,9 @@ import (
 )
 
 type Config struct {
-	Servers ServersConfig `hcl:"servers,block"`
-	Recipe  []Recipe      `hcl:"recipe,block"`
+	Servers   ServersConfig `hcl:"servers,block"`
+	Recipe    []Recipe      `hcl:"recipe,block"`
+	Terraform []string      `hcl:"terraform"`
 }
 
 type ServersConfig struct {
