@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/alexflint/go-arg"
-	"github.com/sudhanshuraheja/golem/pkg/recipes"
+	"github.com/sudhanshuraheja/golem/pkg/kitchen"
 )
 
 var args struct {
@@ -12,5 +14,7 @@ var args struct {
 
 func main() {
 	arg.MustParse(&args)
-	recipes.Start(args.Config, args.Recipe)
+
+	kitchen := kitchen.NewKitchen(args.Config)
+	fmt.Printf("%+v", kitchen.Conf)
 }

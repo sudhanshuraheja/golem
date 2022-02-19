@@ -1,19 +1,15 @@
-package recipes
+package kitchen
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclparse"
 )
 
-type Context struct {
-	Pid string
-}
-
 type Config struct {
 	Servers ServersConfig `hcl:"servers,block"`
+	Recipe  []Recipe      `hcl:"recipe,block"`
 }
 
 type ServersConfig struct {
@@ -21,17 +17,24 @@ type ServersConfig struct {
 }
 
 type Server struct {
-	Name string `hcl:"name,label"`
-	IP   string `hcl:"ip"`
-	User string `hcl:"user"`
-	Port int    `hcl:"port"`
+	Name string   `hcl:"name,label"`
+	IP   string   `hcl:"ip"`
+	User string   `hcl:"user"`
+	Port int      `hcl:"port"`
+	Tags []string `hcl:"tags"`
 }
 
-func Start(configPath, recipe string) {
+type Recipe struct {
+	Name   string   `hcl:"name,label"`
+	Target []string `hcl:"target"`
+}
+
+func NewConfig(configPath string) *Config {
+	var conf Config
+
 	if configPath == "" {
 		configPath = "golem.hcl"
 	}
-	fmt.Println(configPath, recipe)
 
 	parser := hclparse.NewParser()
 	f, diags := parser.ParseHCLFile(configPath)
@@ -39,18 +42,10 @@ func Start(configPath, recipe string) {
 		log.Fatalf("parse error: %v", diags)
 	}
 
-	// ctx := &hcl.EvalContext{
-	// 	Variables: map[string]cty.Value{
-	// 		"id":   cty.StringVal("Emintrude"),
-	// 		"port": cty.NumberIntVal(22),
-	// 	},
-	// }
-
-	var c Config
-	diags = gohcl.DecodeBody(f.Body, nil, &c)
+	diags = gohcl.DecodeBody(f.Body, nil, &conf)
 	if diags.HasErrors() {
 		log.Fatalf("parse body error: %v", diags)
 	}
 
-	fmt.Printf("%+v", c)
+	return &conf
 }
