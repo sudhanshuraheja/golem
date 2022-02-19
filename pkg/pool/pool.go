@@ -3,11 +3,11 @@ package pool
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/sudhanshuraheja/golem/pkg/logger"
 	"github.com/sudhanshuraheja/golem/pkg/utils"
 )
 
@@ -32,7 +32,6 @@ type pool struct {
 	ctx          context.Context
 	ctxCancel    context.CancelFunc
 	Name         string
-	log          *logger.Logger
 	workerCount  int64
 	closingCount int64
 	workerGroup  WorkerGroup
@@ -70,10 +69,9 @@ type WorkerContext struct {
 }
 
 // NewPool ...
-func NewPool(name string, log *logger.Logger) Pool {
+func NewPool(name string) Pool {
 	w := pool{
 		Name:         name,
-		log:          log,
 		workerCount:  0,
 		closingCount: 0,
 		workers:      map[string]*Worker{},
@@ -103,7 +101,7 @@ func (w *pool) Start(count int64) chan interface{} {
 }
 
 func (w *pool) Update(count int64) {
-	w.log.Info("pool.update").Str("queue", w.Name).Msgf("updating worker count from <%d> to <%d>", w.getExpectedWorkerCount(), count)
+	log.Printf("[pool.update][q: %s] updating worker count from <%d> to <%d>", w.Name, w.getExpectedWorkerCount(), count)
 	w.setExpectedWorkerCount(count)
 
 	for w.getExpectedWorkerCount() != w.getActualWorkerCount() {
@@ -205,7 +203,7 @@ func (w *pool) emptyProcessed() {
 			<-w.processed
 			count++
 		}
-		w.log.Info("pool.emptyProcessed").Str("queue", w.Name).Msgf("w.processed at %d, removed %d", len(w.processed), count)
+		log.Printf("[pool.emptyProcessed][q:%s] w.processed at %d, removed %d", w.Name, len(w.processed), count)
 	}
 }
 

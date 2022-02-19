@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/alexflint/go-arg"
-	"github.com/sudhanshuraheja/golem/pkg/kitchen"
+	"github.com/sudhanshuraheja/golem/kitchen"
 )
 
 var args struct {
@@ -14,7 +14,6 @@ var args struct {
 
 func main() {
 	arg.MustParse(&args)
-
 	kitchen := kitchen.NewKitchen(args.Config)
 	fmt.Printf("%+v", kitchen.Conf)
 }

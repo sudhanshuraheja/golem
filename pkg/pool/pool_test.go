@@ -9,11 +9,9 @@ import (
 )
 
 func TestWorkerPool(t *testing.T) {
-	_, log := utils.GetConfig(3)
-
 	queueSize := 200
-	wp := NewPool("wk", log)
-	wp.AddWorkerGroup(NewWorkerGroup("wk", time.Second, log))
+	wp := NewPool("wk")
+	wp.AddWorkerGroup(NewWorkerGroup("wk", time.Second))
 	processed := wp.Start(2)
 
 	wp.Update(5)
