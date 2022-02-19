@@ -16,4 +16,4 @@
 
 coverage.*
 todo.txt
-golem.hcl
+golem*.hcl

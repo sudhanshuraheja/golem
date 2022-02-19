@@ -18,7 +18,7 @@ WHITE_COLOR = \x1b[37;01m
 
 dev:
 	@echo "$(BLUE_COLOR)➤ Running dev$(NO_COLOR)"
-	go run main.go
+	go run main.go --conf golem.hcl
 
 test:
 	@echo "$(BLUE_COLOR)➤ Running tests$(NO_COLOR)"

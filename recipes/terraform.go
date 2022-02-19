@@ -51,7 +51,7 @@ type TFDOOutboundRule struct {
 func TerraformResources(c *config.Config, filter string) {
 	tb := NewTable("Type", "Name", "IPV4Address", "IPV4AddressPrivate", "Region", "Tags", "Type", "Value", "CreatedAt")
 
-	for _, t := range c.Terraform {
+	for _, t := range *c.Terraform {
 
 		bytes, err := os.ReadFile(t)
 		if err != nil {
