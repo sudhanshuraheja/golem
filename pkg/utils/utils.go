@@ -123,3 +123,10 @@ func GetContentTypeString(list []string) string {
 	}
 	return strings.Join(list, ";;")
 }
+
+func StringPtrValue(s *string, def string) string {
+	if s == nil {
+		return def
+	}
+	return *s
+}

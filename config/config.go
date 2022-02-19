@@ -1,4 +1,4 @@
-package kitchen
+package config
 
 import (
 	"log"
@@ -17,11 +17,13 @@ type ServersConfig struct {
 }
 
 type Server struct {
-	Name string   `hcl:"name,label"`
-	IP   string   `hcl:"ip"`
-	User string   `hcl:"user"`
-	Port int      `hcl:"port"`
-	Tags []string `hcl:"tags"`
+	Name      string   `hcl:"name,label"`
+	PublicIP  *string  `hcl:"public_ip"`
+	PrivateIP *string  `hcl:"private_ip"`
+	HostName  *string  `hcl:"hostname"`
+	User      string   `hcl:"user"`
+	Port      int      `hcl:"port"`
+	Tags      []string `hcl:"tags"`
 }
 
 type Recipe struct {
