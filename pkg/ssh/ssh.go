@@ -11,21 +11,27 @@ import (
 )
 
 type Connection struct {
-	conn      *ssh.Client
-	session   *ssh.Session
-	stdin     io.Writer
-	stdout    io.Reader
-	stderr    io.Reader
-	Stdout    chan string
-	Stderr    chan string
-	Completed chan struct{}
+	name    string
+	conn    *ssh.Client
+	session *ssh.Session
+	stdin   io.Writer
+	stdout  io.Reader
+	stderr  io.Reader
+	Stdout  chan Out
+	Stderr  chan Out
 }
 
-func NewSSHConnection(user, host string, port int, privateKeyPath string) (*Connection, error) {
+type Out struct {
+	Name      string
+	Message   string
+	Completed bool
+}
+
+func NewSSHConnection(name, user, host string, port int, privateKeyPath string) (*Connection, error) {
 	connection := Connection{}
-	connection.Stdout = make(chan string, 1000)
-	connection.Stderr = make(chan string, 1000)
-	connection.Completed = make(chan struct{})
+	connection.name = name
+	connection.Stdout = make(chan Out, 1000)
+	connection.Stderr = make(chan Out, 1000)
 
 	err := connection.Dial(user, host, port, privateKeyPath)
 	if err != nil {
@@ -147,31 +153,44 @@ func (c *Connection) Pipes() error {
 		return err
 	}
 
-	go func() {
+	go func(name string) {
 		scanner := bufio.NewScanner(c.stdout)
 		for {
 			if tkn := scanner.Scan(); tkn {
 				received := scanner.Bytes()
 				data := make([]byte, len(received))
 				copy(data, received)
-				c.Stdout <- string(data)
+				c.Stdout <- Out{
+					Name:    name,
+					Message: string(data),
+				}
 			} else {
 				if scanner.Err() != nil {
-					c.Stderr <- scanner.Err().Error()
+					c.Stderr <- Out{
+						Name:    name,
+						Message: scanner.Err().Error(),
+					}
 				} else {
-					c.Completed <- struct{}{}
+					c.Stdout <- Out{
+						Name:      name,
+						Message:   "Done",
+						Completed: true,
+					}
 				}
 				return
 			}
 		}
-	}()
+	}(c.name)
 
-	go func() {
+	go func(name string) {
 		scanner := bufio.NewScanner(c.stderr)
 		for scanner.Scan() {
-			c.Stderr <- scanner.Text()
+			c.Stderr <- Out{
+				Name:    name,
+				Message: scanner.Text(),
+			}
 		}
-	}()
+	}(c.name)
 
 	return nil
 }
@@ -194,10 +213,10 @@ func (c *Connection) Run(command string) (int, error) {
 		}
 	}
 
+	c.session.Close()
 	return exitStatus, err
 }
 
 func (c *Connection) Close() {
-	c.session.Close()
 	c.conn.Close()
 }

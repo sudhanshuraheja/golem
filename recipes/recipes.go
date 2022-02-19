@@ -27,3 +27,19 @@ func (t *Table) Row(vals ...interface{}) {
 func (t *Table) Display() {
 	t.table.Print()
 }
+
+func Errors() *color.Color {
+	return color.New(color.FgRed, color.Bold)
+}
+
+func Success() *color.Color {
+	return color.New(color.FgGreen, color.Bold)
+}
+
+func Info() *color.Color {
+	return color.New(color.FgCyan, color.Bold)
+}
+
+func Progress() *color.Color {
+	return color.New(color.FgWhite)
+}

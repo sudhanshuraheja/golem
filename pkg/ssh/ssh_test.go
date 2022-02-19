@@ -1,41 +1,46 @@
 package ssh
 
 import (
-	"fmt"
 	"testing"
 
+	"github.com/fatih/color"
 	"github.com/sudhanshuraheja/golem/pkg/utils"
 )
 
 func TestConn(t *testing.T) {
-	conn, err := NewSSHConnection("sudhanshu", "192.168.86.173", 22, "")
+	conn, err := NewSSHConnection("local", "sudhanshu", "192.168.86.173", 22, "")
 	utils.OK(t, err)
 
-	go func() {
+	wait := make(chan bool)
+
+	go func(wait chan bool) {
 		for {
 			select {
 			case stdout := <-conn.Stdout:
-				fmt.Println(stdout)
+				if stdout.Completed {
+					wait <- true
+				}
+				color.New(color.FgCyan).Println(stdout.Name, "|", stdout.Message)
 			case stderr := <-conn.Stderr:
-				fmt.Println("-----stderr-----", stderr)
+				color.New(color.FgRed).Println(stderr.Name, "|", stderr.Message)
 			}
 		}
-	}()
+	}(wait)
 
 	status, err := conn.Run("ls -la")
 	utils.OK(t, err)
 	utils.Equals(t, -1, status)
-	<-conn.Completed
+	<-wait
 
 	status, err = conn.Run("env")
 	utils.OK(t, err)
 	utils.Equals(t, -1, status)
-	<-conn.Completed
+	<-wait
 
 	status, err = conn.Run("apt-get update")
 	utils.OK(t, err)
 	utils.Equals(t, true, status > 0)
-	<-conn.Completed
+	<-wait
 
 	conn.Close()
 }

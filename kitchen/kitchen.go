@@ -18,6 +18,8 @@ func NewKitchen(configPath string) *Kitchen {
 
 func (k *Kitchen) Exec(recipe string) {
 	switch recipe {
+	case "apt-update":
+		recipes.AptUpdate(k.conf)
 	case "tflist":
 		recipes.TerraformResources(k.conf, "")
 	case "tflistall":
