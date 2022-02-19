@@ -7,6 +7,7 @@ require (
 	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
 	github.com/davecgh/go-spew v1.1.1
 	github.com/google/uuid v1.3.0
+	github.com/hashicorp/hcl/v2 v2.11.1
 	github.com/joeshaw/envdecode v0.0.0-20200121155833-099f1fc765bd
 	github.com/labstack/echo/v4 v4.6.3
 	github.com/rs/zerolog v1.26.1
@@ -14,13 +15,18 @@ require (
 )
 
 require (
+	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/alexflint/go-scalar v1.1.0 // indirect
+	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
+	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/labstack/gommon v0.3.1 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
+	github.com/zclconf/go-cty v1.8.0 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/sys v0.0.0-20211103235746-7861aae1554b // indirect
 	golang.org/x/text v0.3.7 // indirect

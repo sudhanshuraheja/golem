@@ -1,17 +1,16 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/alexflint/go-arg"
+	"github.com/sudhanshuraheja/golem/pkg/recipes"
 )
 
 var args struct {
-	Server    string `arg:"-s,--server" help:"sudhanshu@1.1.1.1"`
-	PublicKey string `arg:"-p,--publickey" help:"publickey"`
+	Recipe string `arg:"positional"`
+	Config string `arg:"-c,--conf" help:"config folder, can be a file ./golem.hcl or folder ./recipes/"`
 }
 
 func main() {
 	arg.MustParse(&args)
-	fmt.Println(args)
+	recipes.Start(args.Config, args.Recipe)
 }
