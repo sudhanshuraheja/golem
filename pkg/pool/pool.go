@@ -3,11 +3,11 @@ package pool
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/sudhanshuraheja/golem/pkg/log"
 	"github.com/sudhanshuraheja/golem/pkg/utils"
 )
 
@@ -101,7 +101,7 @@ func (w *pool) Start(count int64) chan interface{} {
 }
 
 func (w *pool) Update(count int64) {
-	log.Printf("[pool.update][q: %s] updating worker count from <%d> to <%d>", w.Name, w.getExpectedWorkerCount(), count)
+	log.Infof("pool | %s | updating worker count from <%d> to <%d>", w.Name, w.getExpectedWorkerCount(), count)
 	w.setExpectedWorkerCount(count)
 
 	for w.getExpectedWorkerCount() != w.getActualWorkerCount() {
@@ -203,7 +203,7 @@ func (w *pool) emptyProcessed() {
 			<-w.processed
 			count++
 		}
-		log.Printf("[pool.emptyProcessed][q:%s] w.processed at %d, removed %d", w.Name, len(w.processed), count)
+		log.Infof("pool | %s | w.processed at %d, removed %d", w.Name, len(w.processed), count)
 	}
 }
 

@@ -4,13 +4,14 @@ import (
 	"time"
 
 	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/pkg/log"
 	"github.com/sudhanshuraheja/golem/pkg/ssh"
 )
 
 func SSHRun(c *config.Config, commands []string) {
 	for _, s := range c.Servers.Server {
 		startTime := time.Now()
-		Info().Println(s.Name, "| Running apt-update")
+		log.Announcef("%s | running <apt-update>", s.Name)
 
 		var host string
 		switch {
@@ -19,12 +20,12 @@ func SSHRun(c *config.Config, commands []string) {
 		case s.HostName != nil:
 			host = *s.HostName
 		default:
-			Errors().Println(s.Name, "| could not find a public ip or a hostname")
+			log.Errorf("%s | could not find a public ip or a hostname in config", s.Name)
 		}
 
 		conn, err := ssh.NewSSHConnection(s.Name, s.User, host, s.Port, "")
 		if err != nil {
-			Errors().Println(s.Name, "| Could not ssh to host", err)
+			log.Errorf("%s | could not ssh to host: %v", s.Name, err)
 		}
 
 		wait := make(chan bool)
@@ -33,12 +34,12 @@ func SSHRun(c *config.Config, commands []string) {
 			for {
 				select {
 				case stdout := <-conn.Stdout:
-					Progress().Println(stdout.Name, "|", stdout.Message)
+					log.Infof("%s | %s", stdout.Name, stdout.Message)
 					if stdout.Completed {
 						wait <- true
 					}
 				case stderr := <-conn.Stderr:
-					Progress().Println(stderr.Name, "|", stderr.Message)
+					log.Infof("%s | %s", stderr.Name, stderr.Message)
 				}
 			}
 		}(wait)
@@ -46,13 +47,13 @@ func SSHRun(c *config.Config, commands []string) {
 		for _, cmd := range commands {
 			status, err := conn.Run(cmd)
 			if err != nil {
-				Errors().Println(s.Name, "| Error during running", cmd, err)
+				log.Errorf("%s | error in running command <%s>: %v", s.Name, cmd, err)
 			}
 			<-wait
 			if status > 0 {
-				Errors().Println(s.Name, "| Command", cmd, "ended with status", status)
+				log.Errorf("%s | command <%s> failed with status: %d", s.Name, cmd, status)
 			} else {
-				Success().Println(s.Name, "| Command ended in", time.Since(startTime))
+				log.Successf("%s | command <%s> ended successfully in %s", s.Name, cmd, time.Since(startTime))
 			}
 		}
 

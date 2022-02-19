@@ -2,11 +2,11 @@ package recipes
 
 import (
 	"encoding/json"
-	"log"
 	"os"
 	"strings"
 
 	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/pkg/log"
 )
 
 type TFRoot struct {
@@ -49,19 +49,19 @@ type TFDOOutboundRule struct {
 }
 
 func TerraformResources(c *config.Config, filter string) {
-	tb := NewTable("Type", "Name", "IPV4Address", "IPV4AddressPrivate", "Region", "Tags", "Type", "Value", "CreatedAt")
+	tb := log.NewTable("Type", "Name", "IPV4Address", "IPV4AddressPrivate", "Region", "Tags", "Type", "Value", "CreatedAt")
 
 	for _, t := range *c.Terraform {
 
 		bytes, err := os.ReadFile(t)
 		if err != nil {
-			log.Fatalf("unable to read file: %s: %v", t, err)
+			log.Fatalf("terraform | unable to read file: %s: %v", t, err)
 		}
 
 		var tf TFRoot
 		err = json.Unmarshal(bytes, &tf)
 		if err != nil {
-			log.Fatalf("unable to unmarshall: %s: %v", t, err)
+			log.Fatalf("terraform | unable to unmarshall: %s: %v", t, err)
 		}
 
 		for _, tfr := range tf.Resources {

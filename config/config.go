@@ -1,16 +1,19 @@
 package config
 
 import (
-	"log"
+	"fmt"
+	"os"
 
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclparse"
+	"github.com/sudhanshuraheja/golem/pkg/log"
 )
 
 type Config struct {
 	Servers   ServersConfig `hcl:"servers,block"`
 	Recipe    []Recipe      `hcl:"recipe,block"`
 	Terraform *[]string     `hcl:"terraform"`
+	LogLevel  *string       `hcl:"loglevel"`
 }
 
 type ServersConfig struct {
@@ -42,13 +45,16 @@ func NewConfig(configPath string) *Config {
 	parser := hclparse.NewParser()
 	f, diags := parser.ParseHCLFile(configPath)
 	if diags.HasErrors() {
-		log.Fatalf("parse error: %v", diags)
+		fmt.Printf("parse error: %v", diags)
+		os.Exit(1)
 	}
 
 	diags = gohcl.DecodeBody(f.Body, nil, &conf)
 	if diags.HasErrors() {
-		log.Fatalf("parse body error: %v", diags)
+		fmt.Printf("parse body error: %v", diags)
+		os.Exit(1)
 	}
 
+	log.SetLogLevel(conf.LogLevel)
 	return &conf
 }

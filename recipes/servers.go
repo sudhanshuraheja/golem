@@ -4,11 +4,12 @@ import (
 	"strings"
 
 	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/pkg/log"
 	"github.com/sudhanshuraheja/golem/pkg/utils"
 )
 
 func Servers(c *config.Config) {
-	t := NewTable("Name", "Public IP", "Private IP", "Hostname", "User", "Port", "Tags")
+	t := log.NewTable("Name", "Public IP", "Private IP", "Hostname", "User", "Port", "Tags")
 	for _, s := range c.Servers.Server {
 		t.Row(
 			s.Name,

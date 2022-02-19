@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sudhanshuraheja/golem/pkg/log"
 )
 
 // GetUUID definition
@@ -75,7 +75,7 @@ func ElapsedTime(what string, logging bool) func() {
 	start := time.Now()
 	return func() {
 		if logging {
-			log.Printf("[%v] %s\n", time.Since(start), what)
+			log.Tracef("%v | %s\n", time.Since(start), what)
 		}
 	}
 }

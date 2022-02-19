@@ -1,8 +1,8 @@
 package kitchen
 
 import (
-	"github.com/fatih/color"
 	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/pkg/log"
 	"github.com/sudhanshuraheja/golem/recipes"
 )
 
@@ -27,8 +27,7 @@ func (k *Kitchen) Exec(recipe string) {
 	case "servers":
 		recipes.Servers(k.conf)
 	default:
-		red := color.New(color.FgRed)
-		red.Printf("The recipe %s was not found, using golem servers\n", recipe)
+		log.Errorf("kitchen | the recipe <%s> was not found, running recipe <servers>", recipe)
 		recipes.Servers(k.conf)
 	}
 }
