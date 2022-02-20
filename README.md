@@ -71,7 +71,7 @@ To view all connected golem servers, you can run the servers recipe
 $ golem servers
 Name      Public IP        Private IP      User       Port  Tags                                                Hostname
 thebatch                   192.168.86.173  sudhanshu  22    local                                               thebatch.local
-postgres  128.199.226.55   10.104.16.8     root       22    postgres, vpc-private
+postgres  128.199.226.65   10.104.16.8     root       22    postgres, vpc-private
 ...
 ```
 
@@ -94,6 +94,9 @@ recipe "test-exec" {
     ]
 }
 ```
+
+![](docs/test-exec.png)
+
 You can match servers using the `attribute`, `operator` and `value` fields.
 Int-based attributes can use `=`, `!=`, `>`, `>=`, `<`, `<=` operators
 String-based attributes can use `=`, `!=`, `like` operators
@@ -136,6 +139,6 @@ recipe "nomad-server-config-update" {
 ```
 
 ## SSH and SFTP
-Golem uses one goroutine per server. The goroutine creates an initial SSH connection to the server and uses it to upload artifacts to the server and to run each command. It makes a new session for each command. Artifacts are uploaded before running commands.
+Golem uses one goroutine per server. The goroutine creates an initial SSH connection to the server and uses it to upload artifacts to the server and run each command. It makes a new session for each command. Artifacts are uploaded before running commands.
 
 The number of goroutines is capped to 4 by default and can be changed by setting `max_parallel_processes = 16` or any number you like. This is a global setting.
