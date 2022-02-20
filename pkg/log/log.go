@@ -1,7 +1,9 @@
 package log
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/fatih/color"
@@ -89,16 +91,28 @@ func Errorf(format string, v ...interface{}) {
 
 func Fatalf(format string, v ...interface{}) {
 	if logLevel >= 1 {
-		code := color.New(color.FgRed, color.BgWhite)
+		code := color.New(color.FgRed, color.Bold, color.Underline)
 		code.Printf(format+"\n", v...)
 	}
 }
 
 func Panicf(format string, v ...interface{}) {
 	if logLevel >= 0 {
-		code := color.New(color.FgRed, color.BgWhite)
+		code := color.New(color.FgRed, color.Bold, color.Underline)
 		code.Printf(format+"\n", v...)
 	}
+}
+
+func Questionf(format string, v ...interface{}) string {
+	reader := bufio.NewReader(os.Stdin)
+
+	code := color.New(color.FgMagenta, color.Bold)
+	code.Printf(format+" : ", v...)
+	text, err := reader.ReadString('\n')
+	if err != nil {
+		Errorf("could not read input: %v", err)
+	}
+	return text
 }
 
 func Dump(v interface{}) {

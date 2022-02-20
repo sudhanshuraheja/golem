@@ -2,6 +2,7 @@ package recipes
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -50,6 +51,12 @@ func Run(c *config.Config, name string) {
 		serverNames = append(serverNames, s.Name)
 	}
 	log.Announcef("%s | found %d matching servers - %s", recipe.Name, len(servers), strings.Join(serverNames, ", "))
+
+	answer := log.Questionf("Are you sure you want to continue [y/n]?")
+	if utils.ArrayContains([]string{"y", "yes"}, answer, false) == -1 {
+		log.Errorf("Quitting, because you said %s", answer)
+		os.Exit(0)
+	}
 
 	switch recipe.Type {
 	case "exec":
