@@ -30,5 +30,4 @@ func TestWorkerPool(t *testing.T) {
 			break
 		}
 	}
-
 }

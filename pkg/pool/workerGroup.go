@@ -28,7 +28,7 @@ func NewWorkerGroup(name string, heartbeat time.Duration) WorkerGroup {
 
 func (w *workerGroup) Process(ctx context.Context, workerCtx *WorkerContext, id string) {
 	workerCtx.Heartbeat <- Heartbeat{ID: id, Ping: true}
-	log.Infof("pool | %s-%s | Started", w.name, id)
+	log.Infof("%s-%s | Started", w.name, id)
 
 	ticker := time.NewTicker(w.heartbeat)
 	defer ticker.Stop()
@@ -36,19 +36,19 @@ func (w *workerGroup) Process(ctx context.Context, workerCtx *WorkerContext, id 
 	for {
 		select {
 		case j := <-workerCtx.Jobs:
-			log.Infof("pool | %s-%s | Job %+v", w.name, id, j)
+			log.Infof("%s-%s | Job %+v", w.name, id, j)
 			workerCtx.Heartbeat <- Heartbeat{ID: id, Processed: 1}
 			workerCtx.Processed <- j
 		case <-ctx.Done():
-			log.Successf("pool | %s-%s | Done", w.name, id)
+			log.Successf("%s-%s | Done", w.name, id)
 			workerCtx.Heartbeat <- Heartbeat{ID: id, Closed: true}
 			return
 		case <-workerCtx.Close:
-			log.Successf("pool | %s-%s | Closing", w.name, id)
+			log.Successf("%s-%s | Closing", w.name, id)
 			workerCtx.Heartbeat <- Heartbeat{ID: id, Closed: true}
 			return
 		case <-ticker.C:
-			log.Tracef("pool | %s-%s | Heartbeat", w.name, id)
+			log.Tracef("%s-%s | Heartbeat", w.name, id)
 			workerCtx.Heartbeat <- Heartbeat{ID: id, Ping: true}
 		}
 	}

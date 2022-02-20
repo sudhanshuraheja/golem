@@ -12,10 +12,11 @@ import (
 )
 
 type Config struct {
-	ServerProviders []ServerProvider `hcl:"server_provider,block"`
-	Servers         []Server         `hcl:"server,block"`
-	Recipe          []Recipe         `hcl:"recipe,block"`
-	LogLevel        *string          `hcl:"loglevel"`
+	ServerProviders      []ServerProvider `hcl:"server_provider,block"`
+	Servers              []Server         `hcl:"server,block"`
+	Recipe               []Recipe         `hcl:"recipe,block"`
+	LogLevel             *string          `hcl:"loglevel"`
+	MaxParallelProcesses *int             `hcl:"max_parallel_processes"`
 }
 
 type ServerProvider struct {
@@ -88,6 +89,12 @@ func NewConfig(configPath string) *Config {
 	}
 
 	log.SetLogLevel(conf.LogLevel)
+
+	if conf.MaxParallelProcesses == nil {
+		maxParallelProcs := 4
+		conf.MaxParallelProcesses = &maxParallelProcs
+	}
+
 	return &conf
 }
 

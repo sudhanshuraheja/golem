@@ -1,15 +1,23 @@
 package recipes
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/sudhanshuraheja/golem/config"
 	"github.com/sudhanshuraheja/golem/pkg/log"
+	"github.com/sudhanshuraheja/golem/pkg/pool"
 	"github.com/sudhanshuraheja/golem/pkg/utils"
 )
+
+type SSHJob struct {
+	Recipe config.Recipe
+	Server config.Server
+}
 
 func List(c *config.Config) {
 	tb := log.NewTable("Name", "Match", "Artifacts", "Commands")
@@ -104,20 +112,43 @@ func Run(c *config.Config, name string) {
 
 	switch recipe.Type {
 	case "exec":
-		for _, s := range servers {
-			ss := SSH{}
-			err := ss.Connect(&s)
-			if err != nil {
-				log.Errorf("%s | %v", s.Name, err)
-				continue
-			}
-			ss.Upload(recipe.Artifacts)
-			ss.Run(recipe.Commands)
-			ss.Close()
-		}
+		ExecRecipe(servers, recipe, *c.MaxParallelProcesses)
 	default:
 		log.Errorf("recipe only supports ['exec'] types")
 	}
+}
+
+func ExecRecipe(servers []config.Server, recipe config.Recipe, maxProcs int) {
+
+	wp := pool.NewPool("ssh")
+	wp.AddWorkerGroup(NewSSHWorkerGroup("ssh", 10*time.Millisecond))
+	processed := wp.Start(int64(maxProcs))
+
+	startTime := time.Now()
+	for _, s := range servers {
+		wp.Queue(SSHJob{Server: s, Recipe: recipe})
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	count := 0
+
+	for range processed {
+		count++
+		if count == len(servers) {
+			wp.Stop(ctx)
+			break
+		}
+	}
+
+	for {
+		if wp.GetWorkerCount() == 0 {
+			break
+		}
+	}
+
+	log.MinorSuccessf("%s | completed in %s", recipe.Name, time.Since(startTime))
 }
 
 func findMatchingServers(c *config.Config, match config.Match) []config.Server {

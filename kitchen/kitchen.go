@@ -17,7 +17,7 @@ func NewKitchen(configPath string) *Kitchen {
 }
 
 func (k *Kitchen) Exec(recipe string) {
-	log.Announcef("%s | running recipe", recipe)
+	log.Announcef("%s | running recipe with %d routines", recipe, *k.conf.MaxParallelProcesses)
 	switch recipe {
 	case "init":
 		recipes.Init()
