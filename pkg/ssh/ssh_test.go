@@ -13,6 +13,9 @@ func TestConn(t *testing.T) {
 
 	wait := make(chan bool)
 
+	err = conn.Upload("test.data", "test.data")
+	utils.OK(t, err)
+
 	go func(wait chan bool) {
 		for {
 			select {

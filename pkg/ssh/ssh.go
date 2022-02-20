@@ -5,20 +5,24 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"syscall"
+	"time"
 
+	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
 )
 
 type Connection struct {
-	name    string
-	conn    *ssh.Client
-	session *ssh.Session
-	stdin   io.Writer
-	stdout  io.Reader
-	stderr  io.Reader
-	Stdout  chan Out
-	Stderr  chan Out
+	name        string
+	conn        *ssh.Client
+	sshSession  *ssh.Session
+	sftpSession *sftp.Client
+	stdin       io.Writer
+	stdout      io.Reader
+	stderr      io.Reader
+	Stdout      chan Out
+	Stderr      chan Out
 }
 
 type Out struct {
@@ -33,14 +37,14 @@ func NewSSHConnection(name, user, host string, port int, privateKeyPath string) 
 	connection.Stdout = make(chan Out, 1000)
 	connection.Stderr = make(chan Out, 1000)
 
-	err := connection.Dial(user, host, port, privateKeyPath)
+	err := connection.dial(user, host, port, privateKeyPath)
 	if err != nil {
 		return nil, err
 	}
 	return &connection, nil
 }
 
-func (c *Connection) Dial(user, host string, port int, privateKeyPath string) error {
+func (c *Connection) dial(user, host string, port int, privateKeyPath string) error {
 	if user == "" {
 		return fmt.Errorf("user cannot be empty")
 	}
@@ -88,6 +92,7 @@ func (c *Connection) Dial(user, host string, port int, privateKeyPath string) er
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
+		Timeout: 5 * time.Second,
 	}
 
 	addr := fmt.Sprintf("%s:%d", host, port)
@@ -99,19 +104,19 @@ func (c *Connection) Dial(user, host string, port int, privateKeyPath string) er
 	return nil
 }
 
-func (c *Connection) Session() error {
+func (c *Connection) getSSHSession() error {
 	var err error
-	c.session, err = c.conn.NewSession()
+	c.sshSession, err = c.conn.NewSession()
 	if err != nil {
 		return err
 	}
 
-	err = c.Pty()
+	err = c.pty()
 	if err != nil {
 		return err
 	}
 
-	err = c.Pipes()
+	err = c.pipes()
 	if err != nil {
 		return err
 	}
@@ -119,7 +124,7 @@ func (c *Connection) Session() error {
 	return nil
 }
 
-func (c *Connection) Pty() error {
+func (c *Connection) pty() error {
 	// Set up terminal modes
 	modes := ssh.TerminalModes{
 		ssh.ECHO:          0,     // disable echoing
@@ -128,7 +133,7 @@ func (c *Connection) Pty() error {
 	}
 
 	// Request pseudo terminal
-	err := c.session.RequestPty("xterm", 80, 40, modes)
+	err := c.sshSession.RequestPty("xterm", 80, 40, modes)
 	if err != nil {
 		return err
 	}
@@ -136,19 +141,19 @@ func (c *Connection) Pty() error {
 	return nil
 }
 
-func (c *Connection) Pipes() error {
+func (c *Connection) pipes() error {
 	var err error
-	c.stdin, err = c.session.StdinPipe()
+	c.stdin, err = c.sshSession.StdinPipe()
 	if err != nil {
 		return err
 	}
 
-	c.stdout, err = c.session.StdoutPipe()
+	c.stdout, err = c.sshSession.StdoutPipe()
 	if err != nil {
 		return err
 	}
 
-	c.stderr, err = c.session.StderrPipe()
+	c.stderr, err = c.sshSession.StderrPipe()
 	if err != nil {
 		return err
 	}
@@ -198,12 +203,12 @@ func (c *Connection) Pipes() error {
 func (c *Connection) Run(command string) (int, error) {
 	exitStatus := -1
 
-	err := c.Session()
+	err := c.getSSHSession()
 	if err != nil {
 		return exitStatus, err
 	}
 
-	err = c.session.Run(command)
+	err = c.sshSession.Run(command)
 	if err != nil {
 		switch v := err.(type) {
 		case *ssh.ExitError:
@@ -213,8 +218,53 @@ func (c *Connection) Run(command string) (int, error) {
 		}
 	}
 
-	c.session.Close()
+	c.sshSession.Close()
 	return exitStatus, err
+}
+
+func (c *Connection) getSFTPSession() error {
+	var err error
+	// c.sftpSession, err = sftp.NewClient(c.conn, sftp.MaxPacket(1e9))
+	c.sftpSession, err = sftp.NewClient(c.conn)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Connection) Upload(src, dest string) error {
+	err := c.getSFTPSession()
+	if err != nil {
+		return err
+	}
+
+	d, err := c.sftpSession.OpenFile(dest, syscall.O_RDWR|syscall.O_CREAT)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+
+	s, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	s_info, err := s.Stat()
+	if err != nil {
+		return err
+	}
+	sourceSize := s_info.Size()
+	defer s.Close()
+
+	copied, err := io.Copy(d, s)
+	if err != nil {
+		return err
+	}
+	if copied != sourceSize {
+		return fmt.Errorf("only %d bytes out of %d were copied from %s to %s", copied, sourceSize, src, dest)
+	}
+
+	c.sftpSession.Close()
+	return nil
 }
 
 func (c *Connection) Close() {
