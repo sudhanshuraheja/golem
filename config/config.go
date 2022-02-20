@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclparse"
@@ -10,10 +12,17 @@ import (
 )
 
 type Config struct {
-	Servers   []Server  `hcl:"server,block"`
-	Recipe    []Recipe  `hcl:"recipe,block"`
-	Terraform *[]string `hcl:"terraform"`
-	LogLevel  *string   `hcl:"loglevel"`
+	ServerProviders []ServerProvider `hcl:"server_provider,block"`
+	Servers         []Server         `hcl:"server,block"`
+	Recipe          []Recipe         `hcl:"recipe,block"`
+	LogLevel        *string          `hcl:"loglevel"`
+}
+
+type ServerProvider struct {
+	Name   string   `hcl:"name,label"`
+	Config []string `hcl:"config"`
+	User   string   `hcl:"user"`
+	Port   int      `hcl:"port"`
 }
 
 type Server struct {
@@ -67,4 +76,48 @@ func NewConfig(configPath string) *Config {
 
 	log.SetLogLevel(conf.LogLevel)
 	return &conf
+}
+
+func (c *Config) ResolveServerProvider() {
+	startTime := time.Now()
+	for _, sp := range c.ServerProviders {
+		switch sp.Name {
+		case "terraform":
+			for _, cf := range sp.Config {
+				spt := ServerProviderTerraform{}
+				srvs, iph, err := spt.GetServers(cf, sp.User, sp.Port)
+				if err != nil {
+					log.Errorf("config | could not load servers from tfstate %s: %v", cf, err)
+					continue
+				}
+				log.Debugf("config | found %d servers in %s", len(srvs), cf)
+				c.Servers = append(c.Servers, srvs...)
+				mergeIPHostnames(&c.Servers, iph)
+			}
+		default:
+			log.Errorf("config | server_providers label only supports ['terraform']")
+		}
+	}
+	log.Debugf("resolved service provider in %s", time.Since(startTime))
+}
+
+func mergeIPHostnames(servers *[]Server, iph IPHostNames) {
+	for ip, hostnames := range iph {
+		for i, server := range *servers {
+			if server.PublicIP != nil && *server.PublicIP == ip {
+				hn := strings.Join(hostnames, ", ")
+				(*servers)[i].HostName = &hn
+				delete(iph, ip)
+			}
+		}
+	}
+
+	for ip, hostnames := range iph {
+		srv := Server{}
+		ipToUse := ip
+		srv.PublicIP = &ipToUse
+		hn := strings.Join(hostnames, ", ")
+		srv.HostName = &hn
+		*servers = append(*servers, srv)
+	}
 }

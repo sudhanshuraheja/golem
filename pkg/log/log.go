@@ -115,6 +115,6 @@ func Questionf(format string, v ...interface{}) string {
 	return text
 }
 
-func Dump(v interface{}) {
-	spew.Dump(v)
+func Dump(v ...interface{}) {
+	spew.Dump(v...)
 }

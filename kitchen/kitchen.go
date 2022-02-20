@@ -11,9 +11,9 @@ type Kitchen struct {
 }
 
 func NewKitchen(configPath string) *Kitchen {
-	return &Kitchen{
-		conf: config.NewConfig(configPath),
-	}
+	conf := config.NewConfig(configPath)
+	conf.ResolveServerProvider()
+	return &Kitchen{conf: conf}
 }
 
 func (k *Kitchen) Exec(recipe string) {
@@ -21,10 +21,6 @@ func (k *Kitchen) Exec(recipe string) {
 	switch recipe {
 	case "list":
 		recipes.List(k.conf)
-	case "tflist":
-		recipes.TerraformResources(k.conf, "")
-	case "tflistall":
-		recipes.TerraformResources(k.conf, "all")
 	case "servers":
 		recipes.Servers(k.conf)
 	default:
