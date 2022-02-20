@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -63,29 +64,30 @@ func getConfFilePath() (string, error) {
 	return fmt.Sprintf("%s/.golem/golem.hcl", dirname), nil
 }
 
-func NewConfig(configPath string) *Config {
+func NewConfig(configPath string) (*Config, error) {
 	var conf Config
 
 	if configPath == "" {
 		var err error
 		configPath, err = getConfFilePath()
 		if err != nil {
-			log.Errorf("%v", err)
-			return nil
+			return nil, err
 		}
+	}
+
+	if _, err := os.Stat(configPath); errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("config file does not exist")
 	}
 
 	parser := hclparse.NewParser()
 	f, diags := parser.ParseHCLFile(configPath)
 	if diags.HasErrors() {
-		fmt.Printf("parse error: %v", diags)
-		os.Exit(1)
+		return nil, diags
 	}
 
 	diags = gohcl.DecodeBody(f.Body, nil, &conf)
 	if diags.HasErrors() {
-		fmt.Printf("parse body error: %v", diags)
-		os.Exit(1)
+		return nil, diags
 	}
 
 	log.SetLogLevel(conf.LogLevel)
@@ -95,7 +97,7 @@ func NewConfig(configPath string) *Config {
 		conf.MaxParallelProcesses = &maxParallelProcs
 	}
 
-	return &conf
+	return &conf, nil
 }
 
 func (c *Config) ResolveServerProvider() {

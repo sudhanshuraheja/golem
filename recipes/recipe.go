@@ -31,8 +31,6 @@ func List(c *config.Config) {
 	}
 	// Add system defined
 	tb.Row("servers", "local only", 0, 0)
-	tb.Row("tflist", "local only", 0, 0)
-	tb.Row("tflistall", "local only", 0, 0)
 	tb.Display()
 }
 
@@ -72,7 +70,7 @@ func Init() {
 	} else if err != nil {
 		log.Errorf("init | error checking conf file %s: %v", confFile, err)
 	}
-	log.MinorSuccessf("init | conf file already exists at %s", confFile)
+	// log.MinorSuccessf("init | conf file already exists at %s", confFile)
 }
 
 func Run(c *config.Config, name string) {
