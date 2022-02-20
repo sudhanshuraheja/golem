@@ -69,7 +69,15 @@ func Run(c *config.Config, name string) {
 	switch recipe.Type {
 	case "exec":
 		for _, s := range servers {
-			SSHRun(&s, recipe.Commands)
+			ss := SSH{}
+			err := ss.Connect(&s)
+			if err != nil {
+				log.Errorf("%s | %v", s.Name, err)
+				continue
+			}
+			ss.Upload(recipe.Artifacts)
+			ss.Run(recipe.Commands)
+			ss.Close()
 		}
 	default:
 		log.Errorf("recipe only supports ['exec'] types")

@@ -232,39 +232,39 @@ func (c *Connection) getSFTPSession() error {
 	return nil
 }
 
-func (c *Connection) Upload(src, dest string) error {
+func (c *Connection) Upload(src, dest string) (int64, error) {
 	err := c.getSFTPSession()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	d, err := c.sftpSession.OpenFile(dest, syscall.O_RDWR|syscall.O_CREAT)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer d.Close()
 
 	s, err := os.Open(src)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	s_info, err := s.Stat()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	sourceSize := s_info.Size()
 	defer s.Close()
 
 	copied, err := io.Copy(d, s)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if copied != sourceSize {
-		return fmt.Errorf("only %d bytes out of %d were copied from %s to %s", copied, sourceSize, src, dest)
+		return 0, fmt.Errorf("only %d bytes out of %d were copied from %s to %s", copied, sourceSize, src, dest)
 	}
 
 	c.sftpSession.Close()
-	return nil
+	return copied, nil
 }
 
 func (c *Connection) Close() {

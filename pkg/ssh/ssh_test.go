@@ -13,8 +13,9 @@ func TestConn(t *testing.T) {
 
 	wait := make(chan bool)
 
-	err = conn.Upload("test.data", "test.data")
+	copied, err := conn.Upload("test.data", "test.data")
 	utils.OK(t, err)
+	utils.Equals(t, int64(10), copied)
 
 	go func(wait chan bool) {
 		for {
