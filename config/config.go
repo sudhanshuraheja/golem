@@ -31,8 +31,22 @@ type Server struct {
 }
 
 type Recipe struct {
-	Name   string   `hcl:"name,label"`
-	Target []string `hcl:"target"`
+	Name      string     `hcl:"name,label"`
+	Type      string     `hcl:"type"`
+	Match     Match      `hcl:"match,block"`
+	Artifacts []Artifact `hcl:"artifact,block"`
+	Commands  []string   `hcl:"commands"`
+}
+
+type Match struct {
+	Attribute string `hcl:"attribute"`
+	Operator  string `hcl:"operator"`
+	Value     string `hcl:"value"`
+}
+
+type Artifact struct {
+	Source      string `hcl:"source"`
+	Destination string `hcl:"destination"`
 }
 
 func NewConfig(configPath string) *Config {

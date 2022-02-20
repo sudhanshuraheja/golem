@@ -18,8 +18,10 @@ func NewKitchen(configPath string) *Kitchen {
 
 func (k *Kitchen) Exec(recipe string) {
 	switch recipe {
-	case "apt-update":
-		recipes.AptUpdate(k.conf)
+	case "list":
+		recipes.List(k.conf)
+	// case "apt-update":
+	// 	recipes.AptUpdate(k.conf)
 	case "tflist":
 		recipes.TerraformResources(k.conf, "")
 	case "tflistall":
@@ -27,7 +29,6 @@ func (k *Kitchen) Exec(recipe string) {
 	case "servers":
 		recipes.Servers(k.conf)
 	default:
-		log.Errorf("kitchen | the recipe <%s> was not found, running recipe <servers>", recipe)
-		recipes.Servers(k.conf)
+		log.Errorf("kitchen | the recipe <%s> was not found, please add it to golem.hcl and try again", recipe)
 	}
 }

@@ -66,9 +66,6 @@ func TerraformResources(c *config.Config, filter string) {
 
 		for _, tfr := range tf.Resources {
 			resourceType := tfr.Type
-			resourceType = strings.Replace(resourceType, "digitalocean", "do", -1)
-			resourceType = strings.Replace(resourceType, "kubernetes", "k8s", -1)
-
 			for _, tfi := range tfr.Instances {
 				name := tfi.Attributes.Name
 				if resourceType == "do_record" {
