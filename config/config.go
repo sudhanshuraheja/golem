@@ -54,11 +54,24 @@ type Artifact struct {
 	Destination string `hcl:"destination"`
 }
 
+func getConfFilePath() (string, error) {
+	dirname, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("could not find user's home directory: %v", err)
+	}
+	return fmt.Sprintf("%s/.golem/golem.hcl", dirname), nil
+}
+
 func NewConfig(configPath string) *Config {
 	var conf Config
 
 	if configPath == "" {
-		configPath = "golem.hcl"
+		var err error
+		configPath, err = getConfFilePath()
+		if err != nil {
+			log.Errorf("%v", err)
+			return nil
+		}
 	}
 
 	parser := hclparse.NewParser()

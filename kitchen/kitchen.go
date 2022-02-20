@@ -19,6 +19,8 @@ func NewKitchen(configPath string) *Kitchen {
 func (k *Kitchen) Exec(recipe string) {
 	log.Announcef("%s | running recipe", recipe)
 	switch recipe {
+	case "init":
+		recipes.Init()
 	case "list":
 		recipes.List(k.conf)
 	case "servers":

@@ -37,6 +37,36 @@ func Exists(c *config.Config, name string) bool {
 	return false
 }
 
+func Init() {
+	dirname, err := os.UserHomeDir()
+	if err != nil {
+		log.Errorf("init | could not find user's home directory: %v", err)
+		return
+	}
+	confDir := fmt.Sprintf("%s/.golem", dirname)
+
+	err = os.MkdirAll(confDir, os.FileMode(0755))
+	if err != nil {
+		log.Errorf("init | could not create conf dir %s: %v", confDir, err)
+		return
+	}
+
+	confFile := fmt.Sprintf("%s/golem.hcl", confDir)
+	_, err = os.Stat(confFile)
+	if os.IsNotExist(err) {
+		file, err := os.Create(confFile)
+		if err != nil {
+			log.Errorf("init | error creating conf file %s: %v", confFile, err)
+			return
+		}
+		defer file.Close()
+		log.MinorSuccessf("init | conf file created at %s", confFile)
+	} else if err != nil {
+		log.Errorf("init | error checking conf file %s: %v", confFile, err)
+	}
+	log.MinorSuccessf("init | conf file already exists at %s", confFile)
+}
+
 func Run(c *config.Config, name string) {
 	var recipe config.Recipe
 	for i, r := range c.Recipe {
@@ -95,6 +125,9 @@ func findMatchingServers(c *config.Config, match config.Match) []config.Server {
 }
 
 func matchServer(s config.Server, m config.Match) bool {
+	if s.Name == "" {
+		return false
+	}
 	switch m.Attribute {
 	case "name":
 		return matchString("name", s.Name, m.Value, m.Operator)
