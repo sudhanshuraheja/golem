@@ -45,7 +45,11 @@ func Run(c *config.Config, name string) {
 	}
 
 	servers := findMatchingServers(c, recipe.Match)
-	log.Announcef("%s | found %d matching servers", recipe.Name, len(servers))
+	serverNames := []string{}
+	for _, s := range servers {
+		serverNames = append(serverNames, s.Name)
+	}
+	log.Announcef("%s | found %d matching servers - %s", recipe.Name, len(servers), strings.Join(serverNames, ", "))
 
 	switch recipe.Type {
 	case "exec":
