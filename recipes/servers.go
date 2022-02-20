@@ -10,7 +10,7 @@ import (
 
 func Servers(c *config.Config) {
 	t := log.NewTable("Name", "Public IP", "Private IP", "Hostname", "User", "Port", "Tags")
-	for _, s := range c.Servers.Server {
+	for _, s := range c.Servers {
 		t.Row(
 			s.Name,
 			utils.StringPtrValue(s.PublicIP, ""),

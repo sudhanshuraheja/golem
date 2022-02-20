@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/fatih/color"
 )
 
@@ -58,6 +59,13 @@ func Warnf(format string, v ...interface{}) {
 	}
 }
 
+func MinorSuccessf(format string, v ...interface{}) {
+	if logLevel >= 2 {
+		code := color.New(color.FgGreen)
+		code.Printf(format+"\n", v...)
+	}
+}
+
 func Successf(format string, v ...interface{}) {
 	if logLevel >= 2 {
 		code := color.New(color.FgGreen, color.Bold)
@@ -91,4 +99,8 @@ func Panicf(format string, v ...interface{}) {
 		code := color.New(color.FgRed, color.BgWhite)
 		code.Printf(format+"\n", v...)
 	}
+}
+
+func Dump(v interface{}) {
+	spew.Dump(v)
 }

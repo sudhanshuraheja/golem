@@ -10,14 +10,10 @@ import (
 )
 
 type Config struct {
-	Servers   ServersConfig `hcl:"servers,block"`
-	Recipe    []Recipe      `hcl:"recipe,block"`
-	Terraform *[]string     `hcl:"terraform"`
-	LogLevel  *string       `hcl:"loglevel"`
-}
-
-type ServersConfig struct {
-	Server []Server `hcl:"server,block"`
+	Servers   []Server  `hcl:"server,block"`
+	Recipe    []Recipe  `hcl:"recipe,block"`
+	Terraform *[]string `hcl:"terraform"`
+	LogLevel  *string   `hcl:"loglevel"`
 }
 
 type Server struct {

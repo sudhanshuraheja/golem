@@ -9,9 +9,6 @@ import (
 )
 
 func SSHRun(s *config.Server, commands []string) {
-	startTime := time.Now()
-	log.Announcef("%s | running <apt-update>", s.Name)
-
 	var host string
 	switch {
 	case s.PublicIP != nil:
@@ -22,10 +19,12 @@ func SSHRun(s *config.Server, commands []string) {
 		log.Errorf("%s | could not find a public ip or a hostname in config", s.Name)
 	}
 
+	startTime := time.Now()
 	conn, err := ssh.NewSSHConnection(s.Name, s.User, host, s.Port, "")
 	if err != nil {
 		log.Errorf("%s | could not ssh to host: %v", s.Name, err)
 	}
+	log.MinorSuccessf("%s | connected via SSH in %s", s.Name, time.Since(startTime))
 
 	wait := make(chan bool)
 
@@ -44,6 +43,8 @@ func SSHRun(s *config.Server, commands []string) {
 	}(wait)
 
 	for _, cmd := range commands {
+		log.Announcef("%s | running <%s>", s.Name, cmd)
+		startTime := time.Now()
 		status, err := conn.Run(cmd)
 		if err != nil {
 			log.Errorf("%s | error in running command <%s>: %v", s.Name, cmd, err)
