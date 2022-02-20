@@ -52,7 +52,7 @@ func (k *Kitchen) Exec(recipe string) {
 		}
 		log.MinorSuccessf("Here are the recipes that you can use with '$ golem recipe-name'\n")
 		recipes.List(k.conf)
-		log.MinorSuccessf("\nYou can you add more recipes to '~/.golem/golem.hcl'")
+		log.MinorSuccessf("\nYou can add more recipes to '~/.golem/golem.hcl'")
 
 	}
 }
