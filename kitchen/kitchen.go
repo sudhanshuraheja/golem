@@ -34,5 +34,7 @@ func (k *Kitchen) Exec(recipe string) {
 		}
 
 		log.Errorf("kitchen | the recipe <%s> was not found, please add it to golem.hcl and try again", recipe)
+		log.Infof("Here are the recipes that you can use with 'golem recipe-name'")
+		recipes.List(k.conf)
 	}
 }
