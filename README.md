@@ -37,9 +37,7 @@ $ source ~/.zshrc
 $ glm
 ```
 
-# Using Golem
-
-## Adding servers
+# Adding servers
 The first step is to add servers to your config, so that you can take actions on them
 ```bash
 server "thebatch" {
@@ -64,9 +62,9 @@ server_provider "terraform" {
     port = 22
 }
 ```
-Golem only looks for Terraform resources of type `digitalocean_droplet` to add to the server list.
+Golem only looks for Terraform resources of type `digitalocean_droplet` to add to the server list. You can include any number of tfstate files.
 
-To view all connected golem servers, you can run the servers recipe
+To view all connected Golem servers, you can run the servers recipe
 ```bash
 $ golem servers
 Name      Public IP        Private IP      User       Port  Tags                                                Hostname
@@ -75,7 +73,7 @@ postgres  128.199.226.65   10.104.16.8     root       22    postgres, vpc-privat
 ...
 ```
 
-## Adding Recipes
+# Adding Recipes
 Here's a sample recipe that uploads a file to the remote server and checks if it exists
 ```bash
 recipe "test-exec" {
@@ -138,7 +136,29 @@ recipe "nomad-server-config-update" {
 }
 ```
 
-## SSH and SFTP
+After adding recipes, you can check which recipes exist in Golem's configuration by running the `golem list` recipe
+```bash
+$ golem list
+Name                        Match                       Artifacts  Commands
+apt-update                  tags not-contains local     0          1
+tail-syslog                 tags contains nomad         0          1
+test-exec                   name like skye-c            1          1
+nomad-server-config-update  tags contains nomad-server  4          4
+nomad-client-config-update  tags contains nomad-client  4          6
+apply-security-patch        name = skye-s3              0          3
+...
+servers                     local only                  0          0
+```
+
+# SSH and SFTP
 Golem uses one goroutine per server. The goroutine creates an initial SSH connection to the server and uses it to upload artifacts to the server and run each command. It makes a new session for each command. Artifacts are uploaded before running commands.
 
 The number of goroutines is capped to 4 by default and can be changed by setting `max_parallel_processes = 16` or any number you like. This is a global setting.
+
+# Logging
+Logging is set to `WARN` by default. You can change it by setting the config's global `loglevel` setting.
+```bash
+loglevel = "INFO"
+```
+
+When the log level is set to `WARN`, you will not see the output of the commands being run on the server or the goroutines logs. You will only see an update when a command runs successfully or fails and if the artifact uploads or fails. 
