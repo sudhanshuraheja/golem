@@ -1,15 +1,15 @@
 ![](docs/golem.png)
 
-GOLEM is a tiny go binary that helps you manage your personal projects with Hashicorp HCL recipes
+GOLEM is a tiny go binary that helps you manage your personal projects with [Hashicorp HCL](https://github.com/hashicorp/hcl) based recipes.
 
 # About
-Personal projects are unique. I've run a few of them for the last 20 years, and the one big problem with them is to remember how were they deployed when you get around to doing bug fixes. I've gone from running them as binaries with Makefiles on tiny DigitalOcean servers to running docker containers manually to running them on a little k8s cluster (which felt like killing mosquitos with automatic machine guns). Finally, I settled on running them on a tiny Nomad cluster (which worked beautifully).
+Personal projects are unique. I've run quite a few of them over the last 20 years, and the one big problem with them is remembering how to deploy them when you haven't touched them for six months. I've gone from running them as binaries with Makefiles on tiny DigitalOcean servers to running docker containers manually to running them on a little k8s cluster (which felt like killing mosquitos with automatic machine guns). Finally, I settled on running them on a tiny [Nomad](https://www.nomadproject.io/) cluster (which worked beautifully).
 
-Nomad and Terraform significantly simplify running these projects (and tools like hashi-up, which facilitate setting up Nomad); however, you are back to Makefiles and shell scripts whenever you need to handle older servers Terraform can't control or aren't migrated to Nomad.
+[Nomad](https://www.nomadproject.io/) and [Terraform](https://www.terraform.io/) significantly simplify how you run servers and services (and tools like [hashi-up](https://github.com/jsiebens/hashi-up), which facilitate setting up Nomad); however, you are back to Makefiles and shell scripts whenever you need to handle older servers Terraform can't control or aren't migrated to Nomad.
 
-Hence, I came up with Golem one weekend. The idea was to build something like a Terraform Provisioner with remote-exec that you can use on any machine that you can access via SSH.
+Hence, I came up with Golem one weekend. The idea was to build something like a [Terraform Provisioner](https://www.terraform.io/language/resources/provisioners/syntax) with remote-exec that you can use on any machine that you can access via SSH.
 
-Lastly, this is not meant for production. As the Terraform documentation constantly reminds us - Provisioners are the last resort. If you plan anything but personal projects to production, I suggest switching entirely to Packer, Terraform and Nomad, or Kubernetes.
+Lastly, this is not meant for production. As the Terraform documentation constantly reminds us - [Provisioners are the last resort](https://www.terraform.io/language/resources/provisioners/syntax). If you plan anything but personal projects to production, I suggest switching entirely to Packer, Terraform and Nomad, or Kubernetes.
 
 # Getting Started
 The only way to get Golem running on your machine today is to install golang on your device and then run go install
