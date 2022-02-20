@@ -80,6 +80,12 @@ func Run(c *config.Config, name string) {
 	for _, s := range servers {
 		serverNames = append(serverNames, s.Name)
 	}
+
+	if len(servers) == 0 {
+		log.MinorSuccessf("%s | no servers matched '%s %s %s'", recipe.Name, recipe.Match.Attribute, recipe.Match.Operator, recipe.Match.Value)
+		return
+	}
+
 	log.Announcef("%s | found %d matching servers - %s", recipe.Name, len(servers), strings.Join(serverNames, ", "))
 
 	for _, a := range recipe.Artifacts {
