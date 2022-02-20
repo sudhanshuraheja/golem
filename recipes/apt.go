@@ -5,7 +5,9 @@ import (
 )
 
 func AptUpdate(c *config.Config) {
-	SSHRun(c, []string{
-		"apt-get update",
-	})
+	for _, s := range c.Servers.Server {
+		SSHRun(&s, []string{
+			"apt-get update",
+		})
+	}
 }
