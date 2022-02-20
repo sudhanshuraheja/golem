@@ -52,6 +52,14 @@ func Run(c *config.Config, name string) {
 	}
 	log.Announcef("%s | found %d matching servers - %s", recipe.Name, len(servers), strings.Join(serverNames, ", "))
 
+	for _, a := range recipe.Artifacts {
+		log.Infof("→ %s → %s", a.Source, a.Destination)
+	}
+
+	for _, c := range recipe.Commands {
+		log.Infof("→ $ %s", c)
+	}
+
 	answer := log.Questionf("Are you sure you want to continue [y/n]?")
 	if utils.ArrayContains([]string{"y", "yes"}, answer, false) == -1 {
 		log.Errorf("Quitting, because you said %s", answer)
