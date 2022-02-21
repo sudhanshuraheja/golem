@@ -2,9 +2,11 @@ package utils
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -52,4 +54,16 @@ func Contains(tb testing.TB, expected, errorString string) {
 		fmt.Printf("➤ %s:%d ➤ Error string is unexpected\n➤➤➤ Error: %s\n➤➤➤ ShouldHave: %s\n", filepath.Base(file), line, errorString, expected)
 		tb.Fail()
 	}
+}
+
+func DetectCI() bool {
+	ciString := os.Getenv("CI")
+	ci, err := strconv.ParseBool(ciString)
+	if err != nil {
+		return false
+	}
+	if ci {
+		return true
+	}
+	return false
 }

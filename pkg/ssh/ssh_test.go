@@ -8,6 +8,10 @@ import (
 )
 
 func TestConn(t *testing.T) {
+	if utils.DetectCI() {
+		return
+	}
+
 	conn, err := NewSSHConnection("local", "sudhanshu", "192.168.86.173", 22, "")
 	utils.OK(t, err)
 
