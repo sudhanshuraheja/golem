@@ -40,7 +40,7 @@ type Server struct {
 type Recipe struct {
 	Name      string     `hcl:"name,label"`
 	Type      string     `hcl:"type"`
-	Match     Match      `hcl:"match,block"`
+	Match     *Match     `hcl:"match,block"`
 	Artifacts []Artifact `hcl:"artifact,block"`
 	Commands  []string   `hcl:"commands"`
 }

@@ -1,7 +1,7 @@
 <div align="center">
 
 # GOLEM
-Golem is a deployment tool that lets you upload artifacts and execute<br>commands in parallel on multiple servers via SSH using human readable [Hashicorp HCL] recipes
+Golem is a deployment tool that lets you upload artifacts and execute<br>commands in parallel on local or multiple servers via SSH using human readable [Hashicorp HCL] recipes
 
 [Getting Started] •
 [Adding servers] •
@@ -15,7 +15,7 @@ Golem is a deployment tool that lets you upload artifacts and execute<br>command
 </div>
 
 # Why a new deployment tool?
-Golem is a deployment tool built with go that runs over SSH, manages configs and recipes with [Hashicorp HCL] files, and lets you upload artifacts and execute commands in parallel on multiple servers.
+Golem is a deployment tool built with go that runs over SSH, manages configs and recipes with [Hashicorp HCL] files, and lets you upload artifacts and execute commands in parallel on local or multiple servers.
 
 If like me, you have developed a distinct hatred for YAML based configs like the ones you need to use for Ansible,  Kubernetes and the like, you're going to enjoy building the recipes in a very human readable [Hashicorp HCL] based format. Just like you would for [Nomad], [Terraform] or [Consul]
 
@@ -103,6 +103,18 @@ recipe "test-exec" {
 }
 ```
 
+Here's one that runs commands locally
+```bash
+recipe "ls-la" {
+    type = "local-exec"
+    commands = [
+        "ls -la",
+        "nomad version",
+        "consul version",
+    ]
+}
+```
+
 ![](docs/test-exec.png)
 
 You can match servers using the `attribute`, `operator` and `value` fields.
@@ -184,7 +196,7 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Limit number of goroutines
 - [x] Stream output from commands on remove servers
 - [x] Capture SIGINT in worker pool to shutdown connections properly
-- [ ] Separate local and remote execution steps
+- [x] Separate local and remote execution steps
 - [ ] Download http artifacts on the server using https://github.com/hashicorp/go-getter
 - [ ] Allow custom ssh file to connect to server
 - [ ] Allow password based login to ssh servers

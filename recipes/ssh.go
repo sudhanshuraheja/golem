@@ -53,6 +53,9 @@ func (ss *SSH) Run(commands []string) {
 				}
 			case stderr := <-ss.conn.Stderr:
 				log.Infof("%s | %s", stderr.Name, stderr.Message)
+				if stderr.Completed {
+					wait <- true
+				}
 			}
 		}
 	}(wait)

@@ -55,9 +55,15 @@ func (r *Recipes) Init() {
 func (r *Recipes) List() {
 	tb := log.NewTable("Name", "Match", "Artifacts", "Commands")
 	for _, r := range r.conf.Recipe {
+		var attribute, operator, value string
+		if r.Match != nil {
+			attribute = r.Match.Attribute
+			operator = r.Match.Operator
+			value = r.Match.Value
+		}
 		tb.Row(
 			r.Name,
-			fmt.Sprintf("%s %s %s", r.Match.Attribute, r.Match.Operator, r.Match.Value),
+			fmt.Sprintf("%s %s %s", attribute, operator, value),
 			len(r.Artifacts),
 			len(r.Commands),
 		)
@@ -101,18 +107,31 @@ func (r *Recipes) Run(name string) {
 		return
 	}
 
-	servers := NewMatch(recipe.Match).Find(r.conf)
-	serverNames := []string{}
-	for _, s := range servers {
-		serverNames = append(serverNames, s.Name)
-	}
+	var servers []config.Server
+	switch recipe.Type {
+	case "remote-exec":
+		if recipe.Match == nil {
+			log.Errorf("kitchen | recipe <%s> need a 'match' block because of 'remote-exec'", recipe.Name)
+			return
+		}
 
-	if len(servers) == 0 {
-		log.MinorSuccessf("%s | no servers matched '%s %s %s'", recipe.Name, recipe.Match.Attribute, recipe.Match.Operator, recipe.Match.Value)
-		return
-	}
+		servers = NewMatch(*recipe.Match).Find(r.conf)
+		serverNames := []string{}
+		for _, s := range servers {
+			serverNames = append(serverNames, s.Name)
+		}
 
-	log.Announcef("%s | found %d matching servers - %s", recipe.Name, len(servers), strings.Join(serverNames, ", "))
+		if len(servers) == 0 {
+			log.MinorSuccessf("%s | no servers matched '%s %s %s'", recipe.Name, recipe.Match.Attribute, recipe.Match.Operator, recipe.Match.Value)
+			return
+		}
+
+		log.Announcef("%s | found %d matching servers - %s", recipe.Name, len(servers), strings.Join(serverNames, ", "))
+
+	case "local-exec":
+	default:
+		log.Errorf("recipe only supports ['remote-exec', 'local-exec'] types")
+	}
 
 	for _, a := range recipe.Artifacts {
 		log.Infof("→ %s → %s", a.Source, a.Destination)
@@ -131,8 +150,11 @@ func (r *Recipes) Run(name string) {
 	switch recipe.Type {
 	case "remote-exec":
 		r.RemotePool(servers, recipe, *r.conf.MaxParallelProcesses)
+	case "local-exec":
+		c := Cmd{}
+		c.Run(recipe.Commands)
 	default:
-		log.Errorf("recipe only supports ['exec'] types")
+		log.Errorf("recipe only supports ['remote-exec', 'local-exec'] types")
 	}
 }
 
