@@ -172,8 +172,9 @@ func (c *Connection) pipes() error {
 			} else {
 				if scanner.Err() != nil {
 					c.Stderr <- Out{
-						Name:    name,
-						Message: scanner.Err().Error(),
+						Name:      name,
+						Message:   scanner.Err().Error(),
+						Completed: true,
 					}
 				} else {
 					c.Stdout <- Out{

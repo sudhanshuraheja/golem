@@ -129,14 +129,14 @@ func (r *Recipes) Run(name string) {
 	}
 
 	switch recipe.Type {
-	case "exec":
-		r.Pool(servers, recipe, *r.conf.MaxParallelProcesses)
+	case "remote-exec":
+		r.RemotePool(servers, recipe, *r.conf.MaxParallelProcesses)
 	default:
 		log.Errorf("recipe only supports ['exec'] types")
 	}
 }
 
-func (r *Recipes) Pool(servers []config.Server, recipe config.Recipe, maxProcs int) {
+func (r *Recipes) RemotePool(servers []config.Server, recipe config.Recipe, maxProcs int) {
 	wp := pool.NewPool("ssh")
 	wp.AddWorkerGroup(NewSSHWorkerGroup("ssh", 10*time.Millisecond))
 	processed := wp.Start(int64(maxProcs))

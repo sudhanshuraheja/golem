@@ -87,7 +87,7 @@ postgres  128.199.226.65   10.104.16.8     root       22    postgres, vpc-privat
 Here's a sample recipe that uploads a file to the remote server and checks if it exists
 ```bash
 recipe "test-exec" {
-    type = "exec"
+    type = "remote-exec"
     match {
         attribute = "name"
         operator = "like"
@@ -115,7 +115,7 @@ Artifacts upload files from a local source to a remote destination. You can use 
 Here's an example of updating the nomad config and restarting servers
 ```bash
 recipe "nomad-server-config-update" {
-    type = "exec"
+    type = "remote-exec"
     match {
         attribute = "tags"
         operator = "contains"
@@ -184,15 +184,15 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Limit number of goroutines
 - [x] Stream output from commands on remove servers
 - [x] Capture SIGINT in worker pool to shutdown connections properly
-- [ ] Expands commands to include other metadata
 - [ ] Separate local and remote execution steps
 - [ ] Download http artifacts on the server using https://github.com/hashicorp/go-getter
 - [ ] Allow custom ssh file to connect to server
-- [ ] Split config into multiple files
-- [ ] Create system level recipes
 - [ ] Allow password based login to ssh servers
+- [ ] Split config into multiple files
+- [ ] Expands commands to include other metadata
 - [ ] Use output of commands as input to the next command
 - [ ] Increase goroutines if there are more tail tasks than routines
+- [ ] Create system level recipes
 - [ ] Fork a process to continue running tails
 - [ ] Support rolling updates locally and on remote
 - [ ] Setup local and remote environment variables

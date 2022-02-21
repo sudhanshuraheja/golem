@@ -30,6 +30,9 @@ func TestConn(t *testing.T) {
 				}
 				color.New(color.FgCyan).Println(stdout.Name, "|", stdout.Message)
 			case stderr := <-conn.Stderr:
+				if stderr.Completed {
+					wait <- true
+				}
 				color.New(color.FgRed).Println(stderr.Name, "|", stderr.Message)
 			}
 		}
