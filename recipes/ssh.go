@@ -14,6 +14,11 @@ type SSH struct {
 	name string
 }
 
+type SSHJob struct {
+	Recipe config.Recipe
+	Server config.Server
+}
+
 func (ss *SSH) Connect(s *config.Server) error {
 	var host string
 	switch {

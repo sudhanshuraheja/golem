@@ -9,26 +9,21 @@ import (
 	"github.com/sudhanshuraheja/golem/pkg/pool"
 )
 
-// // WorkerGroup ...
-// type SSHWorkerGroup interface {
-// 	Process(ctx context.Context, workerCtx *pool.WorkerContext, id string)
-// }
-
-type sshWorkerGroup struct {
+type SSHWorkerGroup struct {
 	name      string
 	heartbeat time.Duration
 }
 
 // NewWorkerGroup ...
-func NewSSHWorkerGroup(name string, heartbeat time.Duration) *sshWorkerGroup {
-	w := sshWorkerGroup{
+func NewSSHWorkerGroup(name string, heartbeat time.Duration) *SSHWorkerGroup {
+	w := SSHWorkerGroup{
 		name:      name,
 		heartbeat: heartbeat,
 	}
 	return &w
 }
 
-func (w *sshWorkerGroup) Process(ctx context.Context, workerCtx *pool.WorkerContext, id string) {
+func (w *SSHWorkerGroup) Process(ctx context.Context, workerCtx *pool.WorkerContext, id string) {
 	workerCtx.Heartbeat <- pool.Heartbeat{ID: id, Ping: true}
 	log.Infof("%s-%s | Started", w.name, id)
 
@@ -64,7 +59,7 @@ func (w *sshWorkerGroup) Process(ctx context.Context, workerCtx *pool.WorkerCont
 	}
 }
 
-func (w *sshWorkerGroup) ExecRecipeOnServer(s config.Server, recipe config.Recipe) {
+func (w *SSHWorkerGroup) ExecRecipeOnServer(s config.Server, recipe config.Recipe) {
 	ss := SSH{}
 	err := ss.Connect(&s)
 	if err != nil {

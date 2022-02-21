@@ -13,36 +13,15 @@ import (
 	"github.com/sudhanshuraheja/golem/pkg/utils"
 )
 
-type SSHJob struct {
-	Recipe config.Recipe
-	Server config.Server
+type Recipes struct {
+	conf *config.Config
 }
 
-func List(c *config.Config) {
-	tb := log.NewTable("Name", "Match", "Artifacts", "Commands")
-	for _, r := range c.Recipe {
-		tb.Row(
-			r.Name,
-			fmt.Sprintf("%s %s %s", r.Match.Attribute, r.Match.Operator, r.Match.Value),
-			len(r.Artifacts),
-			len(r.Commands),
-		)
-	}
-	// Add system defined
-	tb.Row("servers", "local only", 0, 0)
-	tb.Display()
+func NewRecipes(conf *config.Config) *Recipes {
+	return &Recipes{conf: conf}
 }
 
-func Exists(c *config.Config, name string) bool {
-	for _, r := range c.Recipe {
-		if r.Name == name {
-			return true
-		}
-	}
-	return false
-}
-
-func Init() {
+func (r *Recipes) Init() {
 	dirname, err := os.UserHomeDir()
 	if err != nil {
 		log.Errorf("init | could not find user's home directory: %v", err)
@@ -72,15 +51,56 @@ func Init() {
 	// log.MinorSuccessf("init | conf file already exists at %s", confFile)
 }
 
-func Run(c *config.Config, name string) {
+func (r *Recipes) List() {
+	tb := log.NewTable("Name", "Match", "Artifacts", "Commands")
+	for _, r := range r.conf.Recipe {
+		tb.Row(
+			r.Name,
+			fmt.Sprintf("%s %s %s", r.Match.Attribute, r.Match.Operator, r.Match.Value),
+			len(r.Artifacts),
+			len(r.Commands),
+		)
+	}
+	// Add system defined
+	tb.Row("servers", "local only", 0, 0)
+	tb.Display()
+}
+
+func (r *Recipes) Servers() {
+	t := log.NewTable("Name", "Public IP", "Private IP", "User", "Port", "Tags", "Hostname")
+	for _, s := range r.conf.Servers {
+		hostnames := utils.StringPtrValue(s.HostName, "")
+		if len(hostnames) > 60 {
+			hostnames = hostnames[:60]
+		}
+		t.Row(
+			s.Name,
+			utils.StringPtrValue(s.PublicIP, ""),
+			utils.StringPtrValue(s.PrivateIP, ""),
+			s.User,
+			s.Port,
+			strings.Join(s.Tags, ", "),
+			hostnames,
+		)
+	}
+	t.Display()
+}
+
+func (r *Recipes) Run(name string) {
 	var recipe config.Recipe
-	for i, r := range c.Recipe {
-		if r.Name == name {
-			recipe = c.Recipe[i]
+
+	for i, re := range r.conf.Recipe {
+		if re.Name == name {
+			recipe = r.conf.Recipe[i]
 		}
 	}
 
-	servers := findMatchingServers(c, recipe.Match)
+	if recipe.Name == "" {
+		log.Errorf("kitchen | the recipe <%s> was not  in '~/.golem/golem.hcl'", recipe)
+		return
+	}
+
+	servers := NewMatch(recipe.Match).Find(r.conf)
 	serverNames := []string{}
 	for _, s := range servers {
 		serverNames = append(serverNames, s.Name)
@@ -109,13 +129,13 @@ func Run(c *config.Config, name string) {
 
 	switch recipe.Type {
 	case "exec":
-		ExecRecipe(servers, recipe, *c.MaxParallelProcesses)
+		r.Pool(servers, recipe, *r.conf.MaxParallelProcesses)
 	default:
 		log.Errorf("recipe only supports ['exec'] types")
 	}
 }
 
-func ExecRecipe(servers []config.Server, recipe config.Recipe, maxProcs int) {
+func (r *Recipes) Pool(servers []config.Server, recipe config.Recipe, maxProcs int) {
 	wp := pool.NewPool("ssh")
 	wp.AddWorkerGroup(NewSSHWorkerGroup("ssh", 10*time.Millisecond))
 	processed := wp.Start(int64(maxProcs))

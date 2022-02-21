@@ -9,53 +9,61 @@ import (
 	"github.com/sudhanshuraheja/golem/pkg/utils"
 )
 
-func findMatchingServers(c *config.Config, match config.Match) []config.Server {
+type Match struct {
+	match config.Match
+}
+
+func NewMatch(m config.Match) *Match {
+	return &Match{match: m}
+}
+
+func (m *Match) Find(c *config.Config) []config.Server {
 	var servers []config.Server
 	for _, s := range c.Servers {
-		if matchServer(s, match) {
+		if m.server(s) {
 			servers = append(servers, s)
 		}
 	}
 	return servers
 }
 
-func matchServer(s config.Server, m config.Match) bool {
+func (m *Match) server(s config.Server) bool {
 	if s.Name == "" {
 		return false
 	}
-	switch m.Attribute {
+	switch m.match.Attribute {
 	case "name":
-		return matchString("name", s.Name, m.Value, m.Operator)
+		return m.string("name", s.Name)
 	case "public_ip":
 		if s.PublicIP == nil {
 			return false
 		}
-		return matchString("public_ip", *s.PublicIP, m.Value, m.Operator)
+		return m.string("public_ip", *s.PublicIP)
 	case "private_ip":
 		if s.PrivateIP == nil {
 			return false
 		}
-		return matchString("private_ip", *s.PrivateIP, m.Value, m.Operator)
+		return m.string("private_ip", *s.PrivateIP)
 	case "hostname":
 		if s.HostName == nil {
 			return false
 		}
-		return matchString("hostname", *s.HostName, m.Value, m.Operator)
+		return m.string("hostname", *s.HostName)
 	case "user":
-		return matchString("user", s.User, m.Value, m.Operator)
+		return m.string("user", s.User)
 	case "port":
-		return matchInt("user", s.Port, m.Value, m.Operator)
+		return m.int("port", s.Port)
 	case "tags":
-		return matchArray("tags", s.Tags, m.Value, m.Operator)
+		return m.array("tags", s.Tags)
 	default:
-		log.Errorf("servers does not support attribute %s", m.Attribute)
+		log.Errorf("servers does not support attribute %s", m.match.Attribute)
 	}
 	return false
 }
 
-func matchArray(oftype string, list []string, value, operator string) bool {
-	contains := utils.ArrayContains(list, value, true)
-	switch operator {
+func (m *Match) array(oftype string, list []string) bool {
+	contains := utils.ArrayContains(list, m.match.Value, true)
+	switch m.match.Operator {
 	case "contains":
 		if contains > -1 {
 			return true
@@ -70,18 +78,18 @@ func matchArray(oftype string, list []string, value, operator string) bool {
 	return false
 }
 
-func matchString(oftype, name, value, operator string) bool {
-	switch operator {
+func (m *Match) string(oftype, name string) bool {
+	switch m.match.Operator {
 	case "=":
-		if name == value {
+		if name == m.match.Value {
 			return true
 		}
 	case "!=":
-		if name != value {
+		if name != m.match.Value {
 			return true
 		}
 	case "like":
-		if strings.Contains(name, value) {
+		if strings.Contains(name, m.match.Value) {
 			return true
 		}
 	default:
@@ -90,12 +98,12 @@ func matchString(oftype, name, value, operator string) bool {
 	return false
 }
 
-func matchInt(oftype string, name int, value, operator string) bool {
-	valueInt, err := strconv.Atoi(value)
+func (m *Match) int(oftype string, name int) bool {
+	valueInt, err := strconv.Atoi(m.match.Value)
 	if err != nil {
 		return false
 	}
-	switch operator {
+	switch m.match.Operator {
 	case "=":
 		if name == valueInt {
 			return true

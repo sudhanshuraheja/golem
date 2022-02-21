@@ -16,7 +16,7 @@ func NewKitchen(configPath string) *Kitchen {
 	conf, err := config.NewConfig(configPath)
 	if err != nil {
 		if err.Error() == "config file does not exist" {
-			recipes.Init()
+			recipes.NewRecipes(nil).Init()
 		} else {
 			log.Errorf("%v", err)
 		}
@@ -34,25 +34,18 @@ func (k *Kitchen) Exec(recipe string) {
 	if recipe != "" && k.conf != nil && k.conf.MaxParallelProcesses != nil {
 		log.Announcef("%s | running recipe with %d routines", recipe, *k.conf.MaxParallelProcesses)
 	}
+	r := recipes.NewRecipes(k.conf)
 	switch recipe {
+	case "":
+		log.MinorSuccessf("We found these recipes in '~/.golem/golem.hcl'")
+		r.List()
 	case "init":
-		recipes.Init()
+		r.Init()
 	case "list":
-		recipes.List(k.conf)
+		r.List()
 	case "servers":
-		recipes.Servers(k.conf)
+		r.Servers()
 	default:
-		if recipes.Exists(k.conf, recipe) {
-			recipes.Run(k.conf, recipe)
-			return
-		}
-
-		if recipe != "" {
-			log.Errorf("kitchen | the recipe <%s> was not found, please add it to golem.hcl and try again", recipe)
-		}
-		log.MinorSuccessf("Here are the recipes that you can use with '$ golem recipe-name'\n")
-		recipes.List(k.conf)
-		log.MinorSuccessf("\nYou can add more recipes to '~/.golem/golem.hcl'")
-
+		r.Run(recipe)
 	}
 }
