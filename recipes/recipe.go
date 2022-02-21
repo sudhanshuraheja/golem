@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
 	"time"
 
@@ -145,15 +146,27 @@ func (r *Recipes) Pool(servers []config.Server, recipe config.Recipe, maxProcs i
 		wp.Queue(SSHJob{Server: s, Recipe: recipe})
 	}
 
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	count := 0
 
-	for range processed {
-		count++
-		if count == len(servers) {
+	loop := true
+	for loop {
+		select {
+		case <-processed:
+			count++
+			if count == len(servers) {
+				wp.Stop(ctx)
+				loop = false
+				break
+			}
+		case <-quit:
 			wp.Stop(ctx)
+			loop = false
 			break
 		}
 	}
