@@ -2,6 +2,16 @@
 
 GOLEM is a tiny go binary that helps you manage your personal projects with [Hashicorp HCL](https://github.com/hashicorp/hcl) based recipes.
 
+# Table of contents
+
+- [Table of contents](#table-of-contents)
+- [About](#about)
+- [Getting Started](#getting-started)
+- [Adding servers](#adding-servers)
+- [Adding Recipes](#adding-recipes)
+- [SSH and SFTP](#ssh-and-sftp)
+- [Logging](#logging)
+
 # About
 Personal projects are unique. I've run quite a few of them over the last 20 years, and the one big problem with them is remembering how to deploy them when you haven't touched them for six months. I've gone from running them as binaries with Makefiles on tiny DigitalOcean servers to running docker containers manually to running them on a little k8s cluster (which felt like killing mosquitos with automatic machine guns). Finally, I settled on running them on a tiny [Nomad](https://www.nomadproject.io/) cluster (which worked beautifully).
 
@@ -161,4 +171,4 @@ Logging is set to `WARN` by default. You can change it by setting the config's g
 loglevel = "INFO"
 ```
 
-When the log level is set to `WARN`, you will not see the output of the commands being run on the server or the goroutines logs. You will only see an update when a command runs successfully or fails and if the artifact uploads or fails. 
+When the log level is set to `WARN`, you will not see the output of the commands being run on the server or the goroutines logs. You will only see an update when a command runs successfully or fails and if the artifact uploads or fails.
