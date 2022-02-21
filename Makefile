@@ -3,6 +3,8 @@ APP = golem
 REPO = sudhanshuraheja
 ENV_PREFIX = GOLEM_
 
+TAG := $(shell git describe --tags)
+
 # Colours
 NO_COLOR = \x1b[0m
 GRAY_COLOR = \x1b[30;01m
@@ -39,3 +41,8 @@ test_norace:
 install:
 	@echo "$(BLUE_COLOR)➤ Installing the binary$(NO_COLOR)"
 	go install
+
+build:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o builds/golem-linux-amd64-$(TAG) main.go
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o builds/golem-darwin-amd64-$(TAG) main.go
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o builds/golem-windows-amd64-$(TAG).exe main.go
