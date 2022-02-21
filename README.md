@@ -1,7 +1,7 @@
 <div align="center">
 
 # GOLEM
-Golem is a tiny go binary that helps you manage<br>your personal projects with [Hashicorp HCL](https://github.com/hashicorp/hcl) based recipes.
+Golem is a deployment tool that lets you upload artifacts and exectute<br>commands in parallel on multiple servers via SSH using human readable [Hashicorp HCL] recipes
 
 [Getting Started] •
 [Adding servers] •
@@ -12,22 +12,17 @@ Golem is a tiny go binary that helps you manage<br>your personal projects with [
 [![forthebadge](https://forthebadge.com/images/badges/made-with-go.svg)](https://forthebadge.com)
 [![forthebadge](https://forthebadge.com/images/badges/fixed-bugs.svg)](https://forthebadge.com)
 
-
-![](docs/golem.png)
-
 </div>
 
-# About
-Personal projects are unique. I've run quite a few of them over the last 20 years, and the one big problem with them is remembering how to deploy them when you haven't touched them for six months. I've gone from running them as binaries with Makefiles on tiny DigitalOcean servers to running docker containers manually to running them on a little k8s cluster (which felt like killing mosquitos with automatic machine guns). Finally, I settled on running them on a tiny [Nomad] cluster (which worked beautifully).
+# Why a new deployment tool?
+Golem is a deployment tool built with go that runs over SSH, manages configs and recipes with [Hashicorp HCL] files, and lets you upload artifacts and execute commands in parallel on multiple servers.
 
-[Nomad] and [Terraform] significantly simplify how you run servers and services (and tools like [hashi-up], which facilitate setting up Nomad); however, you are back to Makefiles and shell scripts whenever you need to handle older servers Terraform can't control or aren't migrated to Nomad.
+If like me, you have developed a distinct hatred for YAML based configs like the ones you need to use for Ansible,  Kubernetes and the like, you're going to enjoy building the recipes in a very human readable [Hashicorp HCL] based format. Just like you would for [Nomad], [Terraform] or [Consul]
 
-Hence, I came up with Golem one weekend. The idea was to build something like a [Terraform Provisioner] with remote-exec that you can use on any machine that you can access via SSH.
-
-Lastly, this is not meant for production. As the Terraform documentation constantly reminds us - [Provisioners are the last resort]. If you plan anything but personal projects to production, I suggest switching entirely to Packer, Terraform and Nomad, or Kubernetes.
+The core idea behing Golem was to build something like a [Terraform Provisioner] (they are the last resort) with remote-exec that you can use on any machine that you can access via SSH.
 
 # Getting Started
-The only way to get Golem running on your machine today is to install golang on your device and then run go install
+The best way to get Golem running on your machine today is to install golang on your device and then run go install
 ```bash
 $ brew install go
 $ go install github.com/sudhanshuraheja/golem@latest
@@ -178,13 +173,14 @@ loglevel = "INFO"
 
 When the log level is set to `WARN`, you will not see the output of the commands being run on the server or the goroutines logs. You will only see an update when a command runs successfully or fails and if the artifact uploads or fails.
 
+[Hashicorp HCL]: https://github.com/hashicorp/hcl
 [Getting Started]: #getting-started
 [Adding servers]: #adding-servers
 [Adding Recipes]: #adding-recipes
 [SSH and SFTP]: #ssh-and-sftp
 [Suggest a feature?]: https://github.com/sudhanshuraheja/golem/issues/new
 [Nomad]: https://www.nomadproject.io/
+[Consul]: https://www.consul.io/
 [Terraform]: https://www.terraform.io/
 [hashi-up]: https://github.com/jsiebens/hashi-up
 [Terraform Provisioner]: https://www.terraform.io/language/resources/provisioners/syntax
-[Provisioners are the last resort]: https://www.terraform.io/language/resources/provisioners/syntax
