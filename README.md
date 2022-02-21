@@ -1,7 +1,7 @@
 <div align="center">
 
 # GOLEM
-Golem is a deployment tool that lets you upload artifacts and exectute<br>commands in parallel on multiple servers via SSH using human readable [Hashicorp HCL] recipes
+Golem is a deployment tool that lets you upload artifacts and execute<br>commands in parallel on multiple servers via SSH using human readable [Hashicorp HCL] recipes
 
 [Getting Started] •
 [Adding servers] •
@@ -172,6 +172,39 @@ loglevel = "INFO"
 ```
 
 When the log level is set to `WARN`, you will not see the output of the commands being run on the server or the goroutines logs. You will only see an update when a command runs successfully or fails and if the artifact uploads or fails.
+
+# Roadmap
+- [x] Use HCL for config
+- [x] Connect to servers via SSH
+- [x] Use terraform to get list of servers
+- [x] Upload files via SFTP
+- [x] Read recipes from config and execute them
+- [x] Create a worker pool for ssh connections
+- [x] Run separate goroutines for each server
+- [x] Limit number of goroutines
+- [x] Stream output from commands on remove servers
+- [ ] Capture SIGINT in worker pool to shutdown connections properly
+- [ ] Expands commands to include other metadata
+- [ ] Separate local and remote execution steps
+- [ ] Download http artifacts on the server using https://github.com/hashicorp/go-getter
+- [ ] Allow custom ssh file to connect to server
+- [ ] Split config into multiple files
+- [ ] Create system level recipes
+- [ ] Allow password based login to ssh servers
+- [ ] Use output of commands as input to the next command
+- [ ] Increase goroutines if there are more tail tasks than routines
+- [ ] Fork a process to continue running tails
+- [ ] Support rolling updates locally and on remote
+- [ ] Setup local and remote environment variables
+- [ ] Add tempating for files to be uploaded
+- [ ] Interactive bash on all hosts
+- [ ] Run local script on all remotes without uploading
+- [ ] Get docker logs from remote
+- [ ] Support different environments, like staging, prod
+- [ ] Upload folders to remote
+- [ ] Native support for nomad and docker
+- [ ] Native support for postgres and redis, with and without nomad
+
 
 [Hashicorp HCL]: https://github.com/hashicorp/hcl
 [Getting Started]: #getting-started

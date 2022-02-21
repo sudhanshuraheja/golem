@@ -46,3 +46,6 @@ build:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o builds/golem-linux-amd64-$(TAG) main.go
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o builds/golem-darwin-amd64-$(TAG) main.go
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o builds/golem-windows-amd64-$(TAG).exe main.go
+
+brew:
+	code ../homebrew-golem
