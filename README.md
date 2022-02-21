@@ -1,16 +1,21 @@
+<div align="center">
+
+# GOLEM
+Golem is a tiny go binary that helps you manage<br>your personal projects with [Hashicorp HCL](https://github.com/hashicorp/hcl) based recipes.
+
+[Getting Started](#getting-started) •
+[Adding servers](#adding-servers) •
+[Adding Recipes](#adding-recipes) •
+[SSH and SFTP](#ssh-and-sftp) •
+[Logging](#logging)
+
+[![forthebadge](https://forthebadge.com/images/badges/made-with-go.svg)](https://forthebadge.com)
+[![forthebadge](https://forthebadge.com/images/badges/fixed-bugs.svg)](https://forthebadge.com)
+
+
 ![](docs/golem.png)
 
-GOLEM is a tiny go binary that helps you manage your personal projects with [Hashicorp HCL](https://github.com/hashicorp/hcl) based recipes.
-
-# Table of contents
-
-- [Table of contents](#table-of-contents)
-- [About](#about)
-- [Getting Started](#getting-started)
-- [Adding servers](#adding-servers)
-- [Adding Recipes](#adding-recipes)
-- [SSH and SFTP](#ssh-and-sftp)
-- [Logging](#logging)
+</div>
 
 # About
 Personal projects are unique. I've run quite a few of them over the last 20 years, and the one big problem with them is remembering how to deploy them when you haven't touched them for six months. I've gone from running them as binaries with Makefiles on tiny DigitalOcean servers to running docker containers manually to running them on a little k8s cluster (which felt like killing mosquitos with automatic machine guns). Finally, I settled on running them on a tiny [Nomad](https://www.nomadproject.io/) cluster (which worked beautifully).
