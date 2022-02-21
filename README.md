@@ -3,11 +3,11 @@
 # GOLEM
 Golem is a tiny go binary that helps you manage<br>your personal projects with [Hashicorp HCL](https://github.com/hashicorp/hcl) based recipes.
 
-[Getting Started](#getting-started) •
-[Adding servers](#adding-servers) •
-[Adding Recipes](#adding-recipes) •
-[SSH and SFTP](#ssh-and-sftp) •
-[Logging](#logging)
+[Getting Started] •
+[Adding servers] •
+[Adding Recipes] •
+[SSH and SFTP] •
+[Suggest a feature?]
 
 [![forthebadge](https://forthebadge.com/images/badges/made-with-go.svg)](https://forthebadge.com)
 [![forthebadge](https://forthebadge.com/images/badges/fixed-bugs.svg)](https://forthebadge.com)
@@ -18,13 +18,13 @@ Golem is a tiny go binary that helps you manage<br>your personal projects with [
 </div>
 
 # About
-Personal projects are unique. I've run quite a few of them over the last 20 years, and the one big problem with them is remembering how to deploy them when you haven't touched them for six months. I've gone from running them as binaries with Makefiles on tiny DigitalOcean servers to running docker containers manually to running them on a little k8s cluster (which felt like killing mosquitos with automatic machine guns). Finally, I settled on running them on a tiny [Nomad](https://www.nomadproject.io/) cluster (which worked beautifully).
+Personal projects are unique. I've run quite a few of them over the last 20 years, and the one big problem with them is remembering how to deploy them when you haven't touched them for six months. I've gone from running them as binaries with Makefiles on tiny DigitalOcean servers to running docker containers manually to running them on a little k8s cluster (which felt like killing mosquitos with automatic machine guns). Finally, I settled on running them on a tiny [Nomad] cluster (which worked beautifully).
 
-[Nomad](https://www.nomadproject.io/) and [Terraform](https://www.terraform.io/) significantly simplify how you run servers and services (and tools like [hashi-up](https://github.com/jsiebens/hashi-up), which facilitate setting up Nomad); however, you are back to Makefiles and shell scripts whenever you need to handle older servers Terraform can't control or aren't migrated to Nomad.
+[Nomad] and [Terraform] significantly simplify how you run servers and services (and tools like [hashi-up], which facilitate setting up Nomad); however, you are back to Makefiles and shell scripts whenever you need to handle older servers Terraform can't control or aren't migrated to Nomad.
 
-Hence, I came up with Golem one weekend. The idea was to build something like a [Terraform Provisioner](https://www.terraform.io/language/resources/provisioners/syntax) with remote-exec that you can use on any machine that you can access via SSH.
+Hence, I came up with Golem one weekend. The idea was to build something like a [Terraform Provisioner] with remote-exec that you can use on any machine that you can access via SSH.
 
-Lastly, this is not meant for production. As the Terraform documentation constantly reminds us - [Provisioners are the last resort](https://www.terraform.io/language/resources/provisioners/syntax). If you plan anything but personal projects to production, I suggest switching entirely to Packer, Terraform and Nomad, or Kubernetes.
+Lastly, this is not meant for production. As the Terraform documentation constantly reminds us - [Provisioners are the last resort]. If you plan anything but personal projects to production, I suggest switching entirely to Packer, Terraform and Nomad, or Kubernetes.
 
 # Getting Started
 The only way to get Golem running on your machine today is to install golang on your device and then run go install
@@ -177,3 +177,14 @@ loglevel = "INFO"
 ```
 
 When the log level is set to `WARN`, you will not see the output of the commands being run on the server or the goroutines logs. You will only see an update when a command runs successfully or fails and if the artifact uploads or fails.
+
+[Getting Started]: #getting-started
+[Adding servers]: #adding-servers
+[Adding Recipes]: #adding-recipes
+[SSH and SFTP]: #ssh-and-sftp
+[Suggest a feature?]: https://github.com/sudhanshuraheja/golem/issues/new
+[Nomad]: https://www.nomadproject.io/
+[Terraform]: https://www.terraform.io/
+[hashi-up]: https://github.com/jsiebens/hashi-up
+[Terraform Provisioner]: https://www.terraform.io/language/resources/provisioners/syntax
+[Provisioners are the last resort]: https://www.terraform.io/language/resources/provisioners/syntax
