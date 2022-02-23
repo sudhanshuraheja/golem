@@ -4,6 +4,8 @@ REPO = sudhanshuraheja
 ENV_PREFIX = GOLEM_
 
 TAG := $(shell git describe --tags)
+GOTESTVERBOSE = go test
+GOTEST = gotestsum
 
 # Colours
 NO_COLOR = \x1b[0m
@@ -24,10 +26,12 @@ dev:
 
 test:
 	@echo "$(BLUE_COLOR)➤ Running tests$(NO_COLOR)"
-	MallocNanoZone=0 go test ./... -timeout 15s -race -cover -coverprofile=coverage.out -v \
-		| sed ''/PASS/s//`printf "\033[34;01mPASS\033[0m"`/'' \
-		| sed ''/FAIL/s//`printf "\033[31;01mFAIL\033[0m"`/'' \
-		| sed ''/RUN/s//`printf "\033[30;01mRUN\033[0m"`/''
+	MallocNanoZone=0 $(GOTEST) ./... -timeout 15s -race -cover -coverprofile=coverage.out
+	go tool cover -html=coverage.out -o coverage.html
+
+testv:
+	@echo "$(BLUE_COLOR)➤ Running tests$(NO_COLOR)"
+	$(GOTESTVERBOSE) ./... -timeout 15s -race -cover -coverprofile=coverage.out -v
 	go tool cover -html=coverage.out -o coverage.html
 
 test_norace:

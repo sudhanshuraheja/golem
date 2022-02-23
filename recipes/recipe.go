@@ -193,7 +193,13 @@ func (r *Recipes) RemotePool(servers []config.Server, recipe config.Recipe, maxP
 		}
 	}
 
-	for {
+	ticker := time.NewTicker(50 * time.Millisecond)
+	ticks := 0
+	for ; true; <-ticker.C {
+		ticks++
+		if ticks >= 20 {
+			break
+		}
 		if wp.GetWorkerCount() == 0 {
 			break
 		}
