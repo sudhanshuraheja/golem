@@ -8,6 +8,10 @@ import (
 	"github.com/sudhanshuraheja/golem/recipes"
 )
 
+const (
+	version = "v0.1.0"
+)
+
 type Kitchen struct {
 	conf *config.Config
 }
@@ -32,13 +36,15 @@ func NewKitchen(configPath string) *Kitchen {
 
 func (k *Kitchen) Exec(recipe string) {
 	if recipe != "" && k.conf != nil && k.conf.MaxParallelProcesses != nil {
-		log.Announcef("%s | running recipe with %d routines", recipe, *k.conf.MaxParallelProcesses)
+		log.Announcef("%s | running recipe with max %d routines", recipe, *k.conf.MaxParallelProcesses)
 	}
 	r := recipes.NewRecipes(k.conf)
 	switch recipe {
 	case "":
 		log.MinorSuccessf("We found these recipes in '~/.golem/golem.hcl'")
 		r.List()
+	case "version":
+		log.MinorSuccessf("golem version: %s", version)
 	case "init":
 		r.Init()
 	case "list":

@@ -104,7 +104,7 @@ func (r *Recipes) Run(name string) {
 	}
 
 	if recipe.Name == "" {
-		log.Errorf("kitchen | the recipe <%s> was not  in '~/.golem/golem.hcl'", recipe)
+		log.Errorf("kitchen | the recipe <%s> was not in '~/.golem/golem.hcl'", recipe.Name)
 		return
 	}
 
@@ -176,6 +176,7 @@ func (r *Recipes) downloadRemoteArtifacts(recipe *config.Recipe) error {
 			log.Announcef("kitchen | downloading %s", a.Source)
 			g := getter.NewGetter(nil)
 
+			startTime := time.Now()
 			response := g.FetchResponse(getter.Request{
 				Path:       a.Source,
 				SaveToDisk: true,
@@ -188,7 +189,7 @@ func (r *Recipes) downloadRemoteArtifacts(recipe *config.Recipe) error {
 				return fmt.Errorf("received error code for %s: %d", a.Source, response.Code)
 			}
 
-			log.MinorSuccessf("kitchen | downloaded %s to %s", a.Source, response.DataPath)
+			log.MinorSuccessf("kitchen | downloaded %s to %s in %s", a.Source, response.DataPath, time.Since(startTime))
 			recipe.Artifacts[i].Source = response.DataPath
 		}
 	}
