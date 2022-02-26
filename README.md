@@ -197,7 +197,7 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Stream output from commands on remove servers
 - [x] Capture SIGINT in worker pool to shutdown connections properly
 - [x] Separate local and remote execution steps
-- [ ] Download http artifacts on the server using https://github.com/hashicorp/go-getter
+- [x] Download http artifacts on the server
 - [ ] Allow custom ssh file to connect to server
 - [ ] Allow password based login to ssh servers
 - [ ] Split config into multiple files

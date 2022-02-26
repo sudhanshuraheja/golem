@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/pkg/getter"
 	"github.com/sudhanshuraheja/golem/pkg/log"
 	"github.com/sudhanshuraheja/golem/pkg/pool"
 	"github.com/sudhanshuraheja/golem/pkg/utils"
@@ -107,12 +108,31 @@ func (r *Recipes) Run(name string) {
 		return
 	}
 
+	servers := r.askPermission(&recipe)
+
+	err := r.downloadRemoteArtifacts(&recipe)
+	if err != nil {
+		log.Errorf("kitchen | %v", err)
+	}
+
+	switch recipe.Type {
+	case "remote-exec":
+		r.RemotePool(servers, recipe, *r.conf.MaxParallelProcesses)
+	case "local-exec":
+		c := Cmd{}
+		c.Run(recipe.Commands)
+	default:
+		log.Errorf("recipe only supports ['remote-exec', 'local-exec'] types")
+	}
+}
+
+func (r *Recipes) askPermission(recipe *config.Recipe) []config.Server {
 	var servers []config.Server
 	switch recipe.Type {
 	case "remote-exec":
 		if recipe.Match == nil {
 			log.Errorf("kitchen | recipe <%s> need a 'match' block because of 'remote-exec'", recipe.Name)
-			return
+			return servers
 		}
 
 		servers = NewMatch(*recipe.Match).Find(r.conf)
@@ -123,7 +143,7 @@ func (r *Recipes) Run(name string) {
 
 		if len(servers) == 0 {
 			log.MinorSuccessf("%s | no servers matched '%s %s %s'", recipe.Name, recipe.Match.Attribute, recipe.Match.Operator, recipe.Match.Value)
-			return
+			return servers
 		}
 
 		log.Announcef("%s | found %d matching servers - %s", recipe.Name, len(servers), strings.Join(serverNames, ", "))
@@ -147,15 +167,32 @@ func (r *Recipes) Run(name string) {
 		os.Exit(0)
 	}
 
-	switch recipe.Type {
-	case "remote-exec":
-		r.RemotePool(servers, recipe, *r.conf.MaxParallelProcesses)
-	case "local-exec":
-		c := Cmd{}
-		c.Run(recipe.Commands)
-	default:
-		log.Errorf("recipe only supports ['remote-exec', 'local-exec'] types")
+	return servers
+}
+
+func (r *Recipes) downloadRemoteArtifacts(recipe *config.Recipe) error {
+	for i, a := range recipe.Artifacts {
+		if strings.HasPrefix(a.Source, "http://") || strings.HasPrefix(a.Source, "https://") {
+			log.Announcef("kitchen | downloading %s", a.Source)
+			g := getter.NewGetter(nil)
+
+			response := g.FetchResponse(getter.Request{
+				Path:       a.Source,
+				SaveToDisk: true,
+			})
+
+			if response.Error != nil {
+				return fmt.Errorf("could not download %s: %v", a.Source, response.Error)
+			}
+			if response.Code != 200 {
+				return fmt.Errorf("received error code for %s: %d", a.Source, response.Code)
+			}
+
+			log.MinorSuccessf("kitchen | downloaded %s to %s", a.Source, response.DataPath)
+			recipe.Artifacts[i].Source = response.DataPath
+		}
 	}
+	return nil
 }
 
 func (r *Recipes) RemotePool(servers []config.Server, recipe config.Recipe, maxProcs int) {
