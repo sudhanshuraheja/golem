@@ -186,38 +186,56 @@ loglevel = "INFO"
 When the log level is set to `WARN`, you will not see the output of the commands being run on the server or the goroutines logs. You will only see an update when a command runs successfully or fails and if the artifact uploads or fails.
 
 # Roadmap
+
+## Config
 - [x] Use HCL for config
+- [x] Setup config file at ~/.golem/golem.hcl
+- [x] Show version
+- [ ] Merge multiple config files
+- [ ] Merged config files in ~/.golem/*.hcl and ./*.hcl
+
+## Servers
 - [x] Connect to servers via SSH
 - [x] Use terraform to get list of servers
-- [x] Upload files via SFTP
+- [ ] Allow custom ssh key to connect to server
+- [ ] Allow password based login to ssh servers
+- [ ] Connect to a docker container instead of SSH
+
+## Secrets
+- [ ] Allow golem to saving secrets
+- [ ] Setup local and remote environment variables
+
+## Recipes
 - [x] Read recipes from config and execute them
+- [ ] Create system level recipes
+- [ ] Native recipe to setup docker
+- [ ] Native recipe to setup nomad
+- [ ] Native recipe to setup consul
+- [ ] Native recipe to setup postgres with nomad
+- [ ] Native recipe to setup redis with nomad
+
+## Artifacts
+- [x] Upload local files via SFTP
+- [x] Download http artifacts before uploading
+- [ ] Upload folders to remote
+- [ ] Run go templates on files before uploaded
+- [ ] Show progress while uploading or downloading
+- [ ] Run local script on all remotes without uploading
+
+## Commands
 - [x] Create a worker pool for ssh connections
 - [x] Run separate goroutines for each server
 - [x] Limit number of goroutines
 - [x] Stream output from commands on remove servers
 - [x] Capture SIGINT in worker pool to shutdown connections properly
 - [x] Separate local and remote execution steps
-- [x] Download http artifacts on the server
-- [x] Show version
-- [ ] Show progress while uploading or downloading
-- [ ] Allow custom ssh file to connect to server
-- [ ] Allow password based login to ssh servers
-- [ ] Split config into multiple files
 - [ ] Expands commands to include other metadata
 - [ ] Use output of commands as input to the next command
 - [ ] Increase goroutines if there are more tail tasks than routines
-- [ ] Create system level recipes
 - [ ] Fork a process to continue running tails
 - [ ] Support rolling updates locally and on remote
-- [ ] Setup local and remote environment variables
-- [ ] Add tempating for files to be uploaded
-- [ ] Interactive bash on all hosts
-- [ ] Run local script on all remotes without uploading
 - [ ] Get docker logs from remote
 - [ ] Support different environments, like staging, prod
-- [ ] Upload folders to remote
-- [ ] Native support for nomad and docker
-- [ ] Native support for postgres and redis, with and without nomad
 
 
 [Hashicorp HCL]: https://github.com/hashicorp/hcl
