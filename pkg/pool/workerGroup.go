@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/sudhanshuraheja/golem/pkg/log"
+	"github.com/betas-in/logger"
 )
 
 // WorkerGroup ...
@@ -28,7 +28,7 @@ func NewWorkerGroup(name string, heartbeat time.Duration) WorkerGroup {
 
 func (w *workerGroup) Process(ctx context.Context, workerCtx *WorkerContext, id string) {
 	workerCtx.Heartbeat <- Heartbeat{ID: id, Ping: true}
-	log.Infof("%s-%s | Started", w.name, id)
+	logger.Infof("%s-%s | Started", w.name, id)
 
 	ticker := time.NewTicker(w.heartbeat)
 	defer ticker.Stop()
@@ -36,19 +36,19 @@ func (w *workerGroup) Process(ctx context.Context, workerCtx *WorkerContext, id 
 	for {
 		select {
 		case j := <-workerCtx.Jobs:
-			log.Infof("%s-%s | Job %+v", w.name, id, j)
+			logger.Infof("%s-%s | Job %+v", w.name, id, j)
 			workerCtx.Heartbeat <- Heartbeat{ID: id, Processed: 1}
 			workerCtx.Processed <- j
 		case <-ctx.Done():
-			log.Successf("%s-%s | Done", w.name, id)
+			logger.Successf("%s-%s | Done", w.name, id)
 			workerCtx.Heartbeat <- Heartbeat{ID: id, Closed: true}
 			return
 		case <-workerCtx.Close:
-			log.Successf("%s-%s | Closing", w.name, id)
+			logger.Successf("%s-%s | Closing", w.name, id)
 			workerCtx.Heartbeat <- Heartbeat{ID: id, Closed: true}
 			return
 		case <-ticker.C:
-			log.Tracef("%s-%s | Heartbeat", w.name, id)
+			logger.Tracef("%s-%s | Heartbeat", w.name, id)
 			workerCtx.Heartbeat <- Heartbeat{ID: id, Ping: true}
 		}
 	}

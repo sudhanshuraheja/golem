@@ -6,8 +6,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/betas-in/logger"
+
 	"github.com/sudhanshuraheja/golem/config"
-	"github.com/sudhanshuraheja/golem/pkg/log"
 	"github.com/sudhanshuraheja/golem/recipes"
 )
 
@@ -26,14 +27,14 @@ func NewKitchen() *Kitchen {
 
 	err := k.detectConfigFiles()
 	if err != nil {
-		log.Fatalf("kitchen | %v", err)
+		logger.Fatalf("kitchen | %v", err)
 		os.Exit(1)
 	}
 
 	if len(k.configFiles) == 0 {
 		err := k.initConfigFile()
 		if err != nil {
-			log.Fatalf("kitchen | %v", err)
+			logger.Fatalf("kitchen | %v", err)
 			os.Exit(1)
 		}
 	}
@@ -41,7 +42,7 @@ func NewKitchen() *Kitchen {
 	for _, path := range k.configFiles {
 		conf, err := config.NewConfig(path)
 		if err != nil {
-			log.Errorf("%v", err)
+			logger.Errorf("%v", err)
 		}
 		k.mergeConfig(conf)
 	}
@@ -112,7 +113,7 @@ func (k *Kitchen) initConfigFile() error {
 			return fmt.Errorf("error creating conf file <%s>: %v", confFile, err)
 		}
 		defer file.Close()
-		log.MinorSuccessf("kitchen | conf file created at %s", confFile)
+		logger.MinorSuccessf("kitchen | conf file created at %s", confFile)
 	} else if err != nil {
 		return fmt.Errorf("error checking conf file <%s>: %v", confFile, err)
 	}
@@ -121,7 +122,7 @@ func (k *Kitchen) initConfigFile() error {
 
 func (k *Kitchen) Exec(recipe string) {
 	if recipe != "" && k.conf != nil && k.conf.MaxParallelProcesses != nil {
-		log.Announcef("%s | running recipe with max %d routines", recipe, *k.conf.MaxParallelProcesses)
+		logger.Announcef("%s | running recipe with max %d routines", recipe, *k.conf.MaxParallelProcesses)
 	}
 	r := recipes.NewRecipes(k.conf)
 	switch recipe {
@@ -130,7 +131,7 @@ func (k *Kitchen) Exec(recipe string) {
 		r.Servers()
 		r.List()
 	case "version":
-		log.MinorSuccessf("golem version: %s", version)
+		logger.MinorSuccessf("golem version: %s", version)
 	case "list":
 		r.List()
 	case "servers":

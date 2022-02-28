@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/sudhanshuraheja/golem/pkg/log"
+	"github.com/betas-in/logger"
 	"github.com/sudhanshuraheja/golem/pkg/utils"
 )
 
@@ -101,7 +101,7 @@ func (w *pool) Start(count int64) chan interface{} {
 }
 
 func (w *pool) Update(count int64) {
-	log.Infof("pool | %s | updating worker count from <%d> to <%d>", w.Name, w.getExpectedWorkerCount(), count)
+	logger.Infof("pool | %s | updating worker count from <%d> to <%d>", w.Name, w.getExpectedWorkerCount(), count)
 	w.setExpectedWorkerCount(count)
 
 	for w.getExpectedWorkerCount() != w.getActualWorkerCount() {
@@ -203,7 +203,7 @@ func (w *pool) emptyProcessed() {
 			<-w.processed
 			count++
 		}
-		log.Infof("pool | %s | w.processed at %d, removed %d", w.Name, len(w.processed), count)
+		logger.Infof("pool | %s | w.processed at %d, removed %d", w.Name, len(w.processed), count)
 	}
 }
 

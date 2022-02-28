@@ -8,9 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/betas-in/logger"
+
 	"github.com/sudhanshuraheja/golem/config"
 	"github.com/sudhanshuraheja/golem/pkg/getter"
-	"github.com/sudhanshuraheja/golem/pkg/log"
 	"github.com/sudhanshuraheja/golem/pkg/pool"
 	"github.com/sudhanshuraheja/golem/pkg/utils"
 )
@@ -28,8 +29,8 @@ func NewRecipes(conf *config.Config) *Recipes {
 }
 
 func (r *Recipes) List() {
-	log.Announcef("%sRecipes", header)
-	tb := log.NewTable("Name", "Match", "Artifacts", "Commands")
+	logger.Announcef("%sRecipes", header)
+	tb := logger.NewCLITable("Name", "Match", "Artifacts", "Commands")
 	for _, r := range r.conf.Recipes {
 		var attribute, operator, value string
 		if r.Match != nil {
@@ -50,8 +51,8 @@ func (r *Recipes) List() {
 }
 
 func (r *Recipes) Servers() {
-	log.Announcef("%sServers", header)
-	t := log.NewTable("Name", "Public IP", "Private IP", "User", "Port", "Tags", "Hostname")
+	logger.Announcef("%sServers", header)
+	t := logger.NewCLITable("Name", "Public IP", "Private IP", "User", "Port", "Tags", "Hostname")
 	for _, s := range r.conf.Servers {
 		hostnames := utils.StringPtrValue(s.HostName, "")
 		if len(hostnames) > 60 {
@@ -80,7 +81,7 @@ func (r *Recipes) Run(name string) {
 	}
 
 	if recipe.Name == "" {
-		log.Errorf("kitchen | the recipe <%s> was not found in '~/.golem/' or '.'", recipe.Name)
+		logger.Errorf("kitchen | the recipe <%s> was not found in '~/.golem/' or '.'", recipe.Name)
 		return
 	}
 
@@ -88,7 +89,7 @@ func (r *Recipes) Run(name string) {
 
 	err := r.downloadRemoteArtifacts(&recipe)
 	if err != nil {
-		log.Errorf("kitchen | %v", err)
+		logger.Errorf("kitchen | %v", err)
 	}
 
 	switch recipe.Type {
@@ -98,7 +99,7 @@ func (r *Recipes) Run(name string) {
 		c := Cmd{}
 		c.Run(recipe.Commands)
 	default:
-		log.Errorf("recipe only supports ['remote-exec', 'local-exec'] types")
+		logger.Errorf("recipe only supports ['remote-exec', 'local-exec'] types")
 	}
 }
 
@@ -107,7 +108,7 @@ func (r *Recipes) askPermission(recipe *config.Recipe) []config.Server {
 	switch recipe.Type {
 	case "remote-exec":
 		if recipe.Match == nil {
-			log.Errorf("kitchen | recipe <%s> need a 'match' block because of 'remote-exec'", recipe.Name)
+			logger.Errorf("kitchen | recipe <%s> need a 'match' block because of 'remote-exec'", recipe.Name)
 			return servers
 		}
 
@@ -118,28 +119,28 @@ func (r *Recipes) askPermission(recipe *config.Recipe) []config.Server {
 		}
 
 		if len(servers) == 0 {
-			log.MinorSuccessf("%s | no servers matched '%s %s %s'", recipe.Name, recipe.Match.Attribute, recipe.Match.Operator, recipe.Match.Value)
+			logger.MinorSuccessf("%s | no servers matched '%s %s %s'", recipe.Name, recipe.Match.Attribute, recipe.Match.Operator, recipe.Match.Value)
 			return servers
 		}
 
-		log.Announcef("%s | found %d matching servers - %s", recipe.Name, len(servers), strings.Join(serverNames, ", "))
+		logger.Announcef("%s | found %d matching servers - %s", recipe.Name, len(servers), strings.Join(serverNames, ", "))
 
 	case "local-exec":
 	default:
-		log.Errorf("recipe only supports ['remote-exec', 'local-exec'] types")
+		logger.Errorf("recipe only supports ['remote-exec', 'local-exec'] types")
 	}
 
 	for _, a := range recipe.Artifacts {
-		log.Infof("→ %s → %s", a.Source, a.Destination)
+		logger.Infof("→ %s → %s", a.Source, a.Destination)
 	}
 
 	for _, c := range recipe.Commands {
-		log.Infof("→ $ %s", c)
+		logger.Infof("→ $ %s", c)
 	}
 
-	answer := log.Questionf("Are you sure you want to continue [y/n]?")
+	answer := logger.Questionf("Are you sure you want to continue [y/n]?")
 	if utils.ArrayContains([]string{"y", "yes"}, answer, false) == -1 {
-		log.Errorf("Quitting, because you said %s", answer)
+		logger.Errorf("Quitting, because you said %s", answer)
 		os.Exit(0)
 	}
 
@@ -149,7 +150,7 @@ func (r *Recipes) askPermission(recipe *config.Recipe) []config.Server {
 func (r *Recipes) downloadRemoteArtifacts(recipe *config.Recipe) error {
 	for i, a := range recipe.Artifacts {
 		if strings.HasPrefix(a.Source, "http://") || strings.HasPrefix(a.Source, "https://") {
-			log.Announcef("kitchen | downloading %s", a.Source)
+			logger.Announcef("kitchen | downloading %s", a.Source)
 			g := getter.NewGetter(nil)
 
 			startTime := time.Now()
@@ -165,7 +166,7 @@ func (r *Recipes) downloadRemoteArtifacts(recipe *config.Recipe) error {
 				return fmt.Errorf("received error code for %s: %d", a.Source, response.Code)
 			}
 
-			log.MinorSuccessf("kitchen | downloaded %s to %s in %s", a.Source, response.DataPath, time.Since(startTime))
+			logger.MinorSuccessf("kitchen | downloaded %s to %s in %s", a.Source, response.DataPath, time.Since(startTime))
 			recipe.Artifacts[i].Source = response.DataPath
 		}
 	}
@@ -219,5 +220,5 @@ func (r *Recipes) RemotePool(servers []config.Server, recipe config.Recipe, maxP
 		}
 	}
 
-	log.MinorSuccessf("%s | completed in %s", recipe.Name, time.Since(startTime))
+	logger.MinorSuccessf("%s | completed in %s", recipe.Name, time.Since(startTime))
 }

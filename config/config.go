@@ -4,15 +4,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/betas-in/logger"
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclparse"
-	"github.com/sudhanshuraheja/golem/pkg/log"
 )
 
 type Config struct {
 	ServerProviders      []ServerProvider `hcl:"server_provider,block"`
 	Servers              []Server         `hcl:"server,block"`
-	Recipes               []Recipe         `hcl:"recipe,block"`
+	Recipes              []Recipe         `hcl:"recipe,block"`
 	LogLevel             *string          `hcl:"loglevel"`
 	MaxParallelProcesses *int             `hcl:"max_parallel_processes"`
 }
@@ -68,7 +68,9 @@ func NewConfig(path string) (*Config, error) {
 		return nil, diags
 	}
 
-	log.SetLogLevel(conf.LogLevel)
+	if conf.LogLevel != nil {
+		logger.NewCLILogger(*conf.LogLevel)
+	}
 
 	if conf.MaxParallelProcesses == nil {
 		maxParallelProcs := 4
@@ -87,18 +89,18 @@ func (c *Config) ResolveServerProvider() {
 				spt := ServerProviderTerraform{}
 				srvs, iph, err := spt.GetServers(cf, sp.User, sp.Port)
 				if err != nil {
-					log.Errorf("config | could not load servers from tfstate %s: %v", cf, err)
+					logger.Errorf("config | could not load servers from tfstate %s: %v", cf, err)
 					continue
 				}
-				log.Debugf("config | found %d servers in %s", len(srvs), cf)
+				logger.Debugf("config | found %d servers in %s", len(srvs), cf)
 				c.Servers = append(c.Servers, srvs...)
 				mergeIPHostnames(&c.Servers, iph)
 			}
 		default:
-			log.Errorf("config | server_providers label only supports ['terraform']")
+			logger.Errorf("config | server_providers label only supports ['terraform']")
 		}
 	}
-	log.Debugf("resolved service provider in %s", time.Since(startTime))
+	logger.Debugf("resolved service provider in %s", time.Since(startTime))
 }
 
 func mergeIPHostnames(servers *[]Server, iph IPHostNames) {

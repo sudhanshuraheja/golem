@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/betas-in/logger"
 	"github.com/sudhanshuraheja/golem/config"
-	"github.com/sudhanshuraheja/golem/pkg/log"
 	"github.com/sudhanshuraheja/golem/pkg/pool"
 )
 
@@ -25,7 +25,7 @@ func NewSSHWorkerGroup(name string, heartbeat time.Duration) *SSHWorkerGroup {
 
 func (w *SSHWorkerGroup) Process(ctx context.Context, workerCtx *pool.WorkerContext, id string) {
 	workerCtx.Heartbeat <- pool.Heartbeat{ID: id, Ping: true}
-	log.Infof("%s-%s | Started", w.name, id)
+	logger.Infof("%s-%s | Started", w.name, id)
 
 	ticker := time.NewTicker(w.heartbeat)
 	defer ticker.Stop()
@@ -36,7 +36,7 @@ func (w *SSHWorkerGroup) Process(ctx context.Context, workerCtx *pool.WorkerCont
 
 			job, ok := j.(SSHJob)
 			if !ok {
-				log.Errorf("%s-%s | invalid job", w.name, id)
+				logger.Errorf("%s-%s | invalid job", w.name, id)
 			}
 			// log.Infof("%s-%s | Job %+v", w.name, id, j)
 
@@ -45,15 +45,15 @@ func (w *SSHWorkerGroup) Process(ctx context.Context, workerCtx *pool.WorkerCont
 			workerCtx.Heartbeat <- pool.Heartbeat{ID: id, Processed: 1}
 			workerCtx.Processed <- j
 		case <-ctx.Done():
-			log.Successf("%s-%s | Done", w.name, id)
+			logger.Successf("%s-%s | Done", w.name, id)
 			workerCtx.Heartbeat <- pool.Heartbeat{ID: id, Closed: true}
 			return
 		case <-workerCtx.Close:
-			log.Successf("%s-%s | Closing", w.name, id)
+			logger.Successf("%s-%s | Closing", w.name, id)
 			workerCtx.Heartbeat <- pool.Heartbeat{ID: id, Closed: true}
 			return
 		case <-ticker.C:
-			log.Tracef("%s-%s | Heartbeat", w.name, id)
+			logger.Tracef("%s-%s | Heartbeat", w.name, id)
 			workerCtx.Heartbeat <- pool.Heartbeat{ID: id, Ping: true}
 		}
 	}
@@ -63,7 +63,7 @@ func (w *SSHWorkerGroup) ExecRecipeOnServer(s config.Server, recipe config.Recip
 	ss := SSH{}
 	err := ss.Connect(&s)
 	if err != nil {
-		log.Errorf("%s | %v", s.Name, err)
+		logger.Errorf("%s | %v", s.Name, err)
 		return
 	}
 	ss.Upload(recipe.Artifacts)

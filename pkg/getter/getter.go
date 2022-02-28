@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/betas-in/logger"
 	"github.com/sudhanshuraheja/golem/config"
-	"github.com/sudhanshuraheja/golem/pkg/log"
 	"github.com/sudhanshuraheja/golem/pkg/utils"
 )
 
@@ -150,20 +150,20 @@ func (g *getter) FetchResponse(r Request) *Response {
 		tempFilePath := utils.GetUUID()
 		file, err := os.CreateTemp("", tempFilePath)
 		if err != nil {
-			log.Errorf("getter | could not create file: %v", err)
+			logger.Errorf("getter | could not create file: %v", err)
 			response.Error = err
 			return &response
 		}
 		_, err = io.Copy(file, data.Body)
 		if err != nil {
-			log.Errorf("getter | could not copy to file: %v", err)
+			logger.Errorf("getter | could not copy to file: %v", err)
 			response.Error = err
 			return &response
 		}
 		response.DataPath = file.Name()
 		contentType, err := utils.GetFileContentType(file.Name())
 		if err != nil {
-			log.Errorf("getter | could not check content type: %v", err)
+			logger.Errorf("getter | could not check content type: %v", err)
 			response.Error = err
 			return &response
 		}

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/betas-in/logger"
 	"github.com/sudhanshuraheja/golem/config"
-	"github.com/sudhanshuraheja/golem/pkg/log"
 	"github.com/sudhanshuraheja/golem/pkg/ssh"
 )
 
@@ -35,7 +35,7 @@ func (ss *SSH) Connect(s *config.Server) error {
 	if err != nil {
 		return fmt.Errorf("could not ssh to host: %v", err)
 	}
-	log.MinorSuccessf("%s | connected via SSH in %s", s.Name, time.Since(startTime))
+	logger.MinorSuccessf("%s | connected via SSH in %s", s.Name, time.Since(startTime))
 	ss.conn = conn
 	ss.name = s.Name
 	return nil
@@ -47,12 +47,12 @@ func (ss *SSH) Run(commands []string) {
 		for {
 			select {
 			case stdout := <-ss.conn.Stdout:
-				log.Infof("%s | %s", stdout.Name, stdout.Message)
+				logger.Infof("%s | %s", stdout.Name, stdout.Message)
 				if stdout.Completed {
 					wait <- true
 				}
 			case stderr := <-ss.conn.Stderr:
-				log.Infof("%s | %s", stderr.Name, stderr.Message)
+				logger.Infof("%s | %s", stderr.Name, stderr.Message)
 				if stderr.Completed {
 					wait <- true
 				}
@@ -61,19 +61,19 @@ func (ss *SSH) Run(commands []string) {
 	}(wait)
 
 	for _, cmd := range commands {
-		log.Announcef("%s | running <%s>", ss.name, cmd)
+		logger.Announcef("%s | running <%s>", ss.name, cmd)
 		startTime := time.Now()
 		status, err := ss.conn.Run(cmd)
 		if err != nil {
-			log.Errorf("%s | error in running command <%s>: %v", ss.name, cmd, err)
+			logger.Errorf("%s | error in running command <%s>: %v", ss.name, cmd, err)
 			continue
 		}
 		<-wait
 		if status > 0 {
-			log.Errorf("%s | command <%s> failed with status: %d", ss.name, cmd, status)
+			logger.Errorf("%s | command <%s> failed with status: %d", ss.name, cmd, status)
 			continue
 		}
-		log.Successf("%s | command <%s> ended successfully in %s", ss.name, cmd, time.Since(startTime))
+		logger.Successf("%s | command <%s> ended successfully in %s", ss.name, cmd, time.Since(startTime))
 	}
 }
 
@@ -82,10 +82,10 @@ func (ss *SSH) Upload(artifacts []config.Artifact) {
 		startTime := time.Now()
 		copied, err := ss.conn.Upload(artifact.Source, artifact.Destination)
 		if err != nil {
-			log.Errorf("%s | failed to upload local:<%s> to remote:<%s>: %v", ss.name, artifact.Source, artifact.Destination, err)
+			logger.Errorf("%s | failed to upload local:<%s> to remote:<%s>: %v", ss.name, artifact.Source, artifact.Destination, err)
 			continue
 		}
-		log.Successf("%s | successfully uploaded %d bytes from local:<%s> to remote:<%s> in %s", ss.name, copied, artifact.Source, artifact.Destination, time.Since(startTime))
+		logger.Successf("%s | successfully uploaded %d bytes from local:<%s> to remote:<%s> in %s", ss.name, copied, artifact.Source, artifact.Destination, time.Since(startTime))
 	}
 }
 

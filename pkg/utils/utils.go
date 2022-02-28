@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/betas-in/logger"
 	"github.com/google/uuid"
-	"github.com/sudhanshuraheja/golem/pkg/log"
 )
 
 // GetUUID definition
@@ -75,7 +75,7 @@ func ElapsedTime(what string, logging bool) func() {
 	start := time.Now()
 	return func() {
 		if logging {
-			log.Tracef("%v | %s\n", time.Since(start), what)
+			logger.Tracef("%v | %s\n", time.Since(start), what)
 		}
 	}
 }

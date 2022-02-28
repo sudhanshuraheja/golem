@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/betas-in/logger"
 	"github.com/sudhanshuraheja/golem/config"
-	"github.com/sudhanshuraheja/golem/pkg/log"
 	"github.com/sudhanshuraheja/golem/pkg/utils"
 )
 
@@ -56,7 +56,7 @@ func (m *Match) server(s config.Server) bool {
 	case "tags":
 		return m.array("tags", s.Tags)
 	default:
-		log.Errorf("servers does not support attribute %s", m.match.Attribute)
+		logger.Errorf("servers does not support attribute %s", m.match.Attribute)
 	}
 	return false
 }
@@ -73,7 +73,7 @@ func (m *Match) array(oftype string, list []string) bool {
 			return true
 		}
 	default:
-		log.Errorf("%s only supports ['contains', 'not-contains'] operators", oftype)
+		logger.Errorf("%s only supports ['contains', 'not-contains'] operators", oftype)
 	}
 	return false
 }
@@ -93,7 +93,7 @@ func (m *Match) string(oftype, name string) bool {
 			return true
 		}
 	default:
-		log.Errorf("%s only supports ['=', '!=', 'like'] operators", oftype)
+		logger.Errorf("%s only supports ['=', '!=', 'like'] operators", oftype)
 	}
 	return false
 }
@@ -129,7 +129,7 @@ func (m *Match) int(oftype string, name int) bool {
 			return true
 		}
 	default:
-		log.Errorf("%s only supports ['=', '!=', '>', '>=', '<', '<='] operators", oftype)
+		logger.Errorf("%s only supports ['=', '!=', '>', '>=', '<', '<='] operators", oftype)
 	}
 	return false
 }
