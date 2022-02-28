@@ -192,7 +192,6 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Setup config file at ~/.golem/config.golem.hcl
 - [x] Show version
 - [x] Merged config files in ~/.golem/*.golem and ./*.golem
-- [ ] Set package name in logs
 
 ## Servers
 - [x] Connect to servers via SSH
@@ -202,7 +201,7 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [ ] Connect to a docker container instead of SSH
 
 ## Secrets
-- [ ] Allow golem to saving secrets
+- [ ] Allow golem to save secrets
 - [ ] Setup local and remote environment variables
 
 ## Recipes
