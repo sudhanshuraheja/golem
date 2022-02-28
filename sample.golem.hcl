@@ -15,19 +15,40 @@ recipe "ls-la" {
     type = "local-exec"
     commands = [
         "ls -la",
-        "nomad version",
-        "consul version",
     ]
 }
 
-recipe "tail-nomad" {
+recipe "test-exec" {
     type = "remote-exec"
     match {
-        attribute = "tags"
-        operator = "contains"
-        value = "nomad"
+        attribute = "name"
+        operator = "like"
+        value = "skye-c3"
+    }
+    artifact {
+        source = "https://github.com/sudhanshuraheja/golem/releases/download/v0.1.0/golem-linux-amd64-v0.1.0"
+        destination = "golem"
+    }
+    artifact {
+        source = "LICENSE"
+        destination = "LICENSE"
     }
     commands = [
-        "journalctl -f -u nomad.service"
+        "ls -la L*",
+        "ls -la g*"
+    ]
+}
+
+recipe "apply-security-patch" {
+    type = "remote-exec"
+    match {
+        attribute = "name"
+        operator = "="
+        value = "skye-s3"
+    }
+    commands = [
+        "apt-get update",
+        "apt-get install unattended-upgrades",
+        "unattended-upgrade",
     ]
 }
