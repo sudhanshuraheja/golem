@@ -15,6 +15,10 @@ import (
 	"github.com/sudhanshuraheja/golem/pkg/utils"
 )
 
+var (
+	header = "\n➡️  "
+)
+
 type Recipes struct {
 	conf *config.Config
 }
@@ -23,39 +27,10 @@ func NewRecipes(conf *config.Config) *Recipes {
 	return &Recipes{conf: conf}
 }
 
-func (r *Recipes) Init() {
-	dirname, err := os.UserHomeDir()
-	if err != nil {
-		log.Errorf("init | could not find user's home directory: %v", err)
-		return
-	}
-	confDir := fmt.Sprintf("%s/.golem", dirname)
-
-	err = os.MkdirAll(confDir, os.FileMode(0755))
-	if err != nil {
-		log.Errorf("init | could not create conf dir %s: %v", confDir, err)
-		return
-	}
-
-	confFile := fmt.Sprintf("%s/golem.hcl", confDir)
-	_, err = os.Stat(confFile)
-	if os.IsNotExist(err) {
-		file, err := os.Create(confFile)
-		if err != nil {
-			log.Errorf("init | error creating conf file %s: %v", confFile, err)
-			return
-		}
-		defer file.Close()
-		log.MinorSuccessf("init | conf file created at %s", confFile)
-	} else if err != nil {
-		log.Errorf("init | error checking conf file %s: %v", confFile, err)
-	}
-	// log.MinorSuccessf("init | conf file already exists at %s", confFile)
-}
-
 func (r *Recipes) List() {
+	log.Announcef("%sRecipes", header)
 	tb := log.NewTable("Name", "Match", "Artifacts", "Commands")
-	for _, r := range r.conf.Recipe {
+	for _, r := range r.conf.Recipes {
 		var attribute, operator, value string
 		if r.Match != nil {
 			attribute = r.Match.Attribute
@@ -75,6 +50,7 @@ func (r *Recipes) List() {
 }
 
 func (r *Recipes) Servers() {
+	log.Announcef("%sServers", header)
 	t := log.NewTable("Name", "Public IP", "Private IP", "User", "Port", "Tags", "Hostname")
 	for _, s := range r.conf.Servers {
 		hostnames := utils.StringPtrValue(s.HostName, "")
@@ -97,14 +73,14 @@ func (r *Recipes) Servers() {
 func (r *Recipes) Run(name string) {
 	var recipe config.Recipe
 
-	for i, re := range r.conf.Recipe {
+	for i, re := range r.conf.Recipes {
 		if re.Name == name {
-			recipe = r.conf.Recipe[i]
+			recipe = r.conf.Recipes[i]
 		}
 	}
 
 	if recipe.Name == "" {
-		log.Errorf("kitchen | the recipe <%s> was not in '~/.golem/golem.hcl'", recipe.Name)
+		log.Errorf("kitchen | the recipe <%s> was not found in '~/.golem/' or '.'", recipe.Name)
 		return
 	}
 

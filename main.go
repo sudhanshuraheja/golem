@@ -7,11 +7,10 @@ import (
 
 var args struct {
 	Recipe string `arg:"positional"`
-	Config string `arg:"-c,--conf" help:"config folder, can be a file ./golem.hcl or folder ./recipes/"`
 }
 
 func main() {
 	arg.MustParse(&args)
-	kitchen := kitchen.NewKitchen(args.Config)
+	kitchen := kitchen.NewKitchen()
 	kitchen.Exec(args.Recipe)
 }

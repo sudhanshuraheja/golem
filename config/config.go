@@ -1,9 +1,6 @@
 package config
 
 import (
-	"errors"
-	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -15,7 +12,7 @@ import (
 type Config struct {
 	ServerProviders      []ServerProvider `hcl:"server_provider,block"`
 	Servers              []Server         `hcl:"server,block"`
-	Recipe               []Recipe         `hcl:"recipe,block"`
+	Recipes               []Recipe         `hcl:"recipe,block"`
 	LogLevel             *string          `hcl:"loglevel"`
 	MaxParallelProcesses *int             `hcl:"max_parallel_processes"`
 }
@@ -56,31 +53,12 @@ type Artifact struct {
 	Destination string `hcl:"destination"`
 }
 
-func getConfFilePath() (string, error) {
-	dirname, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("could not find user's home directory: %v", err)
-	}
-	return fmt.Sprintf("%s/.golem/golem.hcl", dirname), nil
-}
-
-func NewConfig(configPath string) (*Config, error) {
+func NewConfig(path string) (*Config, error) {
 	var conf Config
 
-	if configPath == "" {
-		var err error
-		configPath, err = getConfFilePath()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if _, err := os.Stat(configPath); errors.Is(err, os.ErrNotExist) {
-		return nil, fmt.Errorf("config file does not exist")
-	}
-
 	parser := hclparse.NewParser()
-	f, diags := parser.ParseHCLFile(configPath)
+
+	f, diags := parser.ParseHCLFile(path)
 	if diags.HasErrors() {
 		return nil, diags
 	}

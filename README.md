@@ -28,21 +28,21 @@ $ brew install go
 $ go install github.com/sudhanshuraheja/golem@latest
 ```
 
-Golem expects a configuration file at `~/.golem/golem.hcl`. You can set it up by running
+Golem expects a configuration file at `~/.golem/config.golem.hcl` or at `./config.golem.hcl`. You can also set it up at both places. Golem can read and merge multiple `*.golem.hcl` files in `~/.golem/` and `./`. You can set it up by running
 ```bash
 $ golem
-init | conf file created at /Users/your-username/.golem/golem.hcl
+init | conf file created at /Users/your-username/.golem/config.golem.hcl
 Here are the recipes that you can use with '$ golem recipe-name'
 
 Name     Match       Artifacts  Commands
 servers  local only  0          0
 
-You can add more recipes to '~/.golem/golem.hcl'
+You can add more recipes to '~/.golem/config.golem.hcl'
 ```
 
 You can make editing the config easier by adding a shortcut to your .zshrc or .bashrc to open the config file in VSCode
 ```bash
-$ echo 'alias glm="code /Users/sudhanshuraheja/.golem/golem.hcl"' >> ~/.zshrc
+$ echo 'alias glm="code /Users/sudhanshuraheja/.golem/config.golem.hcl"' >> ~/.zshrc
 $ source ~/.zshrc
 $ glm
 ```
@@ -189,10 +189,10 @@ When the log level is set to `WARN`, you will not see the output of the commands
 
 ## Config
 - [x] Use HCL for config
-- [x] Setup config file at ~/.golem/golem.hcl
+- [x] Setup config file at ~/.golem/config.golem.hcl
 - [x] Show version
-- [ ] Merge multiple config files
-- [ ] Merged config files in ~/.golem/*.hcl and ./*.hcl
+- [x] Merged config files in ~/.golem/*.golem and ./*.golem
+- [ ] Set package name in logs
 
 ## Servers
 - [x] Connect to servers via SSH
