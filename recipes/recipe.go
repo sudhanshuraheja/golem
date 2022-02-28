@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/betas-in/getter"
 	"github.com/betas-in/logger"
-
+	"github.com/betas-in/pool"
+	"github.com/betas-in/utils"
 	"github.com/sudhanshuraheja/golem/config"
-	"github.com/sudhanshuraheja/golem/pkg/getter"
-	"github.com/sudhanshuraheja/golem/pkg/pool"
-	"github.com/sudhanshuraheja/golem/pkg/utils"
+	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
 
 var (
@@ -54,14 +54,14 @@ func (r *Recipes) Servers() {
 	logger.Announcef("%sServers", header)
 	t := logger.NewCLITable("Name", "Public IP", "Private IP", "User", "Port", "Tags", "Hostname")
 	for _, s := range r.conf.Servers {
-		hostnames := utils.StringPtrValue(s.HostName, "")
+		hostnames := localutils.StringPtrValue(s.HostName, "")
 		if len(hostnames) > 60 {
 			hostnames = hostnames[:60]
 		}
 		t.Row(
 			s.Name,
-			utils.StringPtrValue(s.PublicIP, ""),
-			utils.StringPtrValue(s.PrivateIP, ""),
+			localutils.StringPtrValue(s.PublicIP, ""),
+			localutils.StringPtrValue(s.PrivateIP, ""),
 			s.User,
 			s.Port,
 			strings.Join(s.Tags, ", "),
@@ -139,7 +139,7 @@ func (r *Recipes) askPermission(recipe *config.Recipe) []config.Server {
 	}
 
 	answer := logger.Questionf("Are you sure you want to continue [y/n]?")
-	if utils.ArrayContains([]string{"y", "yes"}, answer, false) == -1 {
+	if utils.Array().Contains([]string{"y", "yes"}, answer, false) == -1 {
 		logger.Errorf("Quitting, because you said %s", answer)
 		os.Exit(0)
 	}
@@ -174,7 +174,8 @@ func (r *Recipes) downloadRemoteArtifacts(recipe *config.Recipe) error {
 }
 
 func (r *Recipes) RemotePool(servers []config.Server, recipe config.Recipe, maxProcs int) {
-	wp := pool.NewPool("ssh")
+	log := logger.NewLogger(2, true)
+	wp := pool.NewPool("ssh", log)
 	wp.AddWorkerGroup(NewSSHWorkerGroup("ssh", 10*time.Millisecond))
 	processed := wp.Start(int64(maxProcs))
 

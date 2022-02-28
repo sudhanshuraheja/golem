@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sudhanshuraheja/golem/pkg/utils"
+	"github.com/betas-in/utils"
 )
 
 type ServerProviderTerraform struct {
@@ -64,7 +64,7 @@ func (s *ServerProviderTerraform) GetServers(file, user string, port int) ([]Ser
 	}
 
 	for _, tfResource := range s.Resources {
-		if utils.ArrayContains([]string{
+		if utils.Array().Contains([]string{
 			"digitalocean_record",
 		}, tfResource.Type, true) >= 0 {
 			for _, tfResourceInstance := range tfResource.Instances {
@@ -81,7 +81,7 @@ func (s *ServerProviderTerraform) GetServers(file, user string, port int) ([]Ser
 	}
 
 	for _, tfResource := range s.Resources {
-		if utils.ArrayContains([]string{
+		if utils.Array().Contains([]string{
 			"digitalocean_droplet",
 		}, tfResource.Type, true) >= 0 {
 			for _, tfResourceInstance := range tfResource.Instances {

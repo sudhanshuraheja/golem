@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/betas-in/logger"
+	"github.com/betas-in/pool"
 	"github.com/sudhanshuraheja/golem/config"
-	"github.com/sudhanshuraheja/golem/pkg/pool"
 )
 
 type SSHWorkerGroup struct {

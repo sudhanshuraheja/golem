@@ -3,8 +3,8 @@ package cmd
 import (
 	"testing"
 
-	"github.com/fatih/color"
-	"github.com/sudhanshuraheja/golem/pkg/utils"
+	"github.com/betas-in/logger"
+	"github.com/betas-in/utils"
 )
 
 func TestCmd(t *testing.T) {
@@ -18,25 +18,25 @@ func TestCmd(t *testing.T) {
 				if stdout.Completed {
 					wait <- true
 				}
-				color.New(color.FgCyan).Println(stdout.Name, "|", stdout.Message, "|", stdout.Completed)
+				logger.Announcef("%s | %s", stdout.Name, stdout.Message)
 			case stderr := <-c.Stderr:
 				if stderr.Completed {
 					wait <- true
 				}
-				color.New(color.FgRed).Println(stderr.Name, "||", stderr.Message, "|", stderr.Completed)
+				logger.Errorf("%s | %s", stderr.Name, stderr.Message)
 			}
 		}
 	}(wait)
 
 	err := c.Run("ls -la")
-	utils.OK(t, err)
+	utils.Test().Nil(t, err)
 	<-wait
 
 	err = c.Run("ls -la ./../..")
-	utils.OK(t, err)
+	utils.Test().Nil(t, err)
 	<-wait
 
 	err = c.Run("asdfasdf")
-	utils.Contains(t, "exit status", err.Error())
+	utils.Test().Contains(t, err.Error(), "exit status")
 	<-wait
 }

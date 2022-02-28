@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/betas-in/logger"
+	"github.com/betas-in/utils"
 	"github.com/sudhanshuraheja/golem/config"
-	"github.com/sudhanshuraheja/golem/pkg/utils"
 )
 
 type Match struct {
@@ -62,7 +62,7 @@ func (m *Match) server(s config.Server) bool {
 }
 
 func (m *Match) array(oftype string, list []string) bool {
-	contains := utils.ArrayContains(list, m.match.Value, true)
+	contains := utils.Array().Contains(list, m.match.Value, true)
 	switch m.match.Operator {
 	case "contains":
 		if contains > -1 {
