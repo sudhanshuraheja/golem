@@ -12,10 +12,6 @@ import (
 	"github.com/sudhanshuraheja/golem/recipes"
 )
 
-const (
-	version = "v0.1.0"
-)
-
 type Kitchen struct {
 	conf        *config.Config
 	log         *logger.CLILogger
@@ -29,14 +25,14 @@ func NewKitchen() *Kitchen {
 
 	err := k.detectConfigFiles()
 	if err != nil {
-		k.log.Fatal("kitchen").Msgf("%v", err)
+		k.log.Fatal("golem").Msgf("%v", err)
 		os.Exit(1)
 	}
 
 	if len(k.configFiles) == 0 {
 		err := k.initConfigFile()
 		if err != nil {
-			k.log.Fatal("kitchen").Msgf("%v", err)
+			k.log.Fatal("golem").Msgf("%v", err)
 			os.Exit(1)
 		}
 	}
@@ -44,14 +40,14 @@ func NewKitchen() *Kitchen {
 	for _, path := range k.configFiles {
 		conf, err := config.NewConfig(path)
 		if err != nil {
-			k.log.Fatal("kitchen").Msgf("%v", err)
+			k.log.Fatal("golem").Msgf("%v", err)
 		}
 		k.mergeConfig(conf)
 	}
 
 	err = k.conf.ResolveServerProvider()
 	if err != nil {
-		k.log.Error("kitchen").Msgf("%v", err)
+		k.log.Error("golem").Msgf("%v", err)
 	}
 
 	if k.conf.LogLevel != nil {
@@ -132,7 +128,7 @@ func (k *Kitchen) initConfigFile() error {
 			return fmt.Errorf("error creating conf file <%s>: %v", confFile, err)
 		}
 		defer file.Close()
-		k.log.Highlight("kitchen").Msgf("conf file created at %s", confFile)
+		k.log.Highlight("golem").Msgf("conf file created at %s", confFile)
 	} else if err != nil {
 		return fmt.Errorf("error checking conf file <%s>: %v", confFile, err)
 	}
@@ -150,7 +146,7 @@ func (k *Kitchen) Exec(recipe string) {
 		r.Servers()
 		r.List()
 	case "version":
-		k.log.Highlight("kitchen").Msgf("golem version: %s", version)
+		k.log.Highlight("golem").Msgf("golem version: %s", version)
 	case "list":
 		r.List()
 	case "servers":

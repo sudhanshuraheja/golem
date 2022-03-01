@@ -28,6 +28,7 @@ recipe "test_norace" "local" {
 
 recipe "install" "local" {
     commands = [
+        "./version.sh",
         "go install"
     ]
 }
