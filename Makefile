@@ -53,3 +53,7 @@ build:
 
 brew:
 	code ../homebrew-golem
+
+tidy:
+	go get -u
+	go mod tidy
