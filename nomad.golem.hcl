@@ -1,5 +1,4 @@
-recipe "tail-nomad" {
-    type = "remote-exec"
+recipe "tail-nomad" "remote" {
     match {
         attribute = "tags"
         operator = "contains"
@@ -10,8 +9,7 @@ recipe "tail-nomad" {
     ]
 }
 
-recipe "nomad-server-config-update" {
-    type = "remote-exec"
+recipe "nomad-server-config-update" "remote" {
     match {
         attribute = "tags"
         operator = "contains"
@@ -41,8 +39,7 @@ recipe "nomad-server-config-update" {
     ]
 }
 
-recipe "nomad-client-config-update" {
-    type = "remote-exec"
+recipe "nomad-client-config-update" "remote" {
     match {
         attribute = "tags"
         operator = "contains"

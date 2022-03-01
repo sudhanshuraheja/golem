@@ -6,38 +6,33 @@ vars = {
     GOTEST = "gotestsum"
 }
 
-recipe "dev" {
-    type = "local-exec"
+recipe "dev" "local" {
     commands = [
         "go run main.go",
     ]
 }
 
-recipe "test" {
-    type = "local-exec"
+recipe "test" "local" {
     commands = [
         "go test ./... -timeout 15s -race -cover -coverprofile=coverage.out -v",
         "go tool cover -html=coverage.out -o coverage.html",
     ]
 }
 
-recipe "test_norace" {
-    type = "local-exec"
+recipe "test_norace" "local" {
     commands = [
         "MallocNanoZone=0 go test ./... -timeout 15s -cover -coverprofile=coverage.out -v",
         "go tool cover -html=coverage.out -o coverage.html",
     ]
 }
 
-recipe "install" {
-    type = "local-exec"
+recipe "install" "local" {
     commands = [
         "go install"
     ]
 }
 
-recipe "build" {
-    type = "local-exec"
+recipe "build" "local" {
     commands = [
         "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o builds/golem-linux-amd64-$(git describe --tags) main.go",
         "CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o builds/golem-darwin-amd64-$(git describe --tags) main.go",
@@ -45,8 +40,7 @@ recipe "build" {
     ]
 }
 
-recipe "tidy" {
-    type = "local-exec"
+recipe "tidy" "local" {
     commands = [
         "go get -u",
         "go mod tidy"

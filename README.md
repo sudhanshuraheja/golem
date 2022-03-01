@@ -86,8 +86,7 @@ postgres  128.199.226.65   10.104.16.8     root       22    postgres, vpc-privat
 # Adding Recipes
 Here's a sample recipe that uploads a file to the remote server and checks if it exists
 ```bash
-recipe "test-exec" {
-    type = "remote-exec"
+recipe "test-exec" "remote" {
     match {
         attribute = "name"
         operator = "like"
@@ -105,8 +104,7 @@ recipe "test-exec" {
 
 Here's one that runs commands locally
 ```bash
-recipe "ls-la" {
-    type = "local-exec"
+recipe "ls-la" "local" {
     commands = [
         "ls -la",
         "nomad version",
@@ -126,8 +124,7 @@ Artifacts upload files from a local source to a remote destination. You can use 
 
 Here's an example of updating the nomad config and restarting servers
 ```bash
-recipe "nomad-server-config-update" {
-    type = "remote-exec"
+recipe "nomad-server-config-update" "remote" {
     match {
         attribute = "tags"
         operator = "contains"

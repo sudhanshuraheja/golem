@@ -1,5 +1,4 @@
-recipe "apt-update" {
-    type = "remote-exec"
+recipe "apt-update" "remote" {
     match {
         attribute = "tags"
         operator = "not-contains"
@@ -11,15 +10,13 @@ recipe "apt-update" {
     ]
 }
 
-recipe "ls-la" {
-    type = "local-exec"
+recipe "ls-la" "local" {
     commands = [
         "ls -la",
     ]
 }
 
-recipe "test-exec" {
-    type = "remote-exec"
+recipe "test-exec" "remote" {
     match {
         attribute = "name"
         operator = "like"
@@ -39,8 +36,7 @@ recipe "test-exec" {
     ]
 }
 
-recipe "apply-security-patch" {
-    type = "remote-exec"
+recipe "apply-security-patch" "remote" {
     match {
         attribute = "name"
         operator = "="

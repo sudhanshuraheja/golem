@@ -30,7 +30,7 @@ func NewRecipes(conf *config.Config) *Recipes {
 
 func (r *Recipes) List() {
 	logger.Announcef("%sRecipes", header)
-	tb := logger.NewCLITable("Name", "Match", "Artifacts", "Commands")
+	tb := logger.NewCLITable("Type", "Name", "Match", "Artifacts", "Commands")
 	for _, r := range r.conf.Recipes {
 		var attribute, operator, value string
 		if r.Match != nil {
@@ -39,6 +39,7 @@ func (r *Recipes) List() {
 			value = r.Match.Value
 		}
 		tb.Row(
+			r.Type,
 			r.Name,
 			fmt.Sprintf("%s %s %s", attribute, operator, value),
 			len(r.Artifacts),
@@ -46,7 +47,7 @@ func (r *Recipes) List() {
 		)
 	}
 	// Add system defined
-	tb.Row("servers", "local only", 0, 0)
+	tb.Row("local", "servers", "", 0, 0)
 	tb.Display()
 }
 
@@ -93,22 +94,22 @@ func (r *Recipes) Run(name string) {
 	}
 
 	switch recipe.Type {
-	case "remote-exec":
+	case "remote":
 		r.RemotePool(servers, recipe, *r.conf.MaxParallelProcesses)
-	case "local-exec":
+	case "local":
 		c := Cmd{}
 		c.Run(recipe.Commands)
 	default:
-		logger.Errorf("recipe only supports ['remote-exec', 'local-exec'] types")
+		logger.Errorf("recipe only supports ['remote', 'local'] types")
 	}
 }
 
 func (r *Recipes) askPermission(recipe *config.Recipe) []config.Server {
 	var servers []config.Server
 	switch recipe.Type {
-	case "remote-exec":
+	case "remote":
 		if recipe.Match == nil {
-			logger.Errorf("kitchen | recipe <%s> need a 'match' block because of 'remote-exec'", recipe.Name)
+			logger.Errorf("kitchen | recipe <%s> need a 'match' block because of 'remote'", recipe.Name)
 			return servers
 		}
 
@@ -125,9 +126,9 @@ func (r *Recipes) askPermission(recipe *config.Recipe) []config.Server {
 
 		logger.Announcef("%s | found %d matching servers - %s", recipe.Name, len(servers), strings.Join(serverNames, ", "))
 
-	case "local-exec":
+	case "local":
 	default:
-		logger.Errorf("recipe only supports ['remote-exec', 'local-exec'] types")
+		logger.Errorf("recipe only supports ['remote', 'local'] types")
 	}
 
 	for _, a := range recipe.Artifacts {
