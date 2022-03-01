@@ -2,6 +2,7 @@ package recipes
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/betas-in/logger"
@@ -11,13 +12,15 @@ import (
 
 type SSHWorkerGroup struct {
 	name      string
+	log       *logger.CLILogger
 	heartbeat time.Duration
 }
 
 // NewWorkerGroup ...
-func NewSSHWorkerGroup(name string, heartbeat time.Duration) *SSHWorkerGroup {
+func NewSSHWorkerGroup(name string, log *logger.CLILogger, heartbeat time.Duration) *SSHWorkerGroup {
 	w := SSHWorkerGroup{
 		name:      name,
+		log:       log,
 		heartbeat: heartbeat,
 	}
 	return &w
@@ -25,7 +28,7 @@ func NewSSHWorkerGroup(name string, heartbeat time.Duration) *SSHWorkerGroup {
 
 func (w *SSHWorkerGroup) Process(ctx context.Context, workerCtx *pool.WorkerContext, id string) {
 	workerCtx.Heartbeat <- pool.Heartbeat{ID: id, Ping: true}
-	logger.Infof("%s-%s | Started", w.name, id)
+	w.log.Trace(w.Name(id)).Msgf("Started")
 
 	ticker := time.NewTicker(w.heartbeat)
 	defer ticker.Stop()
@@ -36,34 +39,36 @@ func (w *SSHWorkerGroup) Process(ctx context.Context, workerCtx *pool.WorkerCont
 
 			job, ok := j.(SSHJob)
 			if !ok {
-				logger.Errorf("%s-%s | invalid job", w.name, id)
+				w.log.Error(w.Name(id)).Msgf("invalid job")
 			}
-			// log.Infof("%s-%s | Job %+v", w.name, id, j)
-
 			w.ExecRecipeOnServer(job.Server, job.Recipe)
 
 			workerCtx.Heartbeat <- pool.Heartbeat{ID: id, Processed: 1}
 			workerCtx.Processed <- j
 		case <-ctx.Done():
-			logger.Successf("%s-%s | Done", w.name, id)
+			w.log.Trace(w.Name(id)).Msgf("Done")
 			workerCtx.Heartbeat <- pool.Heartbeat{ID: id, Closed: true}
 			return
 		case <-workerCtx.Close:
-			logger.Successf("%s-%s | Closing", w.name, id)
+			w.log.Debug(w.Name(id)).Msgf("Closing")
 			workerCtx.Heartbeat <- pool.Heartbeat{ID: id, Closed: true}
 			return
 		case <-ticker.C:
-			logger.Tracef("%s-%s | Heartbeat", w.name, id)
+			w.log.Trace(w.Name(id)).Msgf("Heartbeat")
 			workerCtx.Heartbeat <- pool.Heartbeat{ID: id, Ping: true}
 		}
 	}
 }
 
+func (w *SSHWorkerGroup) Name(id string) string {
+	return fmt.Sprintf("%s-%s", w.name, id)
+}
+
 func (w *SSHWorkerGroup) ExecRecipeOnServer(s config.Server, recipe config.Recipe) {
-	ss := SSH{}
+	ss := SSH{log: w.log}
 	err := ss.Connect(&s)
 	if err != nil {
-		logger.Errorf("%s | %v", s.Name, err)
+		w.log.Error(s.Name).Msgf("%v", err)
 		return
 	}
 	ss.Upload(recipe.Artifacts)

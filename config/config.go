@@ -1,10 +1,9 @@
 package config
 
 import (
+	"fmt"
 	"strings"
-	"time"
 
-	"github.com/betas-in/logger"
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclparse"
 )
@@ -13,7 +12,7 @@ type Config struct {
 	ServerProviders      []ServerProvider   `hcl:"server_provider,block"`
 	Servers              []Server           `hcl:"server,block"`
 	Recipes              []Recipe           `hcl:"recipe,block"`
-	LogLevel             *string            `hcl:"loglevel"`
+	LogLevel             *int               `hcl:"loglevel"`
 	MaxParallelProcesses *int               `hcl:"max_parallel_processes"`
 	Vars                 *map[string]string `hcl:"vars"`
 }
@@ -69,10 +68,6 @@ func NewConfig(path string) (*Config, error) {
 		return nil, diags
 	}
 
-	if conf.LogLevel != nil {
-		logger.NewCLILogger(*conf.LogLevel)
-	}
-
 	if conf.MaxParallelProcesses == nil {
 		maxParallelProcs := 4
 		conf.MaxParallelProcesses = &maxParallelProcs
@@ -81,8 +76,7 @@ func NewConfig(path string) (*Config, error) {
 	return &conf, nil
 }
 
-func (c *Config) ResolveServerProvider() {
-	startTime := time.Now()
+func (c *Config) ResolveServerProvider() error {
 	for _, sp := range c.ServerProviders {
 		switch sp.Name {
 		case "terraform":
@@ -90,18 +84,16 @@ func (c *Config) ResolveServerProvider() {
 				spt := ServerProviderTerraform{}
 				srvs, iph, err := spt.GetServers(cf, sp.User, sp.Port)
 				if err != nil {
-					logger.Errorf("config | could not load servers from tfstate %s: %v", cf, err)
-					continue
+					return fmt.Errorf("could not load servers from tfstate %s: %v", cf, err)
 				}
-				logger.Debugf("config | found %d servers in %s", len(srvs), cf)
 				c.Servers = append(c.Servers, srvs...)
 				mergeIPHostnames(&c.Servers, iph)
 			}
 		default:
-			logger.Errorf("config | server_providers label only supports ['terraform']")
+			return fmt.Errorf("server_providers label only supports ['terraform']")
 		}
 	}
-	logger.Debugf("resolved service provider in %s", time.Since(startTime))
+	return nil
 }
 
 func mergeIPHostnames(servers *[]Server, iph IPHostNames) {

@@ -13,6 +13,8 @@ func TestConn(t *testing.T) {
 		return
 	}
 
+	log := logger.NewCLILogger(6, 8)
+
 	conn, err := NewSSHConnection("local", "sudhanshu", "192.168.86.173", 22, "")
 	utils.Test().Nil(t, err)
 
@@ -22,22 +24,22 @@ func TestConn(t *testing.T) {
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, int64(10), copied)
 
-	go func(wait chan bool) {
+	go func(log *logger.CLILogger, wait chan bool) {
 		for {
 			select {
 			case stdout := <-conn.Stdout:
 				if stdout.Completed {
 					wait <- true
 				}
-				logger.Announcef("%s | %s", stdout.Name, stdout.Message)
+				log.Debug(stdout.Name).Msgf("%s", stdout.Message)
 			case stderr := <-conn.Stderr:
 				if stderr.Completed {
 					wait <- true
 				}
-				logger.Errorf("%s | %s", stderr.Name, stderr.Message)
+				log.Error(stderr.Name).Msgf("%s", stderr.Message)
 			}
 		}
-	}(wait)
+	}(log, wait)
 
 	status, err := conn.Run("ls -la")
 	utils.Test().Nil(t, err)

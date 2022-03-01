@@ -8,25 +8,26 @@ import (
 )
 
 func TestCmd(t *testing.T) {
+	log := logger.NewCLILogger(6, 8)
 	c := NewCmd("test")
 
 	wait := make(chan bool)
-	go func(wait chan bool) {
+	go func(log *logger.CLILogger, wait chan bool) {
 		for {
 			select {
 			case stdout := <-c.Stdout:
 				if stdout.Completed {
 					wait <- true
 				}
-				logger.Announcef("%s | %s", stdout.Name, stdout.Message)
+				log.Debug(stdout.Name).Msgf("%s", stdout.Message)
 			case stderr := <-c.Stderr:
 				if stderr.Completed {
 					wait <- true
 				}
-				logger.Errorf("%s | %s", stderr.Name, stderr.Message)
+				log.Error(stderr.Name).Msgf("%s", stderr.Message)
 			}
 		}
-	}(wait)
+	}(log, wait)
 
 	err := c.Run("ls -la")
 	utils.Test().Nil(t, err)

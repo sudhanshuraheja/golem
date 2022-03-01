@@ -18,23 +18,25 @@ const (
 
 type Kitchen struct {
 	conf        *config.Config
+	log         *logger.CLILogger
 	configFiles []string
 }
 
 func NewKitchen() *Kitchen {
 	k := Kitchen{}
+	k.log = logger.NewCLILogger(6, 12)
 	k.conf = &config.Config{}
 
 	err := k.detectConfigFiles()
 	if err != nil {
-		logger.Fatalf("kitchen | %v", err)
+		k.log.Fatal("kitchen").Msgf("%v", err)
 		os.Exit(1)
 	}
 
 	if len(k.configFiles) == 0 {
 		err := k.initConfigFile()
 		if err != nil {
-			logger.Fatalf("kitchen | %v", err)
+			k.log.Fatal("kitchen").Msgf("%v", err)
 			os.Exit(1)
 		}
 	}
@@ -42,12 +44,19 @@ func NewKitchen() *Kitchen {
 	for _, path := range k.configFiles {
 		conf, err := config.NewConfig(path)
 		if err != nil {
-			logger.Errorf("%v", err)
+			k.log.Fatal("kitchen").Msgf("%v", err)
 		}
 		k.mergeConfig(conf)
 	}
 
-	k.conf.ResolveServerProvider()
+	err = k.conf.ResolveServerProvider()
+	if err != nil {
+		k.log.Error("kitchen").Msgf("%v", err)
+	}
+
+	if k.conf.LogLevel != nil {
+		k.log = logger.NewCLILogger(*k.conf.LogLevel, 12)
+	}
 	return &k
 }
 
@@ -123,7 +132,7 @@ func (k *Kitchen) initConfigFile() error {
 			return fmt.Errorf("error creating conf file <%s>: %v", confFile, err)
 		}
 		defer file.Close()
-		logger.MinorSuccessf("kitchen | conf file created at %s", confFile)
+		k.log.Highlight("kitchen").Msgf("conf file created at %s", confFile)
 	} else if err != nil {
 		return fmt.Errorf("error checking conf file <%s>: %v", confFile, err)
 	}
@@ -132,16 +141,16 @@ func (k *Kitchen) initConfigFile() error {
 
 func (k *Kitchen) Exec(recipe string) {
 	if recipe != "" && k.conf != nil && k.conf.MaxParallelProcesses != nil {
-		logger.Announcef("%s | running recipe with max %d routines", recipe, *k.conf.MaxParallelProcesses)
+		k.log.Announce(recipe).Msgf("running with a maximum of %d routines %s", *k.conf.MaxParallelProcesses, logger.CyanBold(recipe))
 	}
-	r := recipes.NewRecipes(k.conf)
+	r := recipes.NewRecipes(k.conf, k.log)
 	switch recipe {
 	case "":
 		// log.MinorSuccessf("We found these recipes in '~/.golem' and '.'")
 		r.Servers()
 		r.List()
 	case "version":
-		logger.MinorSuccessf("golem version: %s", version)
+		k.log.Highlight("kitchen").Msgf("golem version: %s", version)
 	case "list":
 		r.List()
 	case "servers":

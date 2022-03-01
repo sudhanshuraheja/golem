@@ -80,7 +80,6 @@ func (c *Cmd) pipes() error {
 					if strings.Contains(errMessage, "file already closed") {
 						c.Stdout <- Out{
 							Name:      name,
-							Message:   "Done",
 							Completed: true,
 						}
 					} else {
@@ -93,7 +92,6 @@ func (c *Cmd) pipes() error {
 				} else {
 					c.Stdout <- Out{
 						Name:      name,
-						Message:   "Done",
 						Completed: true,
 					}
 				}

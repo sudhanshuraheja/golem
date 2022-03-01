@@ -14,8 +14,10 @@ github.com/apparentlymart/go-textseg/v13 v13.0.0 h1:Y+KvPE1NYz0xl601PVImeQfFyEy6
 github.com/apparentlymart/go-textseg/v13 v13.0.0/go.mod h1:ZK2fH7c4NqDTLtiYLvIkEghdlcqw7yxLeM89kiTRPUo=
 github.com/betas-in/getter v0.1.0 h1:+oPyZCXth81I8T8bBU8CfllMFEMprROGlEXlY7SzutQ=
 github.com/betas-in/getter v0.1.0/go.mod h1:lpBdC4ICTWrcPuN568EoGEoDSoceX3PimHUQGVy9LD0=
-github.com/betas-in/logger v0.1.0 h1:Ez4m2Tt8bPLmRP1WayFtTbtW2fsFL1qbeCQvSG14ono=
 github.com/betas-in/logger v0.1.0/go.mod h1:YgnRWy7TA32jkmNSfs2tEfHhj6jp2UiS8H90SfIGt7Y=
+github.com/betas-in/logger v0.1.1/go.mod h1:YgnRWy7TA32jkmNSfs2tEfHhj6jp2UiS8H90SfIGt7Y=
+github.com/betas-in/logger v0.1.2 h1:z99ibpDjsoq0XN8ObECAm+rKgwAb4RAvRbRCYOjjH04=
+github.com/betas-in/logger v0.1.2/go.mod h1:YgnRWy7TA32jkmNSfs2tEfHhj6jp2UiS8H90SfIGt7Y=
 github.com/betas-in/pool v0.1.0 h1:4cP1h0EcfM709vmboaFuoO6BGvFFgdFdci4mufAp8NM=
 github.com/betas-in/pool v0.1.0/go.mod h1:8PPKN4tN3KshID4exdf327mEhcnFnqR01pnp0LLXRh8=
 github.com/betas-in/rediscache v0.1.0 h1:F9IyObOHPYYAKnhzAjkXlq+bPBHXq65t6S4Ze+F16eU=
@@ -23,8 +25,8 @@ github.com/betas-in/rediscache v0.1.0/go.mod h1:yTbtNx63a6VYVdTcx0Tf+ftuIhbkWGKZ
 github.com/betas-in/utils v0.1.0/go.mod h1:5vlEh8HOCdFcgDKhZKUQFevUi9hyDDic/SWrxOAC0aY=
 github.com/betas-in/utils v0.1.1/go.mod h1:5vlEh8HOCdFcgDKhZKUQFevUi9hyDDic/SWrxOAC0aY=
 github.com/betas-in/utils v0.1.2/go.mod h1:5vlEh8HOCdFcgDKhZKUQFevUi9hyDDic/SWrxOAC0aY=
-github.com/betas-in/utils v0.1.4 h1:6MeY9AW6pNW68a1OyZ4Mv1hgSBjoMzGesLswUv1Kon0=
-github.com/betas-in/utils v0.1.4/go.mod h1:cRXtEH6erV5SE98Y+sIFfmJIAQJyTJa52IFp0dM1Lfw=
+github.com/betas-in/utils v0.1.5 h1:ul6cFBeG5HjUWAjf3Bnsd2Z8BOY3GFeJ+iymctM305w=
+github.com/betas-in/utils v0.1.5/go.mod h1:aVjLVBd85ADZTNSBncOMP+nj1aYWrMxMC+jBaEor0+4=
 github.com/cespare/xxhash/v2 v2.1.2 h1:YRXhKfTDauu4ajMg1TPgFO5jnlC2HCbmLXMcTG5cbYE=
 github.com/cespare/xxhash/v2 v2.1.2/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/coreos/go-systemd/v22 v22.3.2/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=

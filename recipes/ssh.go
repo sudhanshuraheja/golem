@@ -6,11 +6,13 @@ import (
 
 	"github.com/betas-in/logger"
 	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/pkg/localutils"
 	"github.com/sudhanshuraheja/golem/pkg/ssh"
 )
 
 type SSH struct {
 	conn *ssh.Connection
+	log  *logger.CLILogger
 	name string
 }
 
@@ -35,7 +37,7 @@ func (ss *SSH) Connect(s *config.Server) error {
 	if err != nil {
 		return fmt.Errorf("could not ssh to host: %v", err)
 	}
-	logger.MinorSuccessf("%s | connected via SSH in %s", s.Name, time.Since(startTime))
+	ss.log.Info(s.Name).Msgf("connected via SSH %s", localutils.TimeInSecs(startTime))
 	ss.conn = conn
 	ss.name = s.Name
 	return nil
@@ -43,49 +45,54 @@ func (ss *SSH) Connect(s *config.Server) error {
 
 func (ss *SSH) Run(commands []string) {
 	wait := make(chan bool)
-	go func(wait chan bool) {
+	go func(log *logger.CLILogger, wait chan bool) {
 		for {
 			select {
 			case stdout := <-ss.conn.Stdout:
-				logger.Infof("%s | %s", stdout.Name, stdout.Message)
+				if stdout.Message != "" {
+					ss.log.Debug(stdout.Name).Msgf("%s", stdout.Message)
+				}
 				if stdout.Completed {
 					wait <- true
 				}
 			case stderr := <-ss.conn.Stderr:
-				logger.Infof("%s | %s", stderr.Name, stderr.Message)
+				if stderr.Message != "" {
+					ss.log.Error(stderr.Name).Msgf("%s", stderr.Message)
+				}
 				if stderr.Completed {
 					wait <- true
 				}
 			}
 		}
-	}(wait)
+	}(ss.log, wait)
 
 	for _, cmd := range commands {
-		logger.Announcef("%s | running <%s>", ss.name, cmd)
+		ss.log.Highlight(ss.name).Msgf("$ %s", cmd)
 		startTime := time.Now()
 		status, err := ss.conn.Run(cmd)
 		if err != nil {
-			logger.Errorf("%s | error in running command <%s>: %v", ss.name, cmd, err)
+			ss.log.Error(ss.name).Msgf("error in running command <%s>: %v", cmd, err)
 			continue
 		}
 		<-wait
 		if status > 0 {
-			logger.Errorf("%s | command <%s> failed with status: %d", ss.name, cmd, status)
+			ss.log.Error(ss.name).Msgf("command <%s> failed with status: %d", cmd, status)
 			continue
 		}
-		logger.Successf("%s | command <%s> ended successfully in %s", ss.name, cmd, time.Since(startTime))
+		ss.log.Success(ss.name).Msgf("$ %s %s", cmd, localutils.TimeInSecs(startTime))
 	}
 }
 
 func (ss *SSH) Upload(artifacts []config.Artifact) {
 	for _, artifact := range artifacts {
 		startTime := time.Now()
+		ss.log.Info(ss.name).Msgf("%s %s %s %s:%s", logger.Cyan("uploading"), artifact.Source, logger.Cyan("to"), ss.name, artifact.Destination)
 		copied, err := ss.conn.Upload(artifact.Source, artifact.Destination)
 		if err != nil {
-			logger.Errorf("%s | failed to upload local:<%s> to remote:<%s>: %v", ss.name, artifact.Source, artifact.Destination, err)
+			ss.log.Error(ss.name).Msgf("failed to upload local:<%s> to remote:<%s>: %v", artifact.Source, artifact.Destination, err)
 			continue
 		}
-		logger.Successf("%s | successfully uploaded %d bytes from local:<%s> to remote:<%s> in %s", ss.name, copied, artifact.Source, artifact.Destination, time.Since(startTime))
+		ss.log.Success(ss.name).Msgf("uploaded %s to %s:%s %s", artifact.Source, ss.name, artifact.Destination, localutils.TransferRate(copied, startTime))
 	}
 }
 

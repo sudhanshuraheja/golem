@@ -179,7 +179,6 @@ func (c *Connection) pipes() error {
 				} else {
 					c.Stdout <- Out{
 						Name:      name,
-						Message:   "Done",
 						Completed: true,
 					}
 				}

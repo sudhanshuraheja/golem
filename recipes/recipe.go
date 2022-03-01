@@ -16,60 +16,102 @@ import (
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
 
-var (
-	header = "\n➡️  "
-)
-
 type Recipes struct {
 	conf *config.Config
+	log  *logger.CLILogger
 }
 
-func NewRecipes(conf *config.Config) *Recipes {
-	return &Recipes{conf: conf}
+func NewRecipes(conf *config.Config, log *logger.CLILogger) *Recipes {
+	return &Recipes{conf: conf, log: log}
 }
 
 func (r *Recipes) List() {
-	logger.Announcef("%sRecipes", header)
-	tb := logger.NewCLITable("Type", "Name", "Match", "Artifacts", "Commands")
-	for _, r := range r.conf.Recipes {
-		var attribute, operator, value string
-		if r.Match != nil {
-			attribute = r.Match.Attribute
-			operator = r.Match.Operator
-			value = r.Match.Value
-		}
-		tb.Row(
-			r.Type,
-			r.Name,
-			fmt.Sprintf("%s %s %s", attribute, operator, value),
-			len(r.Artifacts),
-			len(r.Commands),
-		)
-	}
+	r.log.Announce("").Msgf("list of all available recipes")
+
 	// Add system defined
-	tb.Row("local", "servers", "", 0, 0)
-	tb.Display()
+	r.log.Info("system").Msgf("%s", logger.Cyan("list"))
+	r.log.Info("system").Msgf("%s", logger.Cyan("servers"))
+
+	for _, re := range r.conf.Recipes {
+		name := logger.CyanBold(re.Name)
+		if re.Type == "local" {
+			name = logger.Cyan(re.Name)
+		}
+
+		var attribute, operator, value string
+		match := ""
+		if re.Match != nil {
+			attribute = re.Match.Attribute
+			operator = re.Match.Operator
+			value = re.Match.Value
+			match = fmt.Sprintf("%s %s %s ", attribute, operator, value)
+			match = logger.Yellow(match)
+		}
+
+		r.log.Info(re.Type).Msgf(
+			"%s %s",
+			name,
+			match,
+		)
+
+		for _, ar := range re.Artifacts {
+			r.log.Info("").Msgf("%s %s %s", ar.Source, logger.Cyan("to"), ar.Destination)
+		}
+
+		for _, cm := range re.Commands {
+			r.log.Info("").Msgf("%s %s", logger.Cyan("$"), cm)
+		}
+	}
 }
 
 func (r *Recipes) Servers() {
-	logger.Announcef("%sServers", header)
-	t := logger.NewCLITable("Name", "Public IP", "Private IP", "User", "Port", "Tags", "Hostname")
+	r.log.Announce("").Msgf("list of all connected servers")
+
 	for _, s := range r.conf.Servers {
-		hostnames := localutils.StringPtrValue(s.HostName, "")
-		if len(hostnames) > 60 {
-			hostnames = hostnames[:60]
+
+		primaryName := s.Name
+		if primaryName == "" {
+			primaryName = localutils.StringPtrValue(s.PublicIP, "")
 		}
-		t.Row(
-			s.Name,
-			localutils.StringPtrValue(s.PublicIP, ""),
-			localutils.StringPtrValue(s.PrivateIP, ""),
-			s.User,
-			s.Port,
-			strings.Join(s.Tags, ", "),
-			hostnames,
+
+		username := ""
+		if s.User != "" {
+			username = fmt.Sprintf("%s %s ", logger.Cyan("user"), s.User)
+		}
+
+		port := ""
+		if s.Port != 0 {
+			port = fmt.Sprintf("%s %d ", logger.Cyan("port"), s.Port)
+		}
+
+		publicIP := localutils.StringPtrValue(s.PublicIP, "")
+		if publicIP != "" {
+			publicIP = fmt.Sprintf("%s %s ", logger.Cyan("publicIP"), publicIP)
+		}
+
+		privateIP := localutils.StringPtrValue(s.PrivateIP, "")
+		if privateIP != "" {
+			privateIP = fmt.Sprintf("%s %s ", logger.Cyan("privateIP"), privateIP)
+		}
+
+		r.log.Info(primaryName).Msgf(
+			"%s%s%s%s",
+			username,
+			port,
+			publicIP,
+			privateIP,
 		)
+
+		hostnames := localutils.StringPtrValue(s.HostName, "")
+		if hostnames != "" {
+			r.log.Info("").Msgf("%s %s", logger.Cyan("hosts"), hostnames)
+		}
+
+		tags := strings.Join(s.Tags, ", ")
+		if tags != "" {
+			r.log.Info("").Msgf("%s %s", logger.Cyan("tags"), tags)
+		}
 	}
-	t.Display()
 }
 
 func (r *Recipes) Run(name string) {
@@ -82,7 +124,7 @@ func (r *Recipes) Run(name string) {
 	}
 
 	if recipe.Name == "" {
-		logger.Errorf("kitchen | the recipe <%s> was not found in '~/.golem/' or '.'", recipe.Name)
+		r.log.Error(name).Msgf("the recipe <%s> was not found in '~/.golem/' or '.'", name)
 		return
 	}
 
@@ -90,17 +132,17 @@ func (r *Recipes) Run(name string) {
 
 	err := r.downloadRemoteArtifacts(&recipe)
 	if err != nil {
-		logger.Errorf("kitchen | %v", err)
+		r.log.Error(name).Msgf("%v", err)
 	}
 
 	switch recipe.Type {
 	case "remote":
 		r.RemotePool(servers, recipe, *r.conf.MaxParallelProcesses)
 	case "local":
-		c := Cmd{}
+		c := Cmd{log: r.log}
 		c.Run(recipe.Commands)
 	default:
-		logger.Errorf("recipe only supports ['remote', 'local'] types")
+		r.log.Error(name).Msgf("recipe only supports ['remote', 'local'] types")
 	}
 }
 
@@ -109,43 +151,48 @@ func (r *Recipes) askPermission(recipe *config.Recipe) []config.Server {
 	switch recipe.Type {
 	case "remote":
 		if recipe.Match == nil {
-			logger.Errorf("kitchen | recipe <%s> need a 'match' block because of 'remote'", recipe.Name)
+			r.log.Error(recipe.Name).Msgf("recipe needs a 'match' block because of 'remote' execution")
 			return servers
 		}
 
-		servers = NewMatch(*recipe.Match).Find(r.conf)
+		var err error
+		servers, err = NewMatch(*recipe.Match).Find(r.conf)
+		if err != nil {
+			r.log.Error(recipe.Name).Msgf("%v", err)
+			return servers
+		}
 		serverNames := []string{}
 		for _, s := range servers {
 			serverNames = append(serverNames, s.Name)
 		}
 
 		if len(servers) == 0 {
-			logger.MinorSuccessf("%s | no servers matched '%s %s %s'", recipe.Name, recipe.Match.Attribute, recipe.Match.Operator, recipe.Match.Value)
+			r.log.Highlight(recipe.Name).Msgf("no servers matched '%s %s %s'", recipe.Match.Attribute, recipe.Match.Operator, recipe.Match.Value)
 			return servers
 		}
 
-		logger.Announcef("%s | found %d matching servers - %s", recipe.Name, len(servers), strings.Join(serverNames, ", "))
+		r.log.Info(recipe.Name).Msgf("found %d matching servers - %s", len(servers), strings.Join(serverNames, ", "))
 
 	case "local":
 	default:
-		logger.Errorf("recipe only supports ['remote', 'local'] types")
+		r.log.Error(recipe.Name).Msgf("recipe only supports ['remote', 'local'] types")
 	}
 
 	for _, a := range recipe.Artifacts {
-		logger.Infof("→ %s → %s", a.Source, a.Destination)
+		r.log.Info(recipe.Name).Msgf("%s %s %s %s", logger.Cyan("uploading"), a.Source, logger.Cyan("to"), a.Destination)
 	}
 
 	for _, c := range recipe.Commands {
 		parsed, err := ParseTemplate(c, r.conf)
 		if err != nil {
-			logger.Errorf("Error parsing template <%s>: %v", c, err)
+			r.log.Error(recipe.Name).Msgf("Error parsing template <%s>: %v", c, err)
 		}
-		logger.Infof("→ $ %s", parsed)
+		r.log.Info(recipe.Name).Msgf("$ %s", parsed)
 	}
 
-	answer := logger.Questionf("Are you sure you want to continue [y/n]?")
+	answer := localutils.Question(r.log, recipe.Name, "Are you sure you want to continue [y/n]?")
 	if utils.Array().Contains([]string{"y", "yes"}, answer, false) == -1 {
-		logger.Errorf("Quitting, because you said %s", answer)
+		r.log.Error(recipe.Name).Msgf("Quitting, because you said %s", answer)
 		os.Exit(0)
 	}
 
@@ -155,8 +202,9 @@ func (r *Recipes) askPermission(recipe *config.Recipe) []config.Server {
 func (r *Recipes) downloadRemoteArtifacts(recipe *config.Recipe) error {
 	for i, a := range recipe.Artifacts {
 		if strings.HasPrefix(a.Source, "http://") || strings.HasPrefix(a.Source, "https://") {
-			logger.Announcef("kitchen | downloading %s", a.Source)
-			g := getter.NewGetter(nil)
+			r.log.Info(recipe.Name).Msgf("%s %s", logger.Cyan("downloading"), a.Source)
+			log := logger.NewLogger(3, true)
+			g := getter.NewGetter(log)
 
 			startTime := time.Now()
 			response := g.FetchResponse(getter.Request{
@@ -171,7 +219,7 @@ func (r *Recipes) downloadRemoteArtifacts(recipe *config.Recipe) error {
 				return fmt.Errorf("received error code for %s: %d", a.Source, response.Code)
 			}
 
-			logger.MinorSuccessf("kitchen | downloaded %s to %s in %s", a.Source, response.DataPath, time.Since(startTime))
+			r.log.Highlight(recipe.Name).Msgf("downloaded %s to %s %s", a.Source, response.DataPath, localutils.TimeInSecs(startTime))
 			recipe.Artifacts[i].Source = response.DataPath
 		}
 	}
@@ -181,7 +229,7 @@ func (r *Recipes) downloadRemoteArtifacts(recipe *config.Recipe) error {
 func (r *Recipes) RemotePool(servers []config.Server, recipe config.Recipe, maxProcs int) {
 	log := logger.NewLogger(2, true)
 	wp := pool.NewPool("ssh", log)
-	wp.AddWorkerGroup(NewSSHWorkerGroup("ssh", 10*time.Millisecond))
+	wp.AddWorkerGroup(NewSSHWorkerGroup("ssh", r.log, 10*time.Millisecond))
 	processed := wp.Start(int64(maxProcs))
 
 	startTime := time.Now()
@@ -226,5 +274,5 @@ func (r *Recipes) RemotePool(servers []config.Server, recipe config.Recipe, maxP
 		}
 	}
 
-	logger.MinorSuccessf("%s | completed in %s", recipe.Name, time.Since(startTime))
+	r.log.Announce(recipe.Name).Msgf("completed %s", localutils.TimeInSecs(startTime))
 }
