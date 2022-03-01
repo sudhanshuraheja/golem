@@ -63,6 +63,16 @@ func (k *Kitchen) mergeConfig(conf *config.Config) {
 	if conf.MaxParallelProcesses != nil {
 		k.conf.MaxParallelProcesses = conf.MaxParallelProcesses
 	}
+
+	if conf.Vars != nil {
+		if k.conf.Vars == nil {
+			vars := make(map[string]string)
+			k.conf.Vars = &vars
+		}
+		for key, value := range *conf.Vars {
+			(*k.conf.Vars)[key] = value
+		}
+	}
 }
 
 func (k *Kitchen) detectConfigFiles() error {

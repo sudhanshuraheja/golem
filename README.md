@@ -206,6 +206,7 @@ When the log level is set to `WARN`, you will not see the output of the commands
 
 ## Recipes
 - [x] Read recipes from config and execute them
+- [x] Define variables to be used in recipes
 - [ ] Create system level recipes
 - [ ] Native recipe to setup docker
 - [ ] Native recipe to setup nomad
@@ -228,7 +229,11 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Stream output from commands on remove servers
 - [x] Capture SIGINT in worker pool to shutdown connections properly
 - [x] Separate local and remote execution steps
+- [x] Replace makefile
 - [ ] Expands commands to include other metadata
+- [ ] Store outputs of commands in a struct for later reuse
+- [ ] Run go-template before running local exec
+- [ ] Run go-template before running ssh exec
 - [ ] Use output of commands as input to the next command
 - [ ] Increase goroutines if there are more tail tasks than routines
 - [ ] Fork a process to continue running tails

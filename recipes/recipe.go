@@ -135,7 +135,11 @@ func (r *Recipes) askPermission(recipe *config.Recipe) []config.Server {
 	}
 
 	for _, c := range recipe.Commands {
-		logger.Infof("→ $ %s", c)
+		parsed, err := ParseTemplate(c, r.conf)
+		if err != nil {
+			logger.Errorf("Error parsing template <%s>: %v", c, err)
+		}
+		logger.Infof("→ $ %s", parsed)
 	}
 
 	answer := logger.Questionf("Are you sure you want to continue [y/n]?")

@@ -10,11 +10,12 @@ import (
 )
 
 type Config struct {
-	ServerProviders      []ServerProvider `hcl:"server_provider,block"`
-	Servers              []Server         `hcl:"server,block"`
-	Recipes              []Recipe         `hcl:"recipe,block"`
-	LogLevel             *string          `hcl:"loglevel"`
-	MaxParallelProcesses *int             `hcl:"max_parallel_processes"`
+	ServerProviders      []ServerProvider   `hcl:"server_provider,block"`
+	Servers              []Server           `hcl:"server,block"`
+	Recipes              []Recipe           `hcl:"recipe,block"`
+	LogLevel             *string            `hcl:"loglevel"`
+	MaxParallelProcesses *int               `hcl:"max_parallel_processes"`
+	Vars                 *map[string]string `hcl:"vars"`
 }
 
 type ServerProvider struct {
