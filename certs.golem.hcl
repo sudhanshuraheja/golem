@@ -39,7 +39,17 @@ EOF
         // server.csr -> certificate signing request
         // server.pem -> public key
         exec = <<EOF
-echo '{}' | cfssl gencert -ca=nomad-ca.pem -ca-key=nomad-ca-key.pem -config=cfssl.json -hostname="server.global.nomad,localhost,127.0.0.1,{{ range $_, $s := (match "tags" "contains" "nomad-server") }}{{ if not ($s).PublicIP }}{{ else }}{{ ($s).PublicIP }},{{ end }}{{ if not ($s).PrivateIP }}{{ else }}{{ ($s).PrivateIP }},{{ end }}{{ end }}" - | cfssljson -bare server
+echo '{}' | cfssl gencert -ca=nomad-ca.pem -ca-key=nomad-ca-key.pem -config=cfssl.json -hostname="server.global.nomad,localhost,127.0.0.1,
+{{- range $_, $s := (match "tags" "contains" "nomad-server") -}}
+    {{- if not ($s).PublicIP -}}
+    {{- else -}}
+        {{- ($s).PublicIP -}},
+    {{- end -}}
+    {{- if not ($s).PrivateIP -}}
+    {{- else -}}
+        {{- ($s).PrivateIP -}},
+    {{- end -}}
+{{- end -}}" - | cfssljson -bare server
         EOF
     }
     command {

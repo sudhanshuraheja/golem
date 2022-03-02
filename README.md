@@ -155,6 +155,68 @@ recipe "nomad-server-config-update" "remote" {
 }
 ```
 
+## Using go-template in recipes
+
+Golem runs go-templates on all Command `commands = []` and CustomCommands `command {}`. It exposes two structs for you to use in your templates - `Servers` and `Vars`.
+
+`Vars` can be added at the top level of any `.golem.hcl` file. If you place them in multiple files, they are merged when start golem.
+
+```bash
+vars = {
+    APP = "golem"
+    REPO = "sudhanshuraheja"
+    ENV_PREFIX = "GOLEM_"
+}
+```
+
+Any `Vars` can be accessed in the commands as `{{ .Vars.APP }}`. Vars only support string keys and values.
+
+`Servers` includes any servers that you have added to golem. This has been covered in more detail earlier.
+
+Golem template introduces two functions for `Servers`. `match` which can be used as `(match "tags" "contains" "nomad-server")`, and `matchOne` which can be used at `(matchOne "tags" "contains" "nomad-server")`. `matchOne` returns the first server in the list, if multiple are matched.
+
+```bash
+{{ range $_, $s := (match "tags" "contains" "nomad-server") }}
+    {{ if not ($s).PublicIP }}
+    {{ else }}
+        {{ ($s).PublicIP }}
+    {{ end }}
+{{ end }}
+```
+
+You can loop through maps like this
+```bash
+{{ range $key, $value := .Vars }}
+    {{ $key }} = {{ $value }}
+{{ end }}
+```
+
+You can remove the whitespce by using hyphens `{{-` and `-}}`
+
+Here's an example of using it all together
+```bash
+recipe "nomad-ca" "local" {
+    command {
+        // server-key.pem -> private key
+        // server.csr -> certificate signing request
+        // server.pem -> public key
+        exec = <<EOF
+echo '{}' | cfssl gencert -ca=nomad-ca.pem -ca-key=nomad-ca-key.pem -config=cfssl.json -hostname="server.global.nomad,localhost,127.0.0.1,
+{{- range $_, $s := (match "tags" "contains" "nomad-server") -}}
+    {{- if not ($s).PublicIP -}}
+    {{- else -}}
+        {{- ($s).PublicIP -}},
+    {{- end -}}
+    {{- if not ($s).PrivateIP -}}
+    {{- else -}}
+        {{- ($s).PrivateIP -}},
+    {{- end -}}
+{{- end -}}" - | cfssljson -bare server
+        EOF
+    }
+}
+```
+
 After adding recipes, you can check which recipes exist in Golem's configuration by running the `golem list` recipe
 ```bash
 $ golem list
