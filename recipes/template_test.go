@@ -7,17 +7,13 @@ import (
 )
 
 func TestTemplates(t *testing.T) {
-	type Todo struct {
-		Vars *map[string]string
-	}
-
-	todo := Todo{
-		Vars: &map[string]string{"foo": "bar"},
+	tpl := &Template{
+		Vars: map[string]string{"foo": "bar"},
 	}
 
 	message := "foo:{{ .Vars.foo}}"
 
-	txt, err := ParseTemplate(message, todo)
+	txt, err := ParseTemplate(message, tpl)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, "foo:bar", txt)
 }
