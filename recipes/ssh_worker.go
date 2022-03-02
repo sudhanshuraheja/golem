@@ -3,6 +3,7 @@ package recipes
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/betas-in/logger"
@@ -72,6 +73,15 @@ func (w *SSHWorkerGroup) ExecRecipeOnServer(s config.Server, recipe config.Recip
 		return
 	}
 	ss.Upload(recipe.Artifacts)
-	ss.Run(recipe.Commands)
+	if len(recipe.CustomCommands) > 0 {
+		commands := []string{}
+		for _, cmd := range recipe.CustomCommands {
+			commands = append(commands, strings.TrimSuffix(cmd.Exec, "\n"))
+		}
+		ss.Run(commands)
+	}
+	if recipe.Commands != nil {
+		ss.Run(*recipe.Commands)
+	}
 	ss.Close()
 }

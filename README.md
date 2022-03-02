@@ -214,6 +214,8 @@ When the log level is set to `WARN`, you will not see the output of the commands
 ## Artifacts
 - [x] Upload local files via SFTP
 - [x] Download http artifacts before uploading
+- [ ] Support local artifact via go-template
+- [ ] Support local artifcat via shell
 - [ ] Upload folders to remote
 - [ ] Run go templates on files before uploaded
 - [ ] Show progress while uploading or downloading
@@ -227,16 +229,13 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Capture SIGINT in worker pool to shutdown connections properly
 - [x] Separate local and remote execution steps
 - [x] Replace makefile
-- [ ] Expands commands to include other metadata
 - [ ] Store outputs of commands in a struct for later reuse
 - [ ] Run go-template before running local exec
 - [ ] Run go-template before running ssh exec
+- [ ] Expands commands to include other metadata
 - [ ] Use output of commands as input to the next command
 - [ ] Increase goroutines if there are more tail tasks than routines
-- [ ] Fork a process to continue running tails
-- [ ] Support rolling updates locally and on remote
 - [ ] Get docker logs from remote
-- [ ] Support different environments, like staging, prod
 
 
 [Hashicorp HCL]: https://github.com/hashicorp/hcl

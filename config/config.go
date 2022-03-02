@@ -2,8 +2,10 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclparse"
 )
@@ -35,11 +37,12 @@ type Server struct {
 }
 
 type Recipe struct {
-	Name      string     `hcl:"name,label"`
-	Type      string     `hcl:"type,label"`
-	Match     *Match     `hcl:"match,block"`
-	Artifacts []Artifact `hcl:"artifact,block"`
-	Commands  []string   `hcl:"commands"`
+	Name           string     `hcl:"name,label"`
+	Type           string     `hcl:"type,label"`
+	Match          *Match     `hcl:"match,block"`
+	Artifacts      []Artifact `hcl:"artifact,block"`
+	Commands       *[]string  `hcl:"commands"`
+	CustomCommands []Command  `hcl:"command,block"`
 }
 
 type Match struct {
@@ -53,19 +56,25 @@ type Artifact struct {
 	Destination string `hcl:"destination"`
 }
 
-func NewConfig(path string) (*Config, error) {
+type Command struct {
+	Exec string `hcl:"exec"`
+}
+
+func NewConfig(path string) *Config {
 	var conf Config
 
 	parser := hclparse.NewParser()
 
 	f, diags := parser.ParseHCLFile(path)
 	if diags.HasErrors() {
-		return nil, diags
+		showHCLDiagnostics(parser, diags)
+		return nil
 	}
 
 	diags = gohcl.DecodeBody(f.Body, nil, &conf)
 	if diags.HasErrors() {
-		return nil, diags
+		showHCLDiagnostics(parser, diags)
+		return nil
 	}
 
 	if conf.MaxParallelProcesses == nil {
@@ -73,7 +82,25 @@ func NewConfig(path string) (*Config, error) {
 		conf.MaxParallelProcesses = &maxParallelProcs
 	}
 
-	return &conf, nil
+	return &conf
+}
+
+func showHCLDiagnostics(parser *hclparse.Parser, diags hcl.Diagnostics) {
+	wr := hcl.NewDiagnosticTextWriter(
+		os.Stdout,
+		parser.Files(),
+		80,
+		true,
+	)
+
+	for _, diag := range diags {
+		err := wr.WriteDiagnostic(diag)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
+	os.Exit(1)
 }
 
 func (c *Config) ResolveServerProvider() error {

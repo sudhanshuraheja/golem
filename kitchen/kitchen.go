@@ -38,10 +38,7 @@ func NewKitchen() *Kitchen {
 	}
 
 	for _, path := range k.configFiles {
-		conf, err := config.NewConfig(path)
-		if err != nil {
-			k.log.Fatal("golem").Msgf("%v", err)
-		}
+		conf := config.NewConfig(path)
 		k.mergeConfig(conf)
 	}
 

@@ -58,8 +58,14 @@ func (r *Recipes) List() {
 			r.log.Info("").Msgf("%s %s %s", ar.Source, logger.Cyan("to"), ar.Destination)
 		}
 
-		for _, cm := range re.Commands {
-			r.log.Info("").Msgf("%s %s", logger.Cyan("$"), cm)
+		for _, cm := range re.CustomCommands {
+			r.log.Info("").Msgf("%s %s", logger.Cyan("$"), strings.TrimSuffix(cm.Exec, "\n"))
+		}
+
+		if re.Commands != nil {
+			for _, cm := range *re.Commands {
+				r.log.Info("").Msgf("%s %s", logger.Cyan("$"), cm)
+			}
 		}
 	}
 }
@@ -140,7 +146,16 @@ func (r *Recipes) Run(name string) {
 		r.RemotePool(servers, recipe, *r.conf.MaxParallelProcesses)
 	case "local":
 		c := Cmd{log: r.log}
-		c.Run(recipe.Commands)
+		if len(recipe.CustomCommands) > 0 {
+			commands := []string{}
+			for _, cmd := range recipe.CustomCommands {
+				commands = append(commands, strings.TrimSuffix(cmd.Exec, "\n"))
+			}
+			c.Run(commands)
+		}
+		if recipe.Commands != nil {
+			c.Run(*recipe.Commands)
+		}
 	default:
 		r.log.Error(name).Msgf("recipe only supports ['remote', 'local'] types")
 	}
@@ -182,12 +197,18 @@ func (r *Recipes) askPermission(recipe *config.Recipe) []config.Server {
 		r.log.Info(recipe.Name).Msgf("%s %s %s %s", logger.Cyan("uploading"), a.Source, logger.Cyan("to"), a.Destination)
 	}
 
-	for _, c := range recipe.Commands {
-		parsed, err := ParseTemplate(c, r.conf)
-		if err != nil {
-			r.log.Error(recipe.Name).Msgf("Error parsing template <%s>: %v", c, err)
+	for _, cmd := range recipe.CustomCommands {
+		r.log.Info(recipe.Name).Msgf("$ %s", strings.TrimSuffix(cmd.Exec, "\n"))
+	}
+
+	if recipe.Commands != nil {
+		for _, c := range *recipe.Commands {
+			parsed, err := ParseTemplate(c, r.conf)
+			if err != nil {
+				r.log.Error(recipe.Name).Msgf("Error parsing template <%s>: %v", c, err)
+			}
+			r.log.Info(recipe.Name).Msgf("$ %s", parsed)
 		}
-		r.log.Info(recipe.Name).Msgf("$ %s", parsed)
 	}
 
 	answer := localutils.Question(r.log, recipe.Name, "Are you sure you want to continue [y/n]?")
@@ -229,7 +250,7 @@ func (r *Recipes) downloadRemoteArtifacts(recipe *config.Recipe) error {
 func (r *Recipes) RemotePool(servers []config.Server, recipe config.Recipe, maxProcs int) {
 	log := logger.NewLogger(2, true)
 	wp := pool.NewPool("ssh", log)
-	wp.AddWorkerGroup(NewSSHWorkerGroup("ssh", r.log, 10*time.Millisecond))
+	wp.AddWorkerGroup(NewSSHWorkerGroup("ssh", r.log, 5*time.Second))
 	processed := wp.Start(int64(maxProcs))
 
 	startTime := time.Now()
