@@ -39,9 +39,16 @@ func TestRecipe(t *testing.T) {
 	match.Operator = "contains"
 	match.Value = "one"
 
+	isTrue := true
+	install := []string{"a", "b"}
+	installNU := []string{"c", "d"}
+
 	command1 := "ls -la {{ .Vars.key}}"
 	commands := []string{command1}
-	custom := []config.Command{{Exec: &command1}}
+	custom := []config.Command{
+		{Exec: &command1},
+		{Apt: &config.Apt{Update: &isTrue, Install: &install, InstallNoUpgrade: &installNU}},
+	}
 
 	recipe := config.Recipe{}
 	recipe.Name = "test"
@@ -74,7 +81,9 @@ func TestRecipe(t *testing.T) {
 	utils.Test().Equals(t, 2, len(r.servers))
 
 	r.PrepareCommands(&template)
-	utils.Test().Equals(t, 2, len(r.preparedCommands))
+	utils.Test().Equals(t, 5, len(r.preparedCommands))
+	utils.Test().Contains(t, r.preparedCommands[1], "sudo apt-get update")
+	utils.Test().Contains(t, r.preparedCommands[2], "sudo apt-get install")
 
 	r.DownloadArtifacts()
 	utils.Test().Contains(t, r.base.Artifacts[0].Source, "/var/folders/")

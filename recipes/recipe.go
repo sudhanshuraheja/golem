@@ -2,6 +2,7 @@ package recipes
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -41,12 +42,12 @@ func (r *Recipe) FindServers(servers []config.Server) {
 			serverNames = append(serverNames, s.Name)
 		}
 
-		if len(servers) == 0 {
+		if len(r.servers) == 0 {
 			r.log.Highlight(r.base.Name).Msgf("no servers matched '%s %s %s'", r.base.Match.Attribute, r.base.Match.Operator, r.base.Match.Value)
 			return
 		}
 
-		r.log.Info(r.base.Name).Msgf("found %d matching servers - %s", len(servers), strings.Join(serverNames, ", "))
+		r.log.Info(r.base.Name).Msgf("found %d matching servers - %s", len(r.servers), strings.Join(serverNames, ", "))
 
 	case "local":
 	default:
@@ -56,16 +57,41 @@ func (r *Recipe) FindServers(servers []config.Server) {
 
 func (r *Recipe) PrepareCommands(tpl *Template) {
 	for _, cmd := range r.base.CustomCommands {
-		if cmd.Exec == nil {
-			continue
+		switch {
+		case cmd.Exec != nil:
+			parsedCmd, err := ParseTemplate(*cmd.Exec, tpl)
+			if err != nil {
+				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", cmd.Exec, err)
+				continue
+			}
+			parsedCmd = strings.TrimSuffix(parsedCmd, "\n")
+			r.preparedCommands = append(r.preparedCommands, parsedCmd)
+		case cmd.Apt != nil:
+			if cmd.Apt.Update != nil {
+				parsedCmd := "sudo apt-get update --quiet --assume-yes"
+				r.preparedCommands = append(r.preparedCommands, parsedCmd)
+			}
+			if cmd.Apt.Install != nil {
+				packages := strings.Join(*cmd.Apt.Install, " ")
+				if len(packages) > 0 {
+					parsedCmd := fmt.Sprintf(
+						"sudo apt-get install %s --quiet --assume-yes",
+						packages,
+					)
+					r.preparedCommands = append(r.preparedCommands, parsedCmd)
+				}
+			}
+			if cmd.Apt.InstallNoUpgrade != nil {
+				packages := strings.Join(*cmd.Apt.InstallNoUpgrade, " ")
+				if len(packages) > 0 {
+					parsedCmd := fmt.Sprintf(
+						"sudo apt-get install %s --no-upgrade --quiet --assume-yes",
+						packages,
+					)
+					r.preparedCommands = append(r.preparedCommands, parsedCmd)
+				}
+			}
 		}
-		parsedCmd, err := ParseTemplate(*cmd.Exec, tpl)
-		if err != nil {
-			r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", cmd.Exec, err)
-			continue
-		}
-		parsedCmd = strings.TrimSuffix(parsedCmd, "\n")
-		r.preparedCommands = append(r.preparedCommands, parsedCmd)
 	}
 
 	if r.base.Commands != nil {

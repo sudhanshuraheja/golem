@@ -1,5 +1,5 @@
 package kitchen
 
 const (
-	version = "v0.1.0-27-ge411ea8"
+	version = "v0.1.0-30-ge12b470"
 )

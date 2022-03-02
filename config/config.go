@@ -61,8 +61,9 @@ type Command struct {
 }
 
 type Apt struct {
-	Update  *bool   `hcl:"update"`
-	Install *string `hcl:"install"`
+	Update           *bool     `hcl:"update"`
+	Install          *[]string `hcl:"install"`
+	InstallNoUpgrade *[]string `hcl:"install_no_upgrade"`
 }
 
 func NewConfig(path string) *Config {

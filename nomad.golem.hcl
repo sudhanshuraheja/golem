@@ -1,42 +1,36 @@
 recipe "nomad-setup" "remote" {
     match {
-        attribute = "tags"
-        operator = "contains"
-        value = "nomad"
+        attribute = "name"
+        operator = "="
+        value = "skye-c2"
     }
-//     command {
-//         // add GPG for docker
-//         exec = "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -"
-//     }
-//     command {
-//         // add repo for docker
-//         exec = <<EOF
-// sudo apt-add-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-//         EOF
-//     }
-//     command {
-//         // add hashicorp GPG for consul and nomad
-//         exec = "curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -"
-//     }
-//     command {
-//         // add hashicorp repo for consul and nomad
-//         exec = <<EOF
-// sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-//         EOF
-//     }
     command {
-        // update apt
+        // add GPG for docker
+        exec = "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -"
+    }
+    command {
+        // add repo for docker
+        exec = <<EOF
+sudo apt-add-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        EOF
+    }
+    command {
+        // add hashicorp GPG for consul and nomad
+        exec = "curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -"
+    }
+    command {
+        // add hashicorp repo for consul and nomad
+        exec = <<EOF
+sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+        EOF
+    }
+    command {
         apt {
             update = true
+            install = ["docker-ce", "docker-ce-cli", "containerd.io"]
+            install_no_upgrade = ["consul", "nomad"]
         }
-        // exec = "sudo apt-get update --quiet --assume-yes --show-upgraded"
     }
-    command {
-        exec = "sudo apt-get install docker-ce docker-ce-cli containerd.io --quiet --assume-yes --show-upgraded"
-    }
-    // command {
-    //     exec = "sudo apt-get install consul nomad --no-upgrade --quiet --assume-yes --show-upgraded"
-    // }
 }
 
 recipe "nomad-server-config-update" "remote" {
