@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/betas-in/utils"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
@@ -27,6 +28,8 @@ type Connection struct {
 
 type Out struct {
 	Name      string
+	ID        string
+	Command   string
 	Message   string
 	Completed bool
 }
@@ -104,7 +107,7 @@ func (c *Connection) dial(user, host string, port int, privateKeyPath string) er
 	return nil
 }
 
-func (c *Connection) getSSHSession() error {
+func (c *Connection) getSSHSession(id, command string) error {
 	var err error
 	c.sshSession, err = c.conn.NewSession()
 	if err != nil {
@@ -116,7 +119,7 @@ func (c *Connection) getSSHSession() error {
 		return err
 	}
 
-	err = c.pipes()
+	err = c.pipes(id, command)
 	if err != nil {
 		return err
 	}
@@ -141,7 +144,7 @@ func (c *Connection) pty() error {
 	return nil
 }
 
-func (c *Connection) pipes() error {
+func (c *Connection) pipes(id, command string) error {
 	var err error
 	c.stdin, err = c.sshSession.StdinPipe()
 	if err != nil {
@@ -158,7 +161,7 @@ func (c *Connection) pipes() error {
 		return err
 	}
 
-	go func(name string) {
+	go func(name, id, command string) {
 		scanner := bufio.NewScanner(c.stdout)
 		for {
 			if tkn := scanner.Scan(); tkn {
@@ -167,35 +170,43 @@ func (c *Connection) pipes() error {
 				copy(data, received)
 				c.Stdout <- Out{
 					Name:    name,
+					ID:      id,
+					Command: command,
 					Message: string(data),
 				}
 			} else {
 				if scanner.Err() != nil {
 					c.Stderr <- Out{
 						Name:      name,
+						ID:        id,
+						Command:   command,
 						Message:   scanner.Err().Error(),
 						Completed: true,
 					}
 				} else {
 					c.Stdout <- Out{
 						Name:      name,
+						ID:        id,
+						Command:   command,
 						Completed: true,
 					}
 				}
 				return
 			}
 		}
-	}(c.name)
+	}(c.name, id, command)
 
-	go func(name string) {
+	go func(name, id, command string) {
 		scanner := bufio.NewScanner(c.stderr)
 		for scanner.Scan() {
 			c.Stderr <- Out{
 				Name:    name,
+				ID:      id,
+				Command: command,
 				Message: scanner.Text(),
 			}
 		}
-	}(c.name)
+	}(c.name, id, command)
 
 	return nil
 }
@@ -203,7 +214,7 @@ func (c *Connection) pipes() error {
 func (c *Connection) Run(command string) (int, error) {
 	exitStatus := -1
 
-	err := c.getSSHSession()
+	err := c.getSSHSession(utils.UUID().GetShort(), command)
 	if err != nil {
 		return exitStatus, err
 	}

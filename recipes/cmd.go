@@ -9,11 +9,13 @@ import (
 )
 
 type Cmd struct {
-	log *logger.CLILogger
+	log    *logger.CLILogger
+	output []cmd.Out
 }
 
 func (c *Cmd) Run(commands []string) {
 	name := "local"
+	c.output = []cmd.Out{}
 	cm := cmd.NewCmd(name)
 
 	wait := make(chan bool)
@@ -21,6 +23,7 @@ func (c *Cmd) Run(commands []string) {
 		for {
 			select {
 			case stdout := <-cm.Stdout:
+				c.output = append(c.output, stdout)
 				if stdout.Message != "" {
 					c.log.Debug(stdout.Name).Msgf("%s", stdout.Message)
 				}
@@ -28,6 +31,7 @@ func (c *Cmd) Run(commands []string) {
 					wait <- true
 				}
 			case stderr := <-cm.Stderr:
+				c.output = append(c.output, stderr)
 				if stderr.Message != "" {
 					c.log.Error(stderr.Name).Msgf("%s", stderr.Message)
 				}

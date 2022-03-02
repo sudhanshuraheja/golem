@@ -11,9 +11,10 @@ import (
 )
 
 type SSH struct {
-	conn *ssh.Connection
-	log  *logger.CLILogger
-	name string
+	conn   *ssh.Connection
+	log    *logger.CLILogger
+	name   string
+	output []ssh.Out
 }
 
 type SSHJob struct {
@@ -44,11 +45,13 @@ func (ss *SSH) Connect(s *config.Server) error {
 }
 
 func (ss *SSH) Run(commands []string) {
+	ss.output = []ssh.Out{}
 	wait := make(chan bool)
 	go func(log *logger.CLILogger, wait chan bool) {
 		for {
 			select {
 			case stdout := <-ss.conn.Stdout:
+				ss.output = append(ss.output, stdout)
 				if stdout.Message != "" {
 					ss.log.Debug(stdout.Name).Msgf("%s", stdout.Message)
 				}
@@ -56,6 +59,7 @@ func (ss *SSH) Run(commands []string) {
 					wait <- true
 				}
 			case stderr := <-ss.conn.Stderr:
+				ss.output = append(ss.output, stderr)
 				if stderr.Message != "" {
 					ss.log.Error(stderr.Name).Msgf("%s", stderr.Message)
 				}

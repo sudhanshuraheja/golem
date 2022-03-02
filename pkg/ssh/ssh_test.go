@@ -8,14 +8,14 @@ import (
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
 
-func TestConn(t *testing.T) {
+func TestSSH(t *testing.T) {
 	if localutils.DetectCI() {
 		return
 	}
 
 	log := logger.NewCLILogger(6, 8)
 
-	conn, err := NewSSHConnection("local", "sudhanshu", "192.168.86.173", 22, "")
+	conn, err := NewSSHConnection("thebatch", "sudhanshu", "192.168.86.173", 22, "")
 	utils.Test().Nil(t, err)
 
 	wait := make(chan bool)
@@ -31,27 +31,26 @@ func TestConn(t *testing.T) {
 				if stdout.Completed {
 					wait <- true
 				}
-				log.Debug(stdout.Name).Msgf("%s", stdout.Message)
+				if stdout.Message != "" {
+					log.Debug(stdout.Name).Msgf("%s", stdout.Message)
+				}
 			case stderr := <-conn.Stderr:
 				if stderr.Completed {
 					wait <- true
 				}
-				log.Error(stderr.Name).Msgf("%s", stderr.Message)
+				if stderr.Message != "" {
+					log.Error(stderr.Name).Msgf("%s", stderr.Message)
+				}
 			}
 		}
 	}(log, wait)
 
-	status, err := conn.Run("ls -la")
+	status, err := conn.Run("ls -la D*")
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, -1, status)
 	<-wait
 
-	status, err = conn.Run("env")
-	utils.Test().Nil(t, err)
-	utils.Test().Equals(t, -1, status)
-	<-wait
-
-	status, err = conn.Run("sudo apt-get update")
+	status, err = conn.Run("env | grep PATH")
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, -1, status)
 	<-wait

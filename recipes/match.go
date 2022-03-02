@@ -49,9 +49,6 @@ func (m *Match) server(s config.Server) (bool, error) {
 		}
 		return m.string("private_ip", *s.PrivateIP)
 	case "hostname":
-		if s.HostName == nil {
-			return false, nil
-		}
 		return m.array("hostname", s.HostName)
 	case "user":
 		return m.string("user", s.User)
@@ -96,6 +93,7 @@ func (m *Match) string(oftype, name string) (bool, error) {
 			return true, nil
 		}
 	default:
+		// #TODO Support nil match type
 		return false, fmt.Errorf("%s only supports ['=', '!=', 'like'] operators", oftype)
 	}
 	return false, nil

@@ -5,6 +5,8 @@ import (
 	"io"
 	"os/exec"
 	"strings"
+
+	"github.com/betas-in/utils"
 )
 
 type Cmd struct {
@@ -19,6 +21,8 @@ type Cmd struct {
 
 type Out struct {
 	Name      string
+	ID        string
+	Command   string
 	Message   string
 	Completed bool
 }
@@ -33,7 +37,7 @@ func NewCmd(name string) *Cmd {
 
 func (c *Cmd) Run(command string) error {
 	c.cmd = exec.Command("bash", "-c", command)
-	err := c.pipes()
+	err := c.pipes(utils.UUID().GetShort(), command)
 	if err != nil {
 		return err
 	}
@@ -46,7 +50,7 @@ func (c *Cmd) Run(command string) error {
 	return nil
 }
 
-func (c *Cmd) pipes() error {
+func (c *Cmd) pipes(id, command string) error {
 	var err error
 	c.stdin, err = c.cmd.StdinPipe()
 	if err != nil {
@@ -63,7 +67,7 @@ func (c *Cmd) pipes() error {
 		return err
 	}
 
-	go func(name string) {
+	go func(name, id, command string) {
 		scanner := bufio.NewScanner(c.stdout)
 		for {
 			if tkn := scanner.Scan(); tkn {
@@ -72,6 +76,8 @@ func (c *Cmd) pipes() error {
 				copy(data, received)
 				c.Stdout <- Out{
 					Name:    name,
+					ID:      id,
+					Command: command,
 					Message: string(data),
 				}
 			} else {
@@ -80,11 +86,15 @@ func (c *Cmd) pipes() error {
 					if strings.Contains(errMessage, "file already closed") {
 						c.Stdout <- Out{
 							Name:      name,
+							ID:        id,
+							Command:   command,
 							Completed: true,
 						}
 					} else {
 						c.Stderr <- Out{
 							Name:      name,
+							ID:        id,
+							Command:   command,
 							Message:   scanner.Err().Error(),
 							Completed: true,
 						}
@@ -92,23 +102,27 @@ func (c *Cmd) pipes() error {
 				} else {
 					c.Stdout <- Out{
 						Name:      name,
+						ID:        id,
+						Command:   command,
 						Completed: true,
 					}
 				}
 				return
 			}
 		}
-	}(c.name)
+	}(c.name, id, command)
 
-	go func(name string) {
+	go func(name, id, command string) {
 		scanner := bufio.NewScanner(c.stderr)
 		for scanner.Scan() {
 			c.Stderr <- Out{
 				Name:    name,
+				ID:      id,
+				Command: command,
 				Message: scanner.Text(),
 			}
 		}
-	}(c.name)
+	}(c.name, id, command)
 
 	return nil
 }

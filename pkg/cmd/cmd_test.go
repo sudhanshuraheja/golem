@@ -33,7 +33,7 @@ func TestCmd(t *testing.T) {
 	utils.Test().Nil(t, err)
 	<-wait
 
-	err = c.Run("ls -la ./../..")
+	err = c.Run("ls -la ./../../M*")
 	utils.Test().Nil(t, err)
 	<-wait
 
