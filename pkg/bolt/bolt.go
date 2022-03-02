@@ -7,20 +7,17 @@ import (
 	"os"
 	"time"
 
-	"github.com/betas-in/logger"
 	"go.etcd.io/bbolt"
 )
 
 type Bolt struct {
-	db  *bbolt.DB
-	log *logger.CLILogger
+	db *bbolt.DB
 }
 
-func NewBolt(log *logger.CLILogger, path string) (*Bolt, error) {
-	b := &Bolt{log: log}
+func NewBolt(path string) (*Bolt, error) {
+	b := &Bolt{}
 	err := b.Open(path)
 	if err != nil {
-		log.Error("bolt").Msgf("%v", err)
 		return b, err
 	}
 	return b, nil

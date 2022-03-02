@@ -2,7 +2,6 @@ package recipes
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -16,232 +15,92 @@ import (
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
 
-type Recipes struct {
-	conf *config.Config
-	log  *logger.CLILogger
-	tpl  *Template
+type Recipe struct {
+	base             *config.Recipe
+	log              *logger.CLILogger
+	servers          []config.Server
+	preparedCommands []string
 }
 
-func NewRecipes(conf *config.Config, log *logger.CLILogger) *Recipes {
-	r := Recipes{
-		conf: conf,
-		log:  log,
-	}
-	r.tpl = &Template{}
-	if conf.Vars != nil {
-		r.tpl.Vars = *conf.Vars
-	}
-	r.tpl.Servers = append(r.tpl.Servers, conf.Servers...)
-	return &r
-}
-
-func (r *Recipes) List() {
-	r.log.Announce("").Msgf("list of all available recipes")
-
-	// Add system defined
-	r.log.Info("system").Msgf("%s", logger.Cyan("list"))
-	r.log.Info("system").Msgf("%s", logger.Cyan("servers"))
-
-	for _, re := range r.conf.Recipes {
-		name := logger.CyanBold(re.Name)
-		if re.Type == "local" {
-			name = logger.Cyan(re.Name)
-		}
-
-		var attribute, operator, value string
-		match := ""
-		if re.Match != nil {
-			attribute = re.Match.Attribute
-			operator = re.Match.Operator
-			value = re.Match.Value
-			match = fmt.Sprintf("%s %s %s ", attribute, operator, value)
-			match = logger.Yellow(match)
-		}
-
-		r.log.Info(re.Type).Msgf(
-			"%s %s",
-			name,
-			match,
-		)
-
-		for _, ar := range re.Artifacts {
-			r.log.Info("").Msgf("%s %s %s", ar.Source, logger.Cyan("to"), ar.Destination)
-		}
-
-		for _, cm := range re.CustomCommands {
-			r.log.Info("").Msgf("%s %s", logger.Cyan("$"), strings.TrimSuffix(cm.Exec, "\n"))
-		}
-
-		if re.Commands != nil {
-			for _, cm := range *re.Commands {
-				r.log.Info("").Msgf("%s %s", logger.Cyan("$"), cm)
-			}
-		}
-	}
-}
-
-func (r *Recipes) Servers() {
-	r.log.Announce("").Msgf("list of all connected servers")
-
-	for _, s := range r.conf.Servers {
-
-		primaryName := s.Name
-		if primaryName == "" {
-			primaryName = localutils.StringPtrValue(s.PublicIP, "")
-		}
-
-		username := ""
-		if s.User != "" {
-			username = fmt.Sprintf("%s %s ", logger.Cyan("user"), s.User)
-		}
-
-		port := ""
-		if s.Port != 0 {
-			port = fmt.Sprintf("%s %d ", logger.Cyan("port"), s.Port)
-		}
-
-		publicIP := localutils.StringPtrValue(s.PublicIP, "")
-		if publicIP != "" {
-			publicIP = fmt.Sprintf("%s %s ", logger.Cyan("publicIP"), publicIP)
-		}
-
-		privateIP := localutils.StringPtrValue(s.PrivateIP, "")
-		if privateIP != "" {
-			privateIP = fmt.Sprintf("%s %s ", logger.Cyan("privateIP"), privateIP)
-		}
-
-		r.log.Info(primaryName).Msgf(
-			"%s%s%s%s",
-			username,
-			port,
-			publicIP,
-			privateIP,
-		)
-
-		hostnames := strings.Join(s.HostName, ", ")
-		if hostnames != "" {
-			r.log.Info("").Msgf("%s %s", logger.Cyan("hosts"), hostnames)
-		}
-
-		tags := strings.Join(s.Tags, ", ")
-		if tags != "" {
-			r.log.Info("").Msgf("%s %s", logger.Cyan("tags"), tags)
-		}
-	}
-}
-
-func (r *Recipes) Run(name string) {
-	var recipe config.Recipe
-
-	for i, re := range r.conf.Recipes {
-		if re.Name == name {
-			recipe = r.conf.Recipes[i]
-		}
-	}
-
-	if recipe.Name == "" {
-		r.log.Error(name).Msgf("the recipe <%s> was not found in '~/.golem/' or '.'", name)
-		return
-	}
-
-	servers := r.askPermission(&recipe)
-
-	err := r.downloadRemoteArtifacts(&recipe)
-	if err != nil {
-		r.log.Error(name).Msgf("%v", err)
-	}
-
-	switch recipe.Type {
+func (r *Recipe) FindServers(servers []config.Server) {
+	switch r.base.Type {
 	case "remote":
-		if len(servers) == 0 {
-			r.log.Error(name).Msgf("no matching servers found")
+		if r.base.Match == nil {
+			r.log.Error(r.base.Name).Msgf("recipe needs a 'match' block because of 'remote' execution")
 			return
-		}
-		r.RemotePool(servers, recipe, *r.conf.MaxParallelProcesses)
-	case "local":
-		c := Cmd{log: r.log}
-		if len(recipe.CustomCommands) > 0 {
-			commands := []string{}
-			for _, cmd := range recipe.CustomCommands {
-				commands = append(commands, strings.TrimSuffix(cmd.Exec, "\n"))
-			}
-			c.Run(commands, r.tpl)
-		}
-		if recipe.Commands != nil {
-			c.Run(*recipe.Commands, r.tpl)
-		}
-	default:
-		r.log.Error(name).Msgf("recipe only supports ['remote', 'local'] types")
-	}
-}
-
-func (r *Recipes) askPermission(recipe *config.Recipe) []config.Server {
-	var servers []config.Server
-	switch recipe.Type {
-	case "remote":
-		if recipe.Match == nil {
-			r.log.Error(recipe.Name).Msgf("recipe needs a 'match' block because of 'remote' execution")
-			return servers
 		}
 
 		var err error
-		servers, err = NewMatch(*recipe.Match).Find(r.conf.Servers)
+		r.servers, err = NewMatch(*r.base.Match).Find(servers)
 		if err != nil {
-			r.log.Error(recipe.Name).Msgf("%v", err)
-			return servers
+			r.log.Error(r.base.Name).Msgf("%v", err)
+			return
 		}
 		serverNames := []string{}
-		for _, s := range servers {
+		for _, s := range r.servers {
 			serverNames = append(serverNames, s.Name)
 		}
 
 		if len(servers) == 0 {
-			r.log.Highlight(recipe.Name).Msgf("no servers matched '%s %s %s'", recipe.Match.Attribute, recipe.Match.Operator, recipe.Match.Value)
-			return servers
+			r.log.Highlight(r.base.Name).Msgf("no servers matched '%s %s %s'", r.base.Match.Attribute, r.base.Match.Operator, r.base.Match.Value)
+			return
 		}
 
-		r.log.Info(recipe.Name).Msgf("found %d matching servers - %s", len(servers), strings.Join(serverNames, ", "))
+		r.log.Info(r.base.Name).Msgf("found %d matching servers - %s", len(servers), strings.Join(serverNames, ", "))
 
 	case "local":
 	default:
-		r.log.Error(recipe.Name).Msgf("recipe only supports ['remote', 'local'] types")
+		r.log.Error(r.base.Name).Msgf("recipe only supports ['remote', 'local'] types")
 	}
-
-	for _, a := range recipe.Artifacts {
-		r.log.Info(recipe.Name).Msgf("%s %s %s %s", logger.Cyan("uploading"), a.Source, logger.Cyan("to"), a.Destination)
-	}
-
-	for _, cmd := range recipe.CustomCommands {
-		parsedCmd, err := ParseTemplate(cmd.Exec, r.tpl)
-		if err != nil {
-			r.log.Error(recipe.Name).Msgf("Error parsing template <%s>: %v", cmd.Exec, err)
-		}
-		r.log.Info(recipe.Name).Msgf("$ %s", strings.TrimSuffix(parsedCmd, "\n"))
-	}
-
-	if recipe.Commands != nil {
-		for _, c := range *recipe.Commands {
-			parsedCmd, err := ParseTemplate(c, r.tpl)
-			if err != nil {
-				r.log.Error(recipe.Name).Msgf("Error parsing template <%s>: %v", c, err)
-			}
-			r.log.Info(recipe.Name).Msgf("$ %s", parsedCmd)
-		}
-	}
-
-	answer := localutils.Question(r.log, recipe.Name, "Are you sure you want to continue [y/n]?")
-	if utils.Array().Contains([]string{"y", "yes"}, answer, false) == -1 {
-		r.log.Error(recipe.Name).Msgf("Quitting, because you said %s", answer)
-		os.Exit(0)
-	}
-
-	return servers
 }
 
-func (r *Recipes) downloadRemoteArtifacts(recipe *config.Recipe) error {
-	for i, a := range recipe.Artifacts {
+func (r *Recipe) PrepareCommands(tpl *Template) {
+	for _, cmd := range r.base.CustomCommands {
+		if cmd.Exec == nil {
+			continue
+		}
+		parsedCmd, err := ParseTemplate(*cmd.Exec, tpl)
+		if err != nil {
+			r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", cmd.Exec, err)
+			continue
+		}
+		parsedCmd = strings.TrimSuffix(parsedCmd, "\n")
+		r.preparedCommands = append(r.preparedCommands, parsedCmd)
+	}
+
+	if r.base.Commands != nil {
+		for _, c := range *r.base.Commands {
+			parsedCmd, err := ParseTemplate(c, tpl)
+			if err != nil {
+				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", c, err)
+				continue
+			}
+			parsedCmd = strings.TrimSuffix(parsedCmd, "\n")
+			r.preparedCommands = append(r.preparedCommands, parsedCmd)
+		}
+	}
+}
+
+func (r *Recipe) AskPermission() {
+	for _, a := range r.base.Artifacts {
+		r.log.Info(r.base.Name).Msgf("%s %s %s %s", logger.Cyan("uploading"), a.Source, logger.Cyan("to"), a.Destination)
+	}
+
+	for _, command := range r.preparedCommands {
+		r.log.Info(r.base.Name).Msgf("$ %s", command)
+	}
+
+	answer := localutils.Question(r.log, r.base.Name, "Are you sure you want to continue [y/n]?")
+	if utils.Array().Contains([]string{"y", "yes"}, answer, false) == -1 {
+		r.log.Error(r.base.Name).Msgf("Quitting, because you said %s", answer)
+		os.Exit(0)
+	}
+}
+
+func (r *Recipe) DownloadArtifacts() {
+	for i, a := range r.base.Artifacts {
 		if strings.HasPrefix(a.Source, "http://") || strings.HasPrefix(a.Source, "https://") {
-			r.log.Info(recipe.Name).Msgf("%s %s", logger.Cyan("downloading"), a.Source)
+			r.log.Info(r.base.Name).Msgf("%s %s", logger.Cyan("downloading"), a.Source)
 			log := logger.NewLogger(3, true)
 			g := getter.NewGetter(log)
 
@@ -252,28 +111,53 @@ func (r *Recipes) downloadRemoteArtifacts(recipe *config.Recipe) error {
 			})
 
 			if response.Error != nil {
-				return fmt.Errorf("could not download %s: %v", a.Source, response.Error)
+				r.log.Error(r.base.Name).Msgf("could not download %s: %v", a.Source, response.Error)
+				os.Exit(1)
 			}
 			if response.Code != 200 {
-				return fmt.Errorf("received error code for %s: %d", a.Source, response.Code)
+				r.log.Error(r.base.Name).Msgf("received error code for %s: %d", a.Source, response.Code)
+				os.Exit(1)
 			}
 
-			r.log.Highlight(recipe.Name).Msgf("downloaded %s to %s %s", a.Source, response.DataPath, localutils.TimeInSecs(startTime))
-			recipe.Artifacts[i].Source = response.DataPath
+			r.log.Highlight(r.base.Name).Msgf("downloaded %s to %s %s", a.Source, response.DataPath, localutils.TimeInSecs(startTime))
+			r.base.Artifacts[i].Source = response.DataPath
 		}
 	}
-	return nil
 }
 
-func (r *Recipes) RemotePool(servers []config.Server, recipe config.Recipe, maxProcs int) {
+func (r *Recipe) ExecuteCommands(maxParallelProcesses *int) {
+	switch r.base.Type {
+	case "remote":
+		if len(r.servers) == 0 {
+			r.log.Error(r.base.Name).Msgf("no matching servers found")
+			return
+		}
+
+		maxProcs := 4
+		if maxParallelProcesses != nil {
+			maxProcs = *maxParallelProcesses
+		}
+
+		r.StartSSHPool(int64(maxProcs))
+	case "local":
+		c := Cmd{log: r.log}
+		c.Run(r.preparedCommands)
+	default:
+		r.log.Error(r.base.Name).Msgf("recipe only supports ['remote', 'local'] types")
+	}
+}
+
+func (r *Recipe) StartSSHPool(maxProcs int64) {
 	log := logger.NewLogger(2, true)
+
 	wp := pool.NewPool("ssh", log)
-	wp.AddWorkerGroup(NewSSHWorkerGroup("ssh", r.log, 5*time.Second, r.tpl))
-	processed := wp.Start(int64(maxProcs))
+	wp.AddWorkerGroup(NewSSHWorkerGroup("ssh", r.log, 5*time.Second))
+
+	processed := wp.Start(maxProcs)
 
 	startTime := time.Now()
-	for _, s := range servers {
-		wp.Queue(SSHJob{Server: s, Recipe: recipe})
+	for _, s := range r.servers {
+		wp.Queue(SSHJob{Server: s, Recipe: r})
 	}
 
 	quit := make(chan os.Signal, 1)
@@ -289,7 +173,7 @@ func (r *Recipes) RemotePool(servers []config.Server, recipe config.Recipe, maxP
 		select {
 		case <-processed:
 			count++
-			if count == len(servers) {
+			if count == len(r.servers) {
 				wp.Stop(ctx)
 				loop = false
 				break
@@ -313,5 +197,5 @@ func (r *Recipes) RemotePool(servers []config.Server, recipe config.Recipe, maxP
 		}
 	}
 
-	r.log.Announce(recipe.Name).Msgf("completed %s", localutils.TimeInSecs(startTime))
+	r.log.Announce(r.base.Name).Msgf("completed %s", localutils.TimeInSecs(startTime))
 }

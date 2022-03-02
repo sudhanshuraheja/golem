@@ -18,6 +18,39 @@ recipe "apt-update" "remote" {
     ]
 }
 
+recipe "reboot" "remote" {
+    match {
+        attribute = "tags"
+        operator = "contains"
+        value = "nomad"
+    }
+    commands = [
+        "sudo reboot"
+    ]
+}
+
+recipe "hostname" "remote" {
+    match {
+        attribute = "tags"
+        operator = "contains"
+        value = "nomad"
+    }
+    commands = [
+        "hostname"
+    ]
+}
+
+recipe "all" "remote" {
+    match {
+        attribute = "tags"
+        operator = "contains"
+        value = "nomad"
+    }
+    commands = [
+        "sudo dpkg --configure -a"
+    ]
+}
+
 recipe "ls-la" "local" {
     commands = [
         "ls -la {{.Vars.APP}}*",
@@ -68,3 +101,15 @@ recipe "apply-security-patch" "remote" {
         "unattended-upgrade",
     ]
 }
+
+recipe "tail-nomad" "remote" {
+    match {
+        attribute = "tags"
+        operator = "contains"
+        value = "nomad"
+    }
+    commands = [
+        "journalctl -f -u nomad.service"
+    ]
+}
+

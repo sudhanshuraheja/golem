@@ -17,8 +17,8 @@ type SSH struct {
 }
 
 type SSHJob struct {
-	Recipe config.Recipe
 	Server config.Server
+	Recipe *Recipe
 }
 
 func (ss *SSH) Connect(s *config.Server) error {
@@ -43,7 +43,7 @@ func (ss *SSH) Connect(s *config.Server) error {
 	return nil
 }
 
-func (ss *SSH) Run(commands []string, tpl *Template) {
+func (ss *SSH) Run(commands []string) {
 	wait := make(chan bool)
 	go func(log *logger.CLILogger, wait chan bool) {
 		for {
@@ -66,26 +66,20 @@ func (ss *SSH) Run(commands []string, tpl *Template) {
 		}
 	}(ss.log, wait)
 
-	for _, cmd := range commands {
+	for _, command := range commands {
 		startTime := time.Now()
-
-		parsedCmd, err := ParseTemplate(cmd, tpl)
+		ss.log.Highlight(ss.name).Msgf("$ %s", command)
+		status, err := ss.conn.Run(command)
 		if err != nil {
-			ss.log.Error(ss.name).Msgf("Error parsing template <%s>: %v", cmd, err)
-		}
-
-		ss.log.Highlight(ss.name).Msgf("$ %s", parsedCmd)
-		status, err := ss.conn.Run(parsedCmd)
-		if err != nil {
-			ss.log.Error(ss.name).Msgf("error in running command <%s>: %v", parsedCmd, err)
+			ss.log.Error(ss.name).Msgf("error in running command <%s>: %v", command, err)
 			continue
 		}
 		<-wait
 		if status > 0 {
-			ss.log.Error(ss.name).Msgf("command <%s> failed with status: %d", parsedCmd, status)
+			ss.log.Error(ss.name).Msgf("command <%s> failed with status: %d", command, status)
 			continue
 		}
-		ss.log.Success(ss.name).Msgf("$ %s %s", parsedCmd, localutils.TimeInSecs(startTime))
+		ss.log.Success(ss.name).Msgf("$ %s %s", command, localutils.TimeInSecs(startTime))
 	}
 }
 

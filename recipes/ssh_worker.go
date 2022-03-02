@@ -3,7 +3,6 @@ package recipes
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/betas-in/logger"
@@ -15,16 +14,14 @@ type SSHWorkerGroup struct {
 	name      string
 	log       *logger.CLILogger
 	heartbeat time.Duration
-	tpl       *Template
 }
 
 // NewWorkerGroup ...
-func NewSSHWorkerGroup(name string, log *logger.CLILogger, heartbeat time.Duration, tpl *Template) *SSHWorkerGroup {
+func NewSSHWorkerGroup(name string, log *logger.CLILogger, heartbeat time.Duration) *SSHWorkerGroup {
 	w := SSHWorkerGroup{
 		name:      name,
 		log:       log,
 		heartbeat: heartbeat,
-		tpl:       tpl,
 	}
 	return &w
 }
@@ -67,23 +64,14 @@ func (w *SSHWorkerGroup) Name(id string) string {
 	return fmt.Sprintf("%s-%s", w.name, id)
 }
 
-func (w *SSHWorkerGroup) ExecRecipeOnServer(s config.Server, recipe config.Recipe) {
+func (w *SSHWorkerGroup) ExecRecipeOnServer(s config.Server, recipe *Recipe) {
 	ss := SSH{log: w.log}
 	err := ss.Connect(&s)
 	if err != nil {
 		w.log.Error(s.Name).Msgf("%v", err)
 		return
 	}
-	ss.Upload(recipe.Artifacts)
-	if len(recipe.CustomCommands) > 0 {
-		commands := []string{}
-		for _, cmd := range recipe.CustomCommands {
-			commands = append(commands, strings.TrimSuffix(cmd.Exec, "\n"))
-		}
-		ss.Run(commands, w.tpl)
-	}
-	if recipe.Commands != nil {
-		ss.Run(*recipe.Commands, w.tpl)
-	}
+	ss.Upload(recipe.base.Artifacts)
+	ss.Run(recipe.preparedCommands)
 	ss.Close()
 }

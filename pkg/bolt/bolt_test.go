@@ -4,15 +4,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/betas-in/logger"
 	"github.com/betas-in/utils"
 )
 
 func TestBolt(t *testing.T) {
-	log := logger.NewCLILogger(5, 8)
 	path := "bolt.db"
 
-	b, err := NewBolt(log, path)
+	b, err := NewBolt(path)
 	utils.Test().Nil(t, err)
 
 	bucket := []byte("bucket1")

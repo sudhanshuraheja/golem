@@ -56,7 +56,13 @@ type Artifact struct {
 }
 
 type Command struct {
-	Exec string `hcl:"exec"`
+	Exec *string `hcl:"exec"`
+	Apt  *Apt    `hcl:"apt,block"`
+}
+
+type Apt struct {
+	Update  *bool   `hcl:"update"`
+	Install *string `hcl:"install"`
 }
 
 func NewConfig(path string) *Config {
@@ -74,11 +80,6 @@ func NewConfig(path string) *Config {
 	if diags.HasErrors() {
 		showHCLDiagnostics(parser, diags)
 		return nil
-	}
-
-	if conf.MaxParallelProcesses == nil {
-		maxParallelProcs := 4
-		conf.MaxParallelProcesses = &maxParallelProcs
 	}
 
 	return &conf
