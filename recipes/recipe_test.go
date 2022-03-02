@@ -6,6 +6,7 @@ import (
 	"github.com/betas-in/logger"
 	"github.com/betas-in/utils"
 	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
 
 func TestRecipe(t *testing.T) {
@@ -86,5 +87,10 @@ func TestRecipe(t *testing.T) {
 	utils.Test().Contains(t, r.preparedCommands[2], "sudo apt-get install")
 
 	r.DownloadArtifacts()
-	utils.Test().Contains(t, r.base.Artifacts[0].Source, "/var/folders/")
+	if localutils.DetectCI() {
+		utils.Test().Contains(t, r.base.Artifacts[0].Source, "/tmp")
+	} else {
+		utils.Test().Contains(t, r.base.Artifacts[0].Source, "/var/folders/")
+	}
+
 }
