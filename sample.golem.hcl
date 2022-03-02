@@ -1,3 +1,11 @@
+vars = {
+    APP = "golem"
+    REPO = "sudhanshuraheja"
+    ENV_PREFIX = "GOLEM_"
+    GOTESTVERBOSE = "go test"
+    GOTEST = "gotestsum"
+}
+
 recipe "apt-update" "remote" {
     match {
         attribute = "tags"
@@ -12,7 +20,19 @@ recipe "apt-update" "remote" {
 
 recipe "ls-la" "local" {
     commands = [
-        "ls -la",
+        "ls -la {{.Vars.APP}}*",
+    ]
+}
+
+recipe "ls-la-remote" "remote" {
+    match {
+        attribute = "name"
+        operator = "="
+        value = "skye-c3"
+    }
+    commands = [
+        "ls -la {{.Vars.APP}}*",
+        "ping {{ (matchOne \"name\" \"=\" \"skye-c2\").PrivateIP  }}",
     ]
 }
 

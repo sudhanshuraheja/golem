@@ -19,10 +19,20 @@ import (
 type Recipes struct {
 	conf *config.Config
 	log  *logger.CLILogger
+	tpl  *Template
 }
 
 func NewRecipes(conf *config.Config, log *logger.CLILogger) *Recipes {
-	return &Recipes{conf: conf, log: log}
+	r := Recipes{
+		conf: conf,
+		log:  log,
+	}
+	r.tpl = &Template{}
+	if conf.Vars != nil {
+		r.tpl.Vars = *conf.Vars
+	}
+	r.tpl.Servers = append(r.tpl.Servers, conf.Servers...)
+	return &r
 }
 
 func (r *Recipes) List() {
@@ -108,7 +118,7 @@ func (r *Recipes) Servers() {
 			privateIP,
 		)
 
-		hostnames := localutils.StringPtrValue(s.HostName, "")
+		hostnames := strings.Join(s.HostName, ", ")
 		if hostnames != "" {
 			r.log.Info("").Msgf("%s %s", logger.Cyan("hosts"), hostnames)
 		}
@@ -143,6 +153,10 @@ func (r *Recipes) Run(name string) {
 
 	switch recipe.Type {
 	case "remote":
+		if len(servers) == 0 {
+			r.log.Error(name).Msgf("no matching servers found")
+			return
+		}
 		r.RemotePool(servers, recipe, *r.conf.MaxParallelProcesses)
 	case "local":
 		c := Cmd{log: r.log}
@@ -151,10 +165,10 @@ func (r *Recipes) Run(name string) {
 			for _, cmd := range recipe.CustomCommands {
 				commands = append(commands, strings.TrimSuffix(cmd.Exec, "\n"))
 			}
-			c.Run(commands)
+			c.Run(commands, r.tpl)
 		}
 		if recipe.Commands != nil {
-			c.Run(*recipe.Commands)
+			c.Run(*recipe.Commands, r.tpl)
 		}
 	default:
 		r.log.Error(name).Msgf("recipe only supports ['remote', 'local'] types")
@@ -171,7 +185,7 @@ func (r *Recipes) askPermission(recipe *config.Recipe) []config.Server {
 		}
 
 		var err error
-		servers, err = NewMatch(*recipe.Match).Find(r.conf)
+		servers, err = NewMatch(*recipe.Match).Find(r.conf.Servers)
 		if err != nil {
 			r.log.Error(recipe.Name).Msgf("%v", err)
 			return servers
@@ -198,16 +212,20 @@ func (r *Recipes) askPermission(recipe *config.Recipe) []config.Server {
 	}
 
 	for _, cmd := range recipe.CustomCommands {
-		r.log.Info(recipe.Name).Msgf("$ %s", strings.TrimSuffix(cmd.Exec, "\n"))
+		parsedCmd, err := ParseTemplate(cmd.Exec, r.tpl)
+		if err != nil {
+			r.log.Error(recipe.Name).Msgf("Error parsing template <%s>: %v", cmd.Exec, err)
+		}
+		r.log.Info(recipe.Name).Msgf("$ %s", strings.TrimSuffix(parsedCmd, "\n"))
 	}
 
 	if recipe.Commands != nil {
 		for _, c := range *recipe.Commands {
-			parsed, err := ParseTemplate(c, r.conf)
+			parsedCmd, err := ParseTemplate(c, r.tpl)
 			if err != nil {
 				r.log.Error(recipe.Name).Msgf("Error parsing template <%s>: %v", c, err)
 			}
-			r.log.Info(recipe.Name).Msgf("$ %s", parsed)
+			r.log.Info(recipe.Name).Msgf("$ %s", parsedCmd)
 		}
 	}
 
@@ -250,7 +268,7 @@ func (r *Recipes) downloadRemoteArtifacts(recipe *config.Recipe) error {
 func (r *Recipes) RemotePool(servers []config.Server, recipe config.Recipe, maxProcs int) {
 	log := logger.NewLogger(2, true)
 	wp := pool.NewPool("ssh", log)
-	wp.AddWorkerGroup(NewSSHWorkerGroup("ssh", r.log, 5*time.Second))
+	wp.AddWorkerGroup(NewSSHWorkerGroup("ssh", r.log, 5*time.Second, r.tpl))
 	processed := wp.Start(int64(maxProcs))
 
 	startTime := time.Now()

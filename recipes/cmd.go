@@ -12,7 +12,7 @@ type Cmd struct {
 	log *logger.CLILogger
 }
 
-func (c *Cmd) Run(commands []string) {
+func (c *Cmd) Run(commands []string, tpl *Template) {
 	name := "local"
 	cm := cmd.NewCmd(name)
 
@@ -39,15 +39,21 @@ func (c *Cmd) Run(commands []string) {
 	}(c.log, wait)
 
 	for _, command := range commands {
-		c.log.Highlight(name).Msgf("$ %s", command)
 		startTime := time.Now()
-		err := cm.Run(command)
+
+		parsedCmd, err := ParseTemplate(command, tpl)
 		if err != nil {
-			c.log.Error(name).Msgf("error in running command <%s>: %v", command, err)
+			c.log.Error(name).Msgf("Error parsing template <%s>: %v", command, err)
+		}
+
+		c.log.Highlight(name).Msgf("$ %s", parsedCmd)
+		err = cm.Run(parsedCmd)
+		if err != nil {
+			c.log.Error(name).Msgf("error in running command <%s>: %v", parsedCmd, err)
 			continue
 		}
 		<-wait
-		c.log.Success(name).Msgf("$ %s %s", command, localutils.TimeInSecs(startTime))
+		c.log.Success(name).Msgf("$ %s %s", parsedCmd, localutils.TimeInSecs(startTime))
 	}
 
 }

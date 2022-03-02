@@ -1,11 +1,3 @@
-vars = {
-    APP = "golem"
-    REPO = "sudhanshuraheja"
-    ENV_PREFIX = "GOLEM_"
-    GOTESTVERBOSE = "go test"
-    GOTEST = "gotestsum"
-}
-
 recipe "dev" "local" {
     commands = [
         "go run main.go",

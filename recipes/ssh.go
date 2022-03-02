@@ -26,8 +26,8 @@ func (ss *SSH) Connect(s *config.Server) error {
 	switch {
 	case s.PublicIP != nil:
 		host = *s.PublicIP
-	case s.HostName != nil:
-		host = *s.HostName
+	case len(s.HostName) > 0:
+		host = s.HostName[0]
 	default:
 		return fmt.Errorf("could not find a public ip or a hostname in config")
 	}
@@ -43,7 +43,7 @@ func (ss *SSH) Connect(s *config.Server) error {
 	return nil
 }
 
-func (ss *SSH) Run(commands []string) {
+func (ss *SSH) Run(commands []string, tpl *Template) {
 	wait := make(chan bool)
 	go func(log *logger.CLILogger, wait chan bool) {
 		for {
@@ -67,19 +67,25 @@ func (ss *SSH) Run(commands []string) {
 	}(ss.log, wait)
 
 	for _, cmd := range commands {
-		ss.log.Highlight(ss.name).Msgf("$ %s", cmd)
 		startTime := time.Now()
-		status, err := ss.conn.Run(cmd)
+
+		parsedCmd, err := ParseTemplate(cmd, tpl)
 		if err != nil {
-			ss.log.Error(ss.name).Msgf("error in running command <%s>: %v", cmd, err)
+			ss.log.Error(ss.name).Msgf("Error parsing template <%s>: %v", cmd, err)
+		}
+
+		ss.log.Highlight(ss.name).Msgf("$ %s", parsedCmd)
+		status, err := ss.conn.Run(parsedCmd)
+		if err != nil {
+			ss.log.Error(ss.name).Msgf("error in running command <%s>: %v", parsedCmd, err)
 			continue
 		}
 		<-wait
 		if status > 0 {
-			ss.log.Error(ss.name).Msgf("command <%s> failed with status: %d", cmd, status)
+			ss.log.Error(ss.name).Msgf("command <%s> failed with status: %d", parsedCmd, status)
 			continue
 		}
-		ss.log.Success(ss.name).Msgf("$ %s %s", cmd, localutils.TimeInSecs(startTime))
+		ss.log.Success(ss.name).Msgf("$ %s %s", parsedCmd, localutils.TimeInSecs(startTime))
 	}
 }
 

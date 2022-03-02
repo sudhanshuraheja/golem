@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/gohcl"
@@ -30,7 +29,7 @@ type Server struct {
 	Name      string   `hcl:"name,label"`
 	PublicIP  *string  `hcl:"public_ip"`
 	PrivateIP *string  `hcl:"private_ip"`
-	HostName  *string  `hcl:"hostname"`
+	HostName  []string `hcl:"hostname"`
 	User      string   `hcl:"user"`
 	Port      int      `hcl:"port"`
 	Tags      []string `hcl:"tags"`
@@ -127,8 +126,7 @@ func mergeIPHostnames(servers *[]Server, iph IPHostNames) {
 	for ip, hostnames := range iph {
 		for i, server := range *servers {
 			if server.PublicIP != nil && *server.PublicIP == ip {
-				hn := strings.Join(hostnames, ", ")
-				(*servers)[i].HostName = &hn
+				(*servers)[i].HostName = hostnames
 				delete(iph, ip)
 			}
 		}
@@ -138,8 +136,7 @@ func mergeIPHostnames(servers *[]Server, iph IPHostNames) {
 		srv := Server{}
 		ipToUse := ip
 		srv.PublicIP = &ipToUse
-		hn := strings.Join(hostnames, ", ")
-		srv.HostName = &hn
+		srv.HostName = hostnames
 		*servers = append(*servers, srv)
 	}
 }

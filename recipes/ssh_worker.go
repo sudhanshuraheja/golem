@@ -15,14 +15,16 @@ type SSHWorkerGroup struct {
 	name      string
 	log       *logger.CLILogger
 	heartbeat time.Duration
+	tpl       *Template
 }
 
 // NewWorkerGroup ...
-func NewSSHWorkerGroup(name string, log *logger.CLILogger, heartbeat time.Duration) *SSHWorkerGroup {
+func NewSSHWorkerGroup(name string, log *logger.CLILogger, heartbeat time.Duration, tpl *Template) *SSHWorkerGroup {
 	w := SSHWorkerGroup{
 		name:      name,
 		log:       log,
 		heartbeat: heartbeat,
+		tpl:       tpl,
 	}
 	return &w
 }
@@ -78,10 +80,10 @@ func (w *SSHWorkerGroup) ExecRecipeOnServer(s config.Server, recipe config.Recip
 		for _, cmd := range recipe.CustomCommands {
 			commands = append(commands, strings.TrimSuffix(cmd.Exec, "\n"))
 		}
-		ss.Run(commands)
+		ss.Run(commands, w.tpl)
 	}
 	if recipe.Commands != nil {
-		ss.Run(*recipe.Commands)
+		ss.Run(*recipe.Commands, w.tpl)
 	}
 	ss.Close()
 }

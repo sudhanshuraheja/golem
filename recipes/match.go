@@ -17,9 +17,9 @@ func NewMatch(m config.Match) *Match {
 	return &Match{match: m}
 }
 
-func (m *Match) Find(c *config.Config) ([]config.Server, error) {
+func (m *Match) Find(c []config.Server) ([]config.Server, error) {
 	var servers []config.Server
-	for _, s := range c.Servers {
+	for _, s := range c {
 		matched, err := m.server(s)
 		if err != nil {
 			return servers, err
@@ -52,7 +52,7 @@ func (m *Match) server(s config.Server) (bool, error) {
 		if s.HostName == nil {
 			return false, nil
 		}
-		return m.string("hostname", *s.HostName)
+		return m.array("hostname", s.HostName)
 	case "user":
 		return m.string("user", s.User)
 	case "port":
