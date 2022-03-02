@@ -44,7 +44,7 @@ test_norace:
 
 install:
 	@echo "$(BLUE_COLOR)➤ Installing the binary$(NO_COLOR)"
-	go install
+	go run main.go install
 
 build:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o builds/golem-linux-amd64-$(TAG) main.go

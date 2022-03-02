@@ -10,6 +10,7 @@ require (
 	github.com/betas-in/utils v0.1.5
 	github.com/hashicorp/hcl/v2 v2.11.1
 	github.com/pkg/sftp v1.13.4
+	go.etcd.io/bbolt v1.3.6
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 )
 

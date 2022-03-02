@@ -255,9 +255,15 @@ When the log level is set to `WARN`, you will not see the output of the commands
 ## Servers
 - [x] Connect to servers via SSH
 - [x] Use terraform to get list of servers
+- [ ] Keep tracked of installed software via apt on servers and local
+- [ ] Keep tracked of installed software via brew on servers and local
 - [ ] Allow custom ssh key to connect to server
 - [ ] Allow password based login to ssh servers
 - [ ] Connect to a docker container instead of SSH
+
+## KV Store
+- [ ] Create a KV store with boltdb
+- [ ] Save logs of recipes and commands in kv store
 
 ## Secrets
 - [ ] Allow golem to save secrets
