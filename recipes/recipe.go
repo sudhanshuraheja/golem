@@ -57,8 +57,7 @@ func (r *Recipe) FindServers(servers []config.Server) {
 
 func (r *Recipe) PrepareCommands(tpl *Template) {
 	for _, cmd := range r.base.CustomCommands {
-		switch {
-		case cmd.Exec != nil:
+		if cmd.Exec != nil {
 			parsedCmd, err := ParseTemplate(*cmd.Exec, tpl)
 			if err != nil {
 				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", cmd.Exec, err)
@@ -66,29 +65,58 @@ func (r *Recipe) PrepareCommands(tpl *Template) {
 			}
 			parsedCmd = strings.TrimSuffix(parsedCmd, "\n")
 			r.preparedCommands = append(r.preparedCommands, parsedCmd)
-		case cmd.Apt != nil:
-			if cmd.Apt.Update != nil {
-				parsedCmd := "sudo apt-get update --quiet --assume-yes"
-				r.preparedCommands = append(r.preparedCommands, parsedCmd)
+
+		}
+
+		for _, apt := range cmd.Apt {
+			pgpCmd := "curl -fsSL %s | sudo apt-key add -"
+			repoCmd := "sudo apt-add-repository \"deb [arch=$(dpkg --print-architecture)] %s $(lsb_release -cs) %s\""
+			updateCmd := "sudo apt-get update --quiet --assume-yes"
+			purgeCmd := "sudo apt-get purge %s"
+			installCmd := "sudo apt-get install %s --quiet --assume-yes"
+			installNoUpgradeCmd := "sudo apt-get install %s --no-upgrade --quiet --assume-yes"
+
+			if apt.PGP != nil {
+				// install curl
+				r.preparedCommands = append(r.preparedCommands, fmt.Sprintf(installCmd, "curl"))
+				// add pgp
+				r.preparedCommands = append(
+					r.preparedCommands,
+					fmt.Sprintf(pgpCmd, *apt.PGP))
 			}
-			if cmd.Apt.Install != nil {
-				packages := strings.Join(*cmd.Apt.Install, " ")
+			if apt.Repository != nil {
+				// install software-properties-common
+				r.preparedCommands = append(r.preparedCommands, fmt.Sprintf(installCmd, "software-properties-common"))
+				// add repo
+				r.preparedCommands = append(
+					r.preparedCommands,
+					fmt.Sprintf(repoCmd, apt.Repository.URL, apt.Repository.Sources))
+			}
+			if apt.Update != nil {
+				r.preparedCommands = append(r.preparedCommands, updateCmd)
+			}
+			if apt.Purge != nil {
+				packages := strings.Join(*apt.Purge, " ")
 				if len(packages) > 0 {
-					parsedCmd := fmt.Sprintf(
-						"sudo apt-get install %s --quiet --assume-yes",
-						packages,
-					)
-					r.preparedCommands = append(r.preparedCommands, parsedCmd)
+					r.preparedCommands = append(
+						r.preparedCommands,
+						fmt.Sprintf(purgeCmd, packages))
 				}
 			}
-			if cmd.Apt.InstallNoUpgrade != nil {
-				packages := strings.Join(*cmd.Apt.InstallNoUpgrade, " ")
+			if apt.Install != nil {
+				packages := strings.Join(*apt.Install, " ")
 				if len(packages) > 0 {
-					parsedCmd := fmt.Sprintf(
-						"sudo apt-get install %s --no-upgrade --quiet --assume-yes",
-						packages,
-					)
-					r.preparedCommands = append(r.preparedCommands, parsedCmd)
+					r.preparedCommands = append(
+						r.preparedCommands,
+						fmt.Sprintf(installCmd, packages))
+				}
+			}
+			if apt.InstallNoUpgrade != nil {
+				packages := strings.Join(*apt.InstallNoUpgrade, " ")
+				if len(packages) > 0 {
+					r.preparedCommands = append(
+						r.preparedCommands,
+						fmt.Sprintf(installNoUpgradeCmd, packages))
 				}
 			}
 		}

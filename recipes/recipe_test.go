@@ -48,7 +48,7 @@ func TestRecipe(t *testing.T) {
 	commands := []string{command1}
 	custom := []config.Command{
 		{Exec: &command1},
-		{Apt: &config.Apt{Update: &isTrue, Install: &install, InstallNoUpgrade: &installNU}},
+		{Apt: []config.Apt{{Update: &isTrue, Install: &install, InstallNoUpgrade: &installNU}}},
 	}
 
 	recipe := config.Recipe{}

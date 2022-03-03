@@ -57,13 +57,21 @@ type Artifact struct {
 
 type Command struct {
 	Exec *string `hcl:"exec"`
-	Apt  *Apt    `hcl:"apt,block"`
+	Apt  []Apt   `hcl:"apt,block"`
 }
 
 type Apt struct {
-	Update           *bool     `hcl:"update"`
-	Install          *[]string `hcl:"install"`
-	InstallNoUpgrade *[]string `hcl:"install_no_upgrade"`
+	PGP              *string        `hcl:"pgp"`
+	Repository       *APTRepository `hcl:"repository,block"`
+	Update           *bool          `hcl:"update"`
+	Purge            *[]string      `hcl:"purge"`
+	Install          *[]string      `hcl:"install"`
+	InstallNoUpgrade *[]string      `hcl:"install_no_upgrade"`
+}
+
+type APTRepository struct {
+	URL     string `hcl:"url"`
+	Sources string `hcl:"sources"`
 }
 
 func NewConfig(path string) *Config {
