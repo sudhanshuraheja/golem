@@ -36,6 +36,8 @@ func (r *Recipes) List(query string) {
 	r.log.Info("system").Msgf("%s", logger.Cyan("servers"))
 
 	for _, re := range r.conf.Recipes {
+		recipe := Recipe{log: r.log, base: &re}
+
 		name := logger.CyanBold(re.Name)
 		if re.Type == "local" {
 			name = logger.Cyan(re.Name)
@@ -64,19 +66,13 @@ func (r *Recipes) List(query string) {
 		)
 
 		for _, ar := range re.Artifacts {
-			r.log.Info("").Msgf("%s %s %s", ar.Source, logger.Cyan("to"), ar.Destination)
+			r.log.Info("").Msgf("%s %s %s %s", logger.Cyan("uploading"), ar.Source, logger.Cyan("to"), ar.Destination)
 		}
 
-		for _, cm := range re.CustomCommands {
-			if cm.Exec != nil {
-				r.log.Info("").Msgf("%s %s", logger.Cyan("$"), strings.TrimSuffix(*cm.Exec, "\n"))
-			}
-		}
+		recipe.PrepareCommands(r.tpl)
 
-		if re.Commands != nil {
-			for _, cm := range *re.Commands {
-				r.log.Info("").Msgf("%s %s", logger.Cyan("$"), cm)
-			}
+		for _, command := range recipe.preparedCommands {
+			r.log.Info("").Msgf("$ %s", command)
 		}
 	}
 }
