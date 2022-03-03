@@ -10,7 +10,7 @@ import (
 )
 
 func Download(log *logger.CLILogger, name, url string) (string, error) {
-	log.Info(name).Msgf("%s %s", logger.Cyan("downloading"), url)
+	log.Info(name).Msgf("%s %s", logger.Cyan("downloading"), localutils.TinyString(url, tiny))
 
 	glog := logger.NewLogger(3, true)
 	g := getter.NewGetter(glog)
@@ -28,6 +28,13 @@ func Download(log *logger.CLILogger, name, url string) (string, error) {
 		return "", fmt.Errorf("received error code for %s: %d", url, response.Code)
 	}
 
-	log.Highlight(name).Msgf("downloaded %s to %s %s", url, response.DataPath, localutils.TimeInSecs(startTime))
+	log.Info(name).Msgf(
+		"%s %s %s %s %s",
+		logger.GreenBold("downloaded"),
+		localutils.TinyString(url, tiny),
+		logger.GreenBold("to"),
+		localutils.TinyString(response.DataPath, tiny),
+		localutils.TimeInSecs(startTime),
+	)
 	return response.DataPath, nil
 }

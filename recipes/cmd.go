@@ -72,6 +72,12 @@ func (c *Cmd) Upload(artifacts []config.Artifact) {
 			c.log.Error(name).Msgf("error in moving from <%s> to <%s>: %v", *artifact.Source, artifact.Destination, err)
 			continue
 		}
-		c.log.Success(name).Msgf("%s %s %s %s %s", logger.Cyan("Moved"), *artifact.Source, logger.Cyan("to"), artifact.Destination, localutils.TimeInSecs(startTime))
+		c.log.Success(name).Msgf(
+			"%s %s %s %s %s",
+			logger.Cyan("Moved"),
+			localutils.TinyString(*artifact.Source, tiny),
+			logger.Cyan("to"),
+			artifact.Destination,
+			localutils.TimeInSecs(startTime))
 	}
 }

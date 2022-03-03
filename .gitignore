@@ -19,3 +19,4 @@ todo.txt
 golem*.hcl
 builds/*
 hashicorp/*
+template.p*

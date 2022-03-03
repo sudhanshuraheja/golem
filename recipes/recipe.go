@@ -166,13 +166,31 @@ func (r *Recipe) AskPermission() {
 	for _, a := range r.preparedArtifacts {
 		if a.Template != nil {
 			if a.Template.Data != nil {
-				r.log.Info(r.base.Name).Msgf("%s %s %s %s", logger.Cyan("uploading"), *a.Template.Data, logger.Cyan("to"), a.Destination)
+				r.log.Info(r.base.Name).Msgf(
+					"%s %s %s %s",
+					logger.Cyan("uploading"),
+					localutils.TinyString(*a.Template.Data, tiny*2),
+					logger.Cyan("to"),
+					a.Destination,
+				)
 			}
 			if a.Template.Path != nil {
-				r.log.Info(r.base.Name).Msgf("%s %s %s %s", logger.Cyan("uploading"), *a.Template.Path, logger.Cyan("to"), a.Destination)
+				r.log.Info(r.base.Name).Msgf(
+					"%s %s %s %s",
+					logger.Cyan("uploading"),
+					*a.Template.Path,
+					logger.Cyan("to"),
+					a.Destination,
+				)
 			}
 		} else {
-			r.log.Info(r.base.Name).Msgf("%s %s %s %s", logger.Cyan("uploading"), *a.Source, logger.Cyan("to"), a.Destination)
+			r.log.Info(r.base.Name).Msgf(
+				"%s %s %s %s",
+				logger.Cyan("uploading"),
+				*a.Source,
+				logger.Cyan("to"),
+				a.Destination,
+			)
 		}
 	}
 

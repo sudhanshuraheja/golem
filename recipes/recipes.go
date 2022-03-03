@@ -9,6 +9,10 @@ import (
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
 
+var (
+	tiny = 50
+)
+
 type Recipes struct {
 	conf *config.Config
 	log  *logger.CLILogger
@@ -71,20 +75,38 @@ func (r *Recipes) List(query string) {
 
 			if ar.Template != nil {
 				if ar.Template.Data != nil {
-					r.log.Info("").Msgf("%s %s %s %s", logger.Cyan("uploading"), *ar.Template.Data, logger.Cyan("to"), ar.Destination)
+					r.log.Info("").Msgf(
+						"%s %s %s %s",
+						logger.Cyan("uploading"),
+						localutils.TinyString(*ar.Template.Data, tiny),
+						logger.Cyan("to"),
+						localutils.TinyString(ar.Destination, tiny),
+					)
 				}
 				if ar.Template.Path != nil {
-					r.log.Info("").Msgf("%s %s %s %s", logger.Cyan("uploading"), *ar.Template.Path, logger.Cyan("to"), ar.Destination)
+					r.log.Info("").Msgf(
+						"%s %s %s %s",
+						logger.Cyan("uploading"),
+						localutils.TinyString(*ar.Template.Path, tiny),
+						logger.Cyan("to"),
+						localutils.TinyString(ar.Destination, tiny),
+					)
 				}
 			} else {
-				r.log.Info("").Msgf("%s %s %s %s", logger.Cyan("uploading"), ar.Source, logger.Cyan("to"), ar.Destination)
+				r.log.Info("").Msgf(
+					"%s %s %s %s",
+					logger.Cyan("uploading"),
+					localutils.TinyString(*ar.Source, tiny),
+					logger.Cyan("to"),
+					localutils.TinyString(ar.Destination, tiny),
+				)
 			}
 		}
 
 		recipe.PrepareCommands(r.tpl)
 
 		for _, command := range recipe.preparedCommands {
-			r.log.Info("").Msgf("$ %s", command)
+			r.log.Info("").Msgf("$ %s", localutils.TinyString(command, tiny))
 		}
 	}
 }

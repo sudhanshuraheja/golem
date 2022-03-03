@@ -80,3 +80,29 @@ func FileCopy(text string) (string, error) {
 	}
 	return file.Name(), nil
 }
+
+func TinyString(text string, length int) string {
+	text = strings.ReplaceAll(text, "\n", "")
+	text = strings.ReplaceAll(text, "\t", "")
+
+	if len(text) <= length {
+		return text
+	}
+
+	middle := "----"
+	remaining := length - len(middle)
+
+	split := 0
+	if remaining%2 == 0 {
+		split = remaining / 2
+	} else {
+		split = (remaining - 1) / 2
+		middle = middle[:len(middle)-1]
+	}
+
+	start := text[:split]
+	end := text[len(text)-split:]
+
+	tiny := fmt.Sprintf("%s%s%s", start, logger.YellowBold(middle), end)
+	return tiny
+}
