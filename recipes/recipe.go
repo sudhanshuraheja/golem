@@ -110,14 +110,14 @@ func (r *Recipe) PrepareCommands(tpl *Template) {
 				r.AddPreparedCommand(cmd)
 			}
 			if apt.Install != nil {
-				cmd, err := aptCmd.Purge(*apt.Install)
+				cmd, err := aptCmd.Install(*apt.Install)
 				if err != nil {
 					r.log.Error(r.base.Name).Msgf("%v", err)
 				}
 				r.AddPreparedCommand(cmd)
 			}
 			if apt.InstallNoUpgrade != nil {
-				cmd, err := aptCmd.Purge(*apt.InstallNoUpgrade)
+				cmd, err := aptCmd.InstallNoUpgrade(*apt.InstallNoUpgrade)
 				if err != nil {
 					r.log.Error(r.base.Name).Msgf("%v", err)
 				}

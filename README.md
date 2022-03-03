@@ -255,8 +255,6 @@ When the log level is set to `WARN`, you will not see the output of the commands
 ## Servers
 - [x] Connect to servers via SSH
 - [x] Use terraform to get list of servers
-- [ ] Keep tracked of installed software via apt on servers and local
-- [ ] Keep tracked of installed software via brew on servers and local
 - [ ] Allow custom ssh key to connect to server
 - [ ] Allow password based login to ssh servers
 - [ ] Connect to a docker container instead of SSH
@@ -272,7 +270,7 @@ When the log level is set to `WARN`, you will not see the output of the commands
 ## Recipes
 - [x] Read recipes from config and execute them
 - [x] Define variables to be used in recipes
-- [ ] Create system level recipes
+- [x] Create system level recipes
 - [ ] Native recipe to setup docker
 - [ ] Native recipe to setup nomad
 - [ ] Native recipe to setup consul
@@ -297,10 +295,10 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Capture SIGINT in worker pool to shutdown connections properly
 - [x] Separate local and remote execution steps
 - [x] Replace makefile
-- [ ] Store outputs of commands in a struct for later reuse
-- [ ] Run go-template before running local exec
-- [ ] Run go-template before running ssh exec
-- [ ] Expands commands to include other metadata
+- [x] Store outputs of commands in a struct for later reuse
+- [x] Run go-template before running local exec
+- [x] Run go-template before running ssh exec
+- [x] Expands commands to include other metadata
 - [ ] Use output of commands as input to the next command
 - [ ] Increase goroutines if there are more tail tasks than routines
 - [ ] Get docker logs from remote

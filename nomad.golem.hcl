@@ -4,27 +4,6 @@ recipe "nomad-setup" "remote" {
         operator = "="
         value = "skye-c2"
     }
-    // command {
-    //     // add GPG for docker
-    //     exec = "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -"
-    // }
-//     command {
-//         // add repo for docker
-//         // amd64 = dpkg --print-architecture
-//         exec = <<EOF
-// sudo apt-add-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-//         EOF
-//     }
-    // command {
-    //     // add hashicorp GPG for consul and nomad
-    //     exec = "curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -"
-    // }
-//     command {
-//         // add hashicorp repo for consul and nomad
-//         exec = <<EOF
-// sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-//         EOF
-//     }
     command {
         apt {
             update = true
