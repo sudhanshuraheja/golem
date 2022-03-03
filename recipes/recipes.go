@@ -28,7 +28,7 @@ func NewRecipes(conf *config.Config, log *logger.CLILogger) *Recipes {
 	return &r
 }
 
-func (r *Recipes) List() {
+func (r *Recipes) List(query string) {
 	r.log.Announce("").Msgf("list of all available recipes")
 
 	// Add system defined
@@ -49,6 +49,12 @@ func (r *Recipes) List() {
 			value = re.Match.Value
 			match = fmt.Sprintf("%s %s %s ", attribute, operator, value)
 			match = logger.Yellow(match)
+		}
+
+		if len(query) > 0 {
+			if !strings.Contains(name, query) {
+				continue
+			}
 		}
 
 		r.log.Info(re.Type).Msgf(
@@ -75,10 +81,16 @@ func (r *Recipes) List() {
 	}
 }
 
-func (r *Recipes) Servers() {
+func (r *Recipes) Servers(query string) {
 	r.log.Announce("").Msgf("list of all connected servers")
 
 	for _, s := range r.conf.Servers {
+
+		if len(query) > 0 {
+			if !strings.Contains(s.Name, query) {
+				continue
+			}
+		}
 
 		primaryName := s.Name
 		if primaryName == "" {
