@@ -19,7 +19,8 @@ recipe "nomad-local-setup" "local" {
         exec = "mkdir -p {{.Vars.HASHI_PATH}}certs/"
     }
     artifact {
-        template = <<EOF
+        template {
+            data = <<EOF
 {
   "signing": {
     "default": {
@@ -28,7 +29,8 @@ recipe "nomad-local-setup" "local" {
     }
   }
 }
-        EOF
+            EOF
+        }
         destination = "{{.Vars.HASHI_PATH}}certs/cfssl.json"
     }
     command {
@@ -83,6 +85,9 @@ echo '{}' | cfssl gencert -ca={{.Vars.HASHI_PATH}}certs/nomad-ca.pem -ca-key={{.
     }
     command {
         exec = "echo '{}' | cfssl gencert -ca={{.Vars.HASHI_PATH}}certs/nomad-ca.pem -ca-key={{.Vars.HASHI_PATH}}certs/nomad-ca-key.pem -profile=client - | cfssljson -bare {{.Vars.HASHI_PATH}}certs/cli"
+    }
+    command {
+        exec = "openssl rand 32 | base64 > {{.Vars.HASHI_PATH}}certs/nomad.key"
     }
 }
 

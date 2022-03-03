@@ -2,13 +2,11 @@ package recipes
 
 import (
 	"context"
-	"io"
 	"os"
 	"os/signal"
 	"strings"
 	"time"
 
-	"github.com/betas-in/getter"
 	"github.com/betas-in/logger"
 	"github.com/betas-in/pool"
 	"github.com/betas-in/utils"
@@ -62,35 +60,52 @@ func (r *Recipe) PrepareArtifacts(tpl *Template, dryrun bool) {
 		artifact := config.Artifact{}
 
 		if a.Template != nil {
-			parsedTemplate, err := ParseTemplate(*a.Template, tpl)
-			if err != nil {
-				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", a.Template, err)
-				continue
-			}
-			artifact.Template = &parsedTemplate
 
-			if !dryrun {
-				tempFilePath := utils.UUID().Get()
-				file, err := os.CreateTemp("", tempFilePath)
+			if a.Template.Path != nil {
+				if strings.HasPrefix(*a.Template.Path, "http://") || strings.HasPrefix(*a.Template.Path, "https://") {
+					// Url based template
+					path, err := Download(r.log, r.base.Name, *a.Template.Path)
+					if err != nil {
+						r.log.Error(r.base.Name).Msgf("%v", err)
+						os.Exit(1)
+					}
+					a.Template.Path = &path
+				} // else File base template
+
+				bytes, err := os.ReadFile(*a.Template.Path)
 				if err != nil {
-					r.log.Error(r.base.Name).Msgf("could not create file: %v", err)
+					r.log.Error(r.base.Name).Msgf("%v", err)
 					os.Exit(1)
 				}
-				defer file.Close()
-				_, err = io.Copy(file, strings.NewReader(parsedTemplate))
+				bytesString := string(bytes)
+				a.Template.Data = &bytesString
+			}
+
+			if a.Template.Data != nil {
+				parsedTemplate, err := ParseTemplate(*a.Template.Data, tpl)
 				if err != nil {
-					r.log.Error(r.base.Name).Msgf("could not save file: %v", err)
-					os.Exit(1)
+					r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", a.Template.Data, err)
+					continue
 				}
-				fileName := file.Name()
-				artifact.Source = &fileName
+				artifact.Template = &config.Template{
+					Data: &parsedTemplate,
+				}
+
+				if !dryrun {
+					fileName, err := localutils.FileCopy(parsedTemplate)
+					if err != nil {
+						r.log.Error(r.base.Name).Msgf("could not save file: %v", err)
+						os.Exit(1)
+					}
+					artifact.Source = &fileName
+				}
 			}
 		}
 
 		if a.Source != nil {
 			parsedSource, err := ParseTemplate(*a.Source, tpl)
 			if err != nil {
-				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", a.Source, err)
+				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", *a.Source, err)
 				continue
 			}
 			artifact.Source = &parsedSource
@@ -112,69 +127,21 @@ func (r *Recipe) PrepareCommands(tpl *Template) {
 		if cmd.Exec != nil {
 			parsedCmd, err := ParseTemplate(*cmd.Exec, tpl)
 			if err != nil {
-				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", cmd.Exec, err)
+				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", *cmd.Exec, err)
 				continue
 			}
 			parsedCmd = strings.TrimSuffix(parsedCmd, "\n")
 			r.AddPreparedCommand(parsedCmd)
 		}
 
-		aptCmd := natives.NewAPT()
-		for _, apt := range cmd.Apt {
-			if apt.PGP != nil {
-				// install curl
-				cmd, err := aptCmd.Install([]string{"curl"})
-				if err != nil {
-					r.log.Error(r.base.Name).Msgf("%v", err)
-				}
-				r.AddPreparedCommand(cmd)
-
-				// add pgp
-				cmd, err = aptCmd.PGP(*apt.PGP)
-				if err != nil {
-					r.log.Error(r.base.Name).Msgf("%v", err)
-				}
-				r.AddPreparedCommand(cmd)
-			}
-			if apt.Repository != nil {
-				// install software-properties-common
-				cmd, err := aptCmd.Install([]string{"software-properties-common"})
-				if err != nil {
-					r.log.Error(r.base.Name).Msgf("%v", err)
-				}
-				r.AddPreparedCommand(cmd)
-
-				// add repo
-				cmd, err = aptCmd.Repository(apt.Repository.URL, apt.Repository.Sources)
-				if err != nil {
-					r.log.Error(r.base.Name).Msgf("%v", err)
-				}
-				r.AddPreparedCommand(cmd)
-			}
-			if apt.Update != nil {
-				r.AddPreparedCommand(aptCmd.Update())
-			}
-			if apt.Purge != nil {
-				cmd, err := aptCmd.Purge(*apt.Purge)
-				if err != nil {
-					r.log.Error(r.base.Name).Msgf("%v", err)
-				}
-				r.AddPreparedCommand(cmd)
-			}
-			if apt.Install != nil {
-				cmd, err := aptCmd.Install(*apt.Install)
-				if err != nil {
-					r.log.Error(r.base.Name).Msgf("%v", err)
-				}
-				r.AddPreparedCommand(cmd)
-			}
-			if apt.InstallNoUpgrade != nil {
-				cmd, err := aptCmd.InstallNoUpgrade(*apt.InstallNoUpgrade)
-				if err != nil {
-					r.log.Error(r.base.Name).Msgf("%v", err)
-				}
-				r.AddPreparedCommand(cmd)
-			}
+		apt := natives.NewAPT()
+		commands, err := apt.ParseConfig(cmd.Apt)
+		if err != nil {
+			r.log.Error(r.base.Name).Msgf("Error parsing apt: %v", err)
+			continue
+		}
+		for _, cmd := range commands {
+			r.AddPreparedCommand(cmd)
 		}
 	}
 
@@ -198,7 +165,12 @@ func (r *Recipe) AddPreparedCommand(cmd string) {
 func (r *Recipe) AskPermission() {
 	for _, a := range r.preparedArtifacts {
 		if a.Template != nil {
-			r.log.Info(r.base.Name).Msgf("%s %s %s %s %s %s", logger.Cyan("uploading"), *a.Template, logger.Cyan("to"), a.Destination, logger.Cyan("via"), *a.Source)
+			if a.Template.Data != nil {
+				r.log.Info(r.base.Name).Msgf("%s %s %s %s", logger.Cyan("uploading"), *a.Template.Data, logger.Cyan("to"), a.Destination)
+			}
+			if a.Template.Path != nil {
+				r.log.Info(r.base.Name).Msgf("%s %s %s %s", logger.Cyan("uploading"), *a.Template.Path, logger.Cyan("to"), a.Destination)
+			}
 		} else {
 			r.log.Info(r.base.Name).Msgf("%s %s %s %s", logger.Cyan("uploading"), *a.Source, logger.Cyan("to"), a.Destination)
 		}
@@ -215,35 +187,9 @@ func (r *Recipe) AskPermission() {
 	}
 }
 
-func (r *Recipe) DownloadArtifacts() {
-	for i, a := range r.preparedArtifacts {
-		if a.Source != nil && strings.HasPrefix(*a.Source, "http://") || strings.HasPrefix(*a.Source, "https://") {
-			r.log.Info(r.base.Name).Msgf("%s %s", logger.Cyan("downloading"), a.Source)
-			log := logger.NewLogger(3, true)
-			g := getter.NewGetter(log)
+func (r *Recipe) Execute(maxParallelProcesses *int) {
+	r.DownloadArtifacts()
 
-			startTime := time.Now()
-			response := g.FetchResponse(getter.Request{
-				Path:       *a.Source,
-				SaveToDisk: true,
-			})
-
-			if response.Error != nil {
-				r.log.Error(r.base.Name).Msgf("could not download %s: %v", a.Source, response.Error)
-				os.Exit(1)
-			}
-			if response.Code != 200 {
-				r.log.Error(r.base.Name).Msgf("received error code for %s: %d", a.Source, response.Code)
-				os.Exit(1)
-			}
-
-			r.log.Highlight(r.base.Name).Msgf("downloaded %s to %s %s", a.Source, response.DataPath, localutils.TimeInSecs(startTime))
-			r.base.Artifacts[i].Source = &response.DataPath
-		}
-	}
-}
-
-func (r *Recipe) ExecuteCommands(maxParallelProcesses *int) {
 	switch r.base.Type {
 	case "remote":
 		if len(r.servers) == 0 {
@@ -263,6 +209,21 @@ func (r *Recipe) ExecuteCommands(maxParallelProcesses *int) {
 		c.Run(r.preparedCommands)
 	default:
 		r.log.Error(r.base.Name).Msgf("recipe only supports ['remote', 'local'] types")
+	}
+}
+
+func (r *Recipe) DownloadArtifacts() {
+	for i, a := range r.preparedArtifacts {
+		if a.Source != nil && strings.HasPrefix(*a.Source, "http://") || strings.HasPrefix(*a.Source, "https://") {
+
+			filePath, err := Download(r.log, r.base.Name, *a.Source)
+			if err != nil {
+				r.log.Error(r.base.Name).Msgf("%v", err)
+				os.Exit(1)
+			}
+
+			r.base.Artifacts[i].Source = &filePath
+		}
 	}
 }
 

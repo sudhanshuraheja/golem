@@ -3,6 +3,8 @@ package natives
 import (
 	"fmt"
 	"strings"
+
+	"github.com/sudhanshuraheja/golem/config"
 )
 
 type Apt struct {
@@ -68,4 +70,65 @@ func (a *Apt) flattenStringArray(packages []string, separator string) (string, e
 		return "", fmt.Errorf("merged packages is empty")
 	}
 	return merged, nil
+}
+
+func (a *Apt) ParseConfig(capt []config.Apt) ([]string, error) {
+	commands := []string{}
+	for _, apt := range capt {
+		if apt.PGP != nil {
+			// install curl
+			cmd, err := a.Install([]string{"curl"})
+			if err != nil {
+				return commands, err
+			}
+			commands = append(commands, cmd)
+
+			// add pgp
+			cmd, err = a.PGP(*apt.PGP)
+			if err != nil {
+				return commands, err
+			}
+			commands = append(commands, cmd)
+		}
+		if apt.Repository != nil {
+			// install software-properties-common
+			cmd, err := a.Install([]string{"software-properties-common"})
+			if err != nil {
+				return commands, err
+			}
+			commands = append(commands, cmd)
+
+			// add repo
+			cmd, err = a.Repository(apt.Repository.URL, apt.Repository.Sources)
+			if err != nil {
+				return commands, err
+			}
+			commands = append(commands, cmd)
+		}
+		if apt.Update != nil {
+			commands = append(commands, a.Update())
+		}
+		if apt.Purge != nil {
+			cmd, err := a.Purge(*apt.Purge)
+			if err != nil {
+				return commands, err
+			}
+			commands = append(commands, cmd)
+		}
+		if apt.Install != nil {
+			cmd, err := a.Install(*apt.Install)
+			if err != nil {
+				return commands, err
+			}
+			commands = append(commands, cmd)
+		}
+		if apt.InstallNoUpgrade != nil {
+			cmd, err := a.InstallNoUpgrade(*apt.InstallNoUpgrade)
+			if err != nil {
+				return commands, err
+			}
+			commands = append(commands, cmd)
+		}
+	}
+	return commands, nil
 }

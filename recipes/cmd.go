@@ -56,7 +56,6 @@ func (c *Cmd) Run(commands []string) {
 		<-wait
 		c.log.Success(name).Msgf("$ %s %s", command, localutils.TimeInSecs(startTime))
 	}
-
 }
 
 func (c *Cmd) Upload(artifacts []config.Artifact) {

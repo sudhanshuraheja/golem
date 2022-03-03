@@ -18,6 +18,9 @@ recipe "consul-local-setup" "local" {
         // do1-client-consul-0-key.pem -> private key
         exec = "consul tls cert create -client -dc {{.Vars.HASHI_DC}}"
     }
+    command {
+        exec = "openssl rand 32 | base64 > {{.Vars.HASHI_PATH}}certs/consul.key"
+    }
     commands = [
         "mv consul-agent-ca.pem {{.Vars.HASHI_PATH}}certs/",
         "mv consul-agent-ca-key.pem {{.Vars.HASHI_PATH}}certs/",

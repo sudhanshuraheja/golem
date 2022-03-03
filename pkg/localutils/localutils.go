@@ -3,11 +3,14 @@ package localutils
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/betas-in/logger"
+	"github.com/betas-in/utils"
 )
 
 func DetectCI() bool {
@@ -61,4 +64,19 @@ func TimeInSecs(start time.Time) string {
 		"%ssec",
 		logger.CyanBold("%.3f", durationSec),
 	)
+}
+
+func FileCopy(text string) (string, error) {
+	tempFilePath := utils.UUID().Get()
+	file, err := os.CreateTemp("", tempFilePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, strings.NewReader(text))
+	if err != nil {
+		return "", err
+	}
+	return file.Name(), nil
 }

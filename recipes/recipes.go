@@ -70,7 +70,12 @@ func (r *Recipes) List(query string) {
 		for _, ar := range recipe.preparedArtifacts {
 
 			if ar.Template != nil {
-				r.log.Info("").Msgf("%s %s %s %s", logger.Cyan("uploading"), *ar.Template, logger.Cyan("to"), ar.Destination)
+				if ar.Template.Data != nil {
+					r.log.Info("").Msgf("%s %s %s %s", logger.Cyan("uploading"), *ar.Template.Data, logger.Cyan("to"), ar.Destination)
+				}
+				if ar.Template.Path != nil {
+					r.log.Info("").Msgf("%s %s %s %s", logger.Cyan("uploading"), *ar.Template.Path, logger.Cyan("to"), ar.Destination)
+				}
 			} else {
 				r.log.Info("").Msgf("%s %s %s %s", logger.Cyan("uploading"), ar.Source, logger.Cyan("to"), ar.Destination)
 			}
@@ -161,6 +166,5 @@ func (r *Recipes) Run(name string) {
 
 	recipe.AskPermission()
 
-	recipe.DownloadArtifacts()
-	recipe.ExecuteCommands(r.conf.MaxParallelProcesses)
+	recipe.Execute(r.conf.MaxParallelProcesses)
 }
