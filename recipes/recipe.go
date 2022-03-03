@@ -2,7 +2,6 @@ package recipes
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/betas-in/pool"
 	"github.com/betas-in/utils"
 	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/natives"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
 
@@ -64,60 +64,64 @@ func (r *Recipe) PrepareCommands(tpl *Template) {
 				continue
 			}
 			parsedCmd = strings.TrimSuffix(parsedCmd, "\n")
-			r.preparedCommands = append(r.preparedCommands, parsedCmd)
-
+			r.AddPreparedCommand(parsedCmd)
 		}
 
+		aptCmd := natives.NewAPT()
 		for _, apt := range cmd.Apt {
-			pgpCmd := "curl -fsSL %s | sudo apt-key add -"
-			repoCmd := "sudo apt-add-repository \"deb [arch=$(dpkg --print-architecture)] %s $(lsb_release -cs) %s\""
-			updateCmd := "sudo apt-get update --quiet --assume-yes"
-			purgeCmd := "sudo apt-get purge %s"
-			installCmd := "sudo apt-get install %s --quiet --assume-yes"
-			installNoUpgradeCmd := "sudo apt-get install %s --no-upgrade --quiet --assume-yes"
-
 			if apt.PGP != nil {
 				// install curl
-				r.preparedCommands = append(r.preparedCommands, fmt.Sprintf(installCmd, "curl"))
+				cmd, err := aptCmd.Install([]string{"curl"})
+				if err != nil {
+					r.log.Error(r.base.Name).Msgf("%v", err)
+				}
+				r.AddPreparedCommand(cmd)
+
 				// add pgp
-				r.preparedCommands = append(
-					r.preparedCommands,
-					fmt.Sprintf(pgpCmd, *apt.PGP))
+				cmd, err = aptCmd.PGP(*apt.PGP)
+				if err != nil {
+					r.log.Error(r.base.Name).Msgf("%v", err)
+				}
+				r.AddPreparedCommand(cmd)
 			}
 			if apt.Repository != nil {
 				// install software-properties-common
-				r.preparedCommands = append(r.preparedCommands, fmt.Sprintf(installCmd, "software-properties-common"))
+				cmd, err := aptCmd.Install([]string{"software-properties-common"})
+				if err != nil {
+					r.log.Error(r.base.Name).Msgf("%v", err)
+				}
+				r.AddPreparedCommand(cmd)
+
 				// add repo
-				r.preparedCommands = append(
-					r.preparedCommands,
-					fmt.Sprintf(repoCmd, apt.Repository.URL, apt.Repository.Sources))
+				cmd, err = aptCmd.Repository(apt.Repository.URL, apt.Repository.Sources)
+				if err != nil {
+					r.log.Error(r.base.Name).Msgf("%v", err)
+				}
+				r.AddPreparedCommand(cmd)
 			}
 			if apt.Update != nil {
-				r.preparedCommands = append(r.preparedCommands, updateCmd)
+				r.AddPreparedCommand(aptCmd.Update())
 			}
 			if apt.Purge != nil {
-				packages := strings.Join(*apt.Purge, " ")
-				if len(packages) > 0 {
-					r.preparedCommands = append(
-						r.preparedCommands,
-						fmt.Sprintf(purgeCmd, packages))
+				cmd, err := aptCmd.Purge(*apt.Purge)
+				if err != nil {
+					r.log.Error(r.base.Name).Msgf("%v", err)
 				}
+				r.AddPreparedCommand(cmd)
 			}
 			if apt.Install != nil {
-				packages := strings.Join(*apt.Install, " ")
-				if len(packages) > 0 {
-					r.preparedCommands = append(
-						r.preparedCommands,
-						fmt.Sprintf(installCmd, packages))
+				cmd, err := aptCmd.Purge(*apt.Install)
+				if err != nil {
+					r.log.Error(r.base.Name).Msgf("%v", err)
 				}
+				r.AddPreparedCommand(cmd)
 			}
 			if apt.InstallNoUpgrade != nil {
-				packages := strings.Join(*apt.InstallNoUpgrade, " ")
-				if len(packages) > 0 {
-					r.preparedCommands = append(
-						r.preparedCommands,
-						fmt.Sprintf(installNoUpgradeCmd, packages))
+				cmd, err := aptCmd.Purge(*apt.InstallNoUpgrade)
+				if err != nil {
+					r.log.Error(r.base.Name).Msgf("%v", err)
 				}
+				r.AddPreparedCommand(cmd)
 			}
 		}
 	}
@@ -133,6 +137,10 @@ func (r *Recipe) PrepareCommands(tpl *Template) {
 			r.preparedCommands = append(r.preparedCommands, parsedCmd)
 		}
 	}
+}
+
+func (r *Recipe) AddPreparedCommand(cmd string) {
+	r.preparedCommands = append(r.preparedCommands, cmd)
 }
 
 func (r *Recipe) AskPermission() {
