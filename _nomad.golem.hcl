@@ -1,3 +1,7 @@
+vars = {
+    HASHI_PATH = "./hashicorp/"
+}
+
 recipe "nomad-ls" "local" {
     command {
         exec = "nomad node status -allocs"
@@ -10,7 +14,79 @@ recipe "nomad-ls" "local" {
     }
 }
 
-recipe "nomad-setup" "remote" {
+recipe "nomad-local-setup" "local" {
+    command {
+        exec = "mkdir -p {{.Vars.HASHI_PATH}}certs/"
+    }
+    artifact {
+        template = <<EOF
+{
+  "signing": {
+    "default": {
+      "expiry": "87600h",
+      "usages": ["signing", "key encipherment", "server auth", "client auth"]
+    }
+  }
+}
+        EOF
+        destination = "{{.Vars.HASHI_PATH}}certs/cfssl.json"
+    }
+    command {
+        // Install cfssl
+        exec = "go install github.com/cloudflare/cfssl/cmd/cfssl@latest"
+    }
+    command {
+        // Install cfssljson
+        exec = "go install github.com/cloudflare/cfssl/cmd/cfssljson@latest"
+    }
+    command {
+        // HASHI_PATH/certs/nomad-ca-key.pem -> private key
+        // HASHI_PATH/certs/nomad-ca.csr -> certificate signing request
+        // HASHI_PATH/certs/nomad-ca.pem -> public key
+        exec = "cfssl print-defaults csr | cfssl gencert -initca - | cfssljson -bare {{.Vars.HASHI_PATH}}certs/nomad-ca"
+    }
+    command {
+        // server-key.pem -> private key
+        // server.csr -> certificate signing request
+        // server.pem -> public key
+        exec = <<EOF
+echo '{}' | cfssl gencert -ca={{.Vars.HASHI_PATH}}certs/nomad-ca.pem -ca-key={{.Vars.HASHI_PATH}}certs/nomad-ca-key.pem -config={{.Vars.HASHI_PATH}}certs/cfssl.json -hostname="server.global.nomad,localhost,127.0.0.1,
+{{- range $_, $s := (match "tags" "contains" "nomad-server") -}}
+    {{- if not ($s).PublicIP -}}
+    {{- else -}}
+        {{- ($s).PublicIP -}},
+    {{- end -}}
+    {{- if not ($s).PrivateIP -}}
+    {{- else -}}
+        {{- ($s).PrivateIP -}},
+    {{- end -}}
+{{- end -}}" - | cfssljson -bare {{.Vars.HASHI_PATH}}certs/server
+        EOF
+    }
+    command {
+        // client-key.pem -> private key
+        // client.csr -> certificate signing request
+        // client.pem -> public key
+        exec = <<EOF
+echo '{}' | cfssl gencert -ca={{.Vars.HASHI_PATH}}certs/nomad-ca.pem -ca-key={{.Vars.HASHI_PATH}}certs/nomad-ca-key.pem -config={{.Vars.HASHI_PATH}}certs/cfssl.json -hostname="client.global.nomad,localhost,127.0.0.1,
+{{- range $_, $s := (match "tags" "contains" "nomad-server") -}}
+    {{- if not ($s).PublicIP -}}
+    {{- else -}}
+        {{- ($s).PublicIP -}},
+    {{- end -}}
+    {{- if not ($s).PrivateIP -}}
+    {{- else -}}
+        {{- ($s).PrivateIP -}},
+    {{- end -}}
+{{ end }}" - | cfssljson -bare {{.Vars.HASHI_PATH}}certs/client
+        EOF
+    }
+    command {
+        exec = "echo '{}' | cfssl gencert -ca={{.Vars.HASHI_PATH}}certs/nomad-ca.pem -ca-key={{.Vars.HASHI_PATH}}certs/nomad-ca-key.pem -profile=client - | cfssljson -bare {{.Vars.HASHI_PATH}}certs/cli"
+    }
+}
+
+recipe "nomad-remote-setup" "remote" {
     match {
         attribute = "name"
         operator = "="
@@ -99,57 +175,6 @@ recipe "nomad-client-config-update" "remote" {
         "systemctl stop nomad",
         "systemctl start nomad",
     ]
-}
-
-recipe "nomad-cfssl" "local" {
-    // Install cfssl
-    commands = [
-        "go install github.com/cloudflare/cfssl/cmd/cfssl@latest",
-        "go install github.com/cloudflare/cfssl/cmd/cfssljson@latest",
-    ]
-}
-
-recipe "nomad-ca" "local" {
-    command {
-        exec = <<EOF
-echo '{ "signing": { "default": { "expiry": "87600h", "usages": ["signing", "key encipherment", "server auth", "client auth"] } } }' > cfssl.json
-EOF
-    }
-    command {
-        // nomad-ca-key.pem -> private key
-        // nomad-ca.csr -> certificate signing request
-        // nomad-ca.pem -> public key
-        exec = "cfssl print-defaults csr | cfssl gencert -initca - | cfssljson -bare nomad-ca"
-    }
-    command {
-        // server-key.pem -> private key
-        // server.csr -> certificate signing request
-        // server.pem -> public key
-        exec = <<EOF
-echo '{}' | cfssl gencert -ca=nomad-ca.pem -ca-key=nomad-ca-key.pem -config=cfssl.json -hostname="server.global.nomad,localhost,127.0.0.1,
-{{- range $_, $s := (match "tags" "contains" "nomad-server") -}}
-    {{- if not ($s).PublicIP -}}
-    {{- else -}}
-        {{- ($s).PublicIP -}},
-    {{- end -}}
-    {{- if not ($s).PrivateIP -}}
-    {{- else -}}
-        {{- ($s).PrivateIP -}},
-    {{- end -}}
-{{- end -}}" - | cfssljson -bare server
-        EOF
-    }
-    command {
-        // client-key.pem -> private key
-        // client.csr -> certificate signing request
-        // client.pem -> public key
-        exec = <<EOF
-echo '{}' | cfssl gencert -ca=nomad-ca.pem -ca-key=nomad-ca-key.pem -config=cfssl.json -hostname="client.global.nomad,localhost,127.0.0.1,{{ range $_, $s := (match "tags" "contains" "nomad-server") }}{{ if not ($s).PublicIP }}{{ else }}{{ ($s).PublicIP }},{{ end }}{{ if not ($s).PrivateIP }}{{ else }}{{ ($s).PrivateIP }},{{ end }}{{ end }}" - | cfssljson -bare client
-        EOF
-    }
-    command {
-        exec = "echo '{}' | cfssl gencert -ca=nomad-ca.pem -ca-key=nomad-ca-key.pem -profile=client - | cfssljson -bare cli"
-    }
 }
 
 recipe "nomad-clean" "local" {

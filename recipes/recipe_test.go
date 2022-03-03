@@ -51,6 +51,8 @@ func TestRecipe(t *testing.T) {
 		{Apt: []config.Apt{{Update: &isTrue, Install: &install, InstallNoUpgrade: &installNU}}},
 	}
 
+	licencePath := "https://raw.githubusercontent.com/sudhanshuraheja/golem/main/LICENSE"
+
 	recipe := config.Recipe{}
 	recipe.Name = "test"
 	recipe.Type = "remote"
@@ -59,7 +61,7 @@ func TestRecipe(t *testing.T) {
 	recipe.CustomCommands = custom
 	recipe.Artifacts = []config.Artifact{
 		{
-			Source:      "https://raw.githubusercontent.com/sudhanshuraheja/golem/main/LICENSE",
+			Source:      &licencePath,
 			Destination: "",
 		},
 	}
@@ -88,9 +90,9 @@ func TestRecipe(t *testing.T) {
 
 	r.DownloadArtifacts()
 	if localutils.DetectCI() {
-		utils.Test().Contains(t, r.base.Artifacts[0].Source, "/tmp")
+		utils.Test().Contains(t, *r.base.Artifacts[0].Source, "/tmp")
 	} else {
-		utils.Test().Contains(t, r.base.Artifacts[0].Source, "/var/folders/")
+		utils.Test().Contains(t, *r.base.Artifacts[0].Source, "/var/folders/")
 	}
 
 }

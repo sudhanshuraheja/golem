@@ -1,9 +1,12 @@
 package recipes
 
 import (
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/betas-in/logger"
+	"github.com/sudhanshuraheja/golem/config"
 	"github.com/sudhanshuraheja/golem/pkg/cmd"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
@@ -54,4 +57,22 @@ func (c *Cmd) Run(commands []string) {
 		c.log.Success(name).Msgf("$ %s %s", command, localutils.TimeInSecs(startTime))
 	}
 
+}
+
+func (c *Cmd) Upload(artifacts []config.Artifact) {
+	name := "local"
+	for _, artifact := range artifacts {
+		startTime := time.Now()
+		err := os.MkdirAll(filepath.Dir(artifact.Destination), os.ModePerm)
+		if err != nil {
+			c.log.Error(name).Msgf("could not create directory <%s>: %v", filepath.Dir(artifact.Destination), err)
+			continue
+		}
+		err = os.Rename(*artifact.Source, artifact.Destination)
+		if err != nil {
+			c.log.Error(name).Msgf("error in moving from <%s> to <%s>: %v", *artifact.Source, artifact.Destination, err)
+			continue
+		}
+		c.log.Success(name).Msgf("%s %s %s %s %s", logger.Cyan("Moved"), *artifact.Source, logger.Cyan("to"), artifact.Destination, localutils.TimeInSecs(startTime))
+	}
 }

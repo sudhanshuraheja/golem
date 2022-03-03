@@ -71,7 +71,7 @@ func (w *SSHWorkerGroup) ExecRecipeOnServer(s config.Server, recipe *Recipe) {
 		w.log.Error(s.Name).Msgf("%v", err)
 		return
 	}
-	ss.Upload(recipe.base.Artifacts)
+	ss.Upload(recipe.preparedArtifacts)
 	ss.Run(recipe.preparedCommands)
 	ss.Close()
 }

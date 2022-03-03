@@ -90,13 +90,13 @@ func (ss *SSH) Run(commands []string) {
 func (ss *SSH) Upload(artifacts []config.Artifact) {
 	for _, artifact := range artifacts {
 		startTime := time.Now()
-		ss.log.Info(ss.name).Msgf("%s %s %s %s:%s", logger.Cyan("uploading"), artifact.Source, logger.Cyan("to"), ss.name, artifact.Destination)
-		copied, err := ss.conn.Upload(artifact.Source, artifact.Destination)
+		ss.log.Info(ss.name).Msgf("%s %s %s %s:%s", logger.Cyan("uploading"), *artifact.Source, logger.Cyan("to"), ss.name, artifact.Destination)
+		copied, err := ss.conn.Upload(*artifact.Source, artifact.Destination)
 		if err != nil {
-			ss.log.Error(ss.name).Msgf("failed to upload local:<%s> to remote:<%s>: %v", artifact.Source, artifact.Destination, err)
+			ss.log.Error(ss.name).Msgf("failed to upload local:<%s> to remote:<%s>: %v", *artifact.Source, artifact.Destination, err)
 			continue
 		}
-		ss.log.Success(ss.name).Msgf("uploaded %s to %s:%s %s", artifact.Source, ss.name, artifact.Destination, localutils.TransferRate(copied, startTime))
+		ss.log.Success(ss.name).Msgf("uploaded %s to %s:%s %s", *artifact.Source, ss.name, artifact.Destination, localutils.TransferRate(copied, startTime))
 	}
 }
 

@@ -65,8 +65,15 @@ func (r *Recipes) List(query string) {
 			match,
 		)
 
-		for _, ar := range re.Artifacts {
-			r.log.Info("").Msgf("%s %s %s %s", logger.Cyan("uploading"), ar.Source, logger.Cyan("to"), ar.Destination)
+		recipe.PrepareArtifacts(r.tpl, true)
+
+		for _, ar := range recipe.preparedArtifacts {
+
+			if ar.Template != nil {
+				r.log.Info("").Msgf("%s %s %s %s", logger.Cyan("uploading"), *ar.Template, logger.Cyan("to"), ar.Destination)
+			} else {
+				r.log.Info("").Msgf("%s %s %s %s", logger.Cyan("uploading"), ar.Source, logger.Cyan("to"), ar.Destination)
+			}
 		}
 
 		recipe.PrepareCommands(r.tpl)
@@ -148,6 +155,8 @@ func (r *Recipes) Run(name string) {
 	}
 
 	recipe.FindServers(r.conf.Servers)
+
+	recipe.PrepareArtifacts(r.tpl, false)
 	recipe.PrepareCommands(r.tpl)
 
 	recipe.AskPermission()

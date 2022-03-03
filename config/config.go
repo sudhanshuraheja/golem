@@ -51,8 +51,9 @@ type Match struct {
 }
 
 type Artifact struct {
-	Source      string `hcl:"source"`
-	Destination string `hcl:"destination"`
+	Template    *string `hcl:"template"`
+	Source      *string  `hcl:"source"`
+	Destination string  `hcl:"destination"`
 }
 
 type Command struct {

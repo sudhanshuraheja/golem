@@ -2,6 +2,7 @@ package recipes
 
 import (
 	"context"
+	"io"
 	"os"
 	"os/signal"
 	"strings"
@@ -17,10 +18,11 @@ import (
 )
 
 type Recipe struct {
-	base             *config.Recipe
-	log              *logger.CLILogger
-	servers          []config.Server
-	preparedCommands []string
+	base              *config.Recipe
+	log               *logger.CLILogger
+	servers           []config.Server
+	preparedCommands  []string
+	preparedArtifacts []config.Artifact
 }
 
 func (r *Recipe) FindServers(servers []config.Server) {
@@ -52,6 +54,56 @@ func (r *Recipe) FindServers(servers []config.Server) {
 	case "local":
 	default:
 		r.log.Error(r.base.Name).Msgf("recipe only supports ['remote', 'local'] types")
+	}
+}
+
+func (r *Recipe) PrepareArtifacts(tpl *Template, dryrun bool) {
+	for _, a := range r.base.Artifacts {
+		artifact := config.Artifact{}
+
+		if a.Template != nil {
+			parsedTemplate, err := ParseTemplate(*a.Template, tpl)
+			if err != nil {
+				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", a.Template, err)
+				continue
+			}
+			artifact.Template = &parsedTemplate
+
+			if !dryrun {
+				tempFilePath := utils.UUID().Get()
+				file, err := os.CreateTemp("", tempFilePath)
+				if err != nil {
+					r.log.Error(r.base.Name).Msgf("could not create file: %v", err)
+					os.Exit(1)
+				}
+				defer file.Close()
+				_, err = io.Copy(file, strings.NewReader(parsedTemplate))
+				if err != nil {
+					r.log.Error(r.base.Name).Msgf("could not save file: %v", err)
+					os.Exit(1)
+				}
+				fileName := file.Name()
+				artifact.Source = &fileName
+			}
+		}
+
+		if a.Source != nil {
+			parsedSource, err := ParseTemplate(*a.Source, tpl)
+			if err != nil {
+				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", a.Source, err)
+				continue
+			}
+			artifact.Source = &parsedSource
+		}
+
+		parsedDestination, err := ParseTemplate(a.Destination, tpl)
+		if err != nil {
+			r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", a.Destination, err)
+			continue
+		}
+		artifact.Destination = parsedDestination
+
+		r.preparedArtifacts = append(r.preparedArtifacts, artifact)
 	}
 }
 
@@ -144,8 +196,12 @@ func (r *Recipe) AddPreparedCommand(cmd string) {
 }
 
 func (r *Recipe) AskPermission() {
-	for _, a := range r.base.Artifacts {
-		r.log.Info(r.base.Name).Msgf("%s %s %s %s", logger.Cyan("uploading"), a.Source, logger.Cyan("to"), a.Destination)
+	for _, a := range r.preparedArtifacts {
+		if a.Template != nil {
+			r.log.Info(r.base.Name).Msgf("%s %s %s %s %s %s", logger.Cyan("uploading"), *a.Template, logger.Cyan("to"), a.Destination, logger.Cyan("via"), *a.Source)
+		} else {
+			r.log.Info(r.base.Name).Msgf("%s %s %s %s", logger.Cyan("uploading"), *a.Source, logger.Cyan("to"), a.Destination)
+		}
 	}
 
 	for _, command := range r.preparedCommands {
@@ -160,15 +216,15 @@ func (r *Recipe) AskPermission() {
 }
 
 func (r *Recipe) DownloadArtifacts() {
-	for i, a := range r.base.Artifacts {
-		if strings.HasPrefix(a.Source, "http://") || strings.HasPrefix(a.Source, "https://") {
+	for i, a := range r.preparedArtifacts {
+		if a.Source != nil && strings.HasPrefix(*a.Source, "http://") || strings.HasPrefix(*a.Source, "https://") {
 			r.log.Info(r.base.Name).Msgf("%s %s", logger.Cyan("downloading"), a.Source)
 			log := logger.NewLogger(3, true)
 			g := getter.NewGetter(log)
 
 			startTime := time.Now()
 			response := g.FetchResponse(getter.Request{
-				Path:       a.Source,
+				Path:       *a.Source,
 				SaveToDisk: true,
 			})
 
@@ -182,7 +238,7 @@ func (r *Recipe) DownloadArtifacts() {
 			}
 
 			r.log.Highlight(r.base.Name).Msgf("downloaded %s to %s %s", a.Source, response.DataPath, localutils.TimeInSecs(startTime))
-			r.base.Artifacts[i].Source = response.DataPath
+			r.base.Artifacts[i].Source = &response.DataPath
 		}
 	}
 }
@@ -203,6 +259,7 @@ func (r *Recipe) ExecuteCommands(maxParallelProcesses *int) {
 		r.StartSSHPool(int64(maxProcs))
 	case "local":
 		c := Cmd{log: r.log}
+		c.Upload(r.preparedArtifacts)
 		c.Run(r.preparedCommands)
 	default:
 		r.log.Error(r.base.Name).Msgf("recipe only supports ['remote', 'local'] types")
