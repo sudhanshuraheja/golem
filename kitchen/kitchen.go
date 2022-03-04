@@ -133,20 +133,20 @@ func (k *Kitchen) initConfigFile() error {
 }
 
 func (k *Kitchen) Exec(recipe string, param1 string) {
-	if recipe != "" && k.conf != nil && k.conf.MaxParallelProcesses != nil {
-		k.log.Announce(recipe).Msgf("running with a maximum of %d routines %s", *k.conf.MaxParallelProcesses, logger.CyanBold(recipe))
-	}
 	r := recipes.NewRecipes(k.conf, k.log)
 	switch recipe {
 	case "":
 		r.List(param1)
 	case "version":
-		k.log.Highlight("golem").Msgf("golem version: %s", version)
+		k.log.Highlight("golem").Msgf("version: %s", version)
 	case "list":
 		r.List(param1)
 	case "servers":
 		r.Servers(param1)
 	default:
+		if recipe != "" && k.conf != nil && k.conf.MaxParallelProcesses != nil {
+			k.log.Announce(recipe).Msgf("running with a maximum of %d routines %s", *k.conf.MaxParallelProcesses, logger.CyanBold(recipe))
+		}
 		r.Run(recipe)
 	}
 }
