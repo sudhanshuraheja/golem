@@ -5,12 +5,10 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-
-# Nomad server should be run as the nomad user. Nomad clients
-# should be run as root
-User=nomad
-Group=nomad
-
+# Nomad server should be run as the nomad user
+# Nomad clients should be run as root
+# User=nomad
+# Group=nomad
 ExecReload=/bin/kill -HUP $MAINPID
 ExecStart=/usr/bin/nomad agent -config /etc/nomad.d
 KillMode=process
@@ -21,7 +19,7 @@ Restart=on-failure
 RestartSec=2
 TasksMax=infinity
 OOMScoreAdjust=-1000
-StartLimitBurst = 3
+StartLimitBurst=3
 
 [Install]
 WantedBy=multi-user.target

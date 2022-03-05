@@ -5,8 +5,14 @@
 bind_addr = "{{- .Vars.NOMAD_BIND_ADDRESS -}}"
 datacenter = "@golem.NOMAD_DC"
 data_dir = "/opt/nomad"
-log_level = "INFO"
 region = "@golem.NOMAD_REGION"
+
+log_level = "INFO"
+log_json = true
+log_file = "/var/log/nomad.log"
+log_rotate_bytes = 16777216
+log_rotate_duration = "720h"
+log_rotate_max_files = 6
 
 addresses {
   http = "{{- .Vars.NOMAD_SERVER_ADDRESSES -}}"

@@ -58,7 +58,6 @@ func (t *Template) Execute(text string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("==>", b.String())
 	return b.String(), nil
 }
 
