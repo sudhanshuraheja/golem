@@ -103,7 +103,7 @@ func (ss *SSH) Upload(artifacts []config.Artifact) {
 			ss.log.Error(ss.name).Msgf("failed to upload local:<%s> to remote:<%s>: %v", *artifact.Source, artifact.Destination, err)
 			continue
 		}
-		ss.log.Success(ss.name).Msgf("uploaded %s to %s:%s %s", *artifact.Source, ss.name, artifact.Destination, localutils.TransferRate(copied, startTime))
+		ss.log.Success(ss.name).Msgf("uploaded %s to %s:%s %s", localutils.TinyString(*artifact.Source, tiny), ss.name, artifact.Destination, localutils.TransferRate(copied, startTime))
 	}
 }
 

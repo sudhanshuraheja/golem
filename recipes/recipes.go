@@ -28,6 +28,7 @@ func NewRecipes(conf *config.Config, log *logger.CLILogger) *Recipes {
 	if conf.Vars != nil {
 		r.tpl.Vars = *conf.Vars
 	}
+	r.tpl.Trim()
 	r.tpl.Servers = append(r.tpl.Servers, conf.Servers...)
 	return &r
 }
@@ -106,7 +107,7 @@ func (r *Recipes) List(query string) {
 		recipe.PrepareCommands(r.tpl)
 
 		for _, command := range recipe.preparedCommands {
-			r.log.Info("").Msgf("$ %s", localutils.TinyString(command, tiny))
+			r.log.Info("").Msgf("$ %s", command)
 		}
 	}
 }
@@ -176,12 +177,12 @@ func (r *Recipes) Run(name string) {
 		}
 	}
 
-	if recipe.base.Name == "" {
-		r.log.Error(name).Msgf("the recipe <%s> was not found in '~/.golem/' or '.'", name)
+	if recipe.base == nil || recipe.base.Name == "" {
+		r.log.Error(name).Msgf("the recipe %s was not found in '~/.golem/' or '.'", logger.Cyan(name))
 		return
 	}
 
-	recipe.FindServers(r.conf.Servers)
+	recipe.FindServers(r.conf.Servers, r.tpl)
 
 	recipe.PrepareArtifacts(r.tpl, false)
 	recipe.PrepareCommands(r.tpl)

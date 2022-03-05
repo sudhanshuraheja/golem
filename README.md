@@ -169,7 +169,7 @@ vars = {
 }
 ```
 
-Any `Vars` can be accessed in the commands as `{{ .Vars.APP }}`. Vars only support string keys and values.
+Any `Vars` can be accessed in the commands as `{{ .Vars.APP }}` or `@golem.APP`. Vars only support string keys and values.
 
 `Servers` includes any servers that you have added to golem. This has been covered in more detail earlier.
 
@@ -272,7 +272,7 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Define variables to be used in recipes
 - [x] Create system level recipes
 - [ ] Native recipe to setup docker
-- [ ] Native recipe to setup nomad
+- [ ] Native recipe to setup nomad without consul
 - [ ] Native recipe to setup consul
 - [ ] Native recipe to setup postgres with nomad
 - [ ] Native recipe to setup redis with nomad

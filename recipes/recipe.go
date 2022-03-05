@@ -23,7 +23,7 @@ type Recipe struct {
 	preparedArtifacts []config.Artifact
 }
 
-func (r *Recipe) FindServers(servers []config.Server) {
+func (r *Recipe) FindServers(servers []config.Server, tpl *Template) {
 	switch r.base.Type {
 	case "remote":
 		if r.base.Match == nil {
@@ -32,6 +32,14 @@ func (r *Recipe) FindServers(servers []config.Server) {
 		}
 
 		var err error
+		if tpl != nil {
+			r.base.Match.Value, err = tpl.Execute(r.base.Match.Value)
+			if err != nil {
+				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", r.base.Match.Value, err)
+				return
+			}
+		}
+
 		r.servers, err = NewMatch(*r.base.Match).Find(servers)
 		if err != nil {
 			r.log.Error(r.base.Name).Msgf("%v", err)
@@ -62,6 +70,13 @@ func (r *Recipe) PrepareArtifacts(tpl *Template, dryrun bool) {
 		if a.Template != nil {
 
 			if a.Template.Path != nil {
+				parsedPath, err := tpl.Execute(*a.Template.Path)
+				if err != nil {
+					r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", *a.Template.Path, err)
+					continue
+				}
+				a.Template.Path = &parsedPath
+
 				if strings.HasPrefix(*a.Template.Path, "http://") || strings.HasPrefix(*a.Template.Path, "https://") {
 					// Url based template
 					path, err := Download(r.log, r.base.Name, *a.Template.Path)
@@ -82,9 +97,9 @@ func (r *Recipe) PrepareArtifacts(tpl *Template, dryrun bool) {
 			}
 
 			if a.Template.Data != nil {
-				parsedTemplate, err := ParseTemplate(*a.Template.Data, tpl)
+				parsedTemplate, err := tpl.Execute(*a.Template.Data)
 				if err != nil {
-					r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", a.Template.Data, err)
+					r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", *a.Template.Data, err)
 					continue
 				}
 				artifact.Template = &config.Template{
@@ -103,7 +118,7 @@ func (r *Recipe) PrepareArtifacts(tpl *Template, dryrun bool) {
 		}
 
 		if a.Source != nil {
-			parsedSource, err := ParseTemplate(*a.Source, tpl)
+			parsedSource, err := tpl.Execute(*a.Source)
 			if err != nil {
 				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", *a.Source, err)
 				continue
@@ -111,7 +126,7 @@ func (r *Recipe) PrepareArtifacts(tpl *Template, dryrun bool) {
 			artifact.Source = &parsedSource
 		}
 
-		parsedDestination, err := ParseTemplate(a.Destination, tpl)
+		parsedDestination, err := tpl.Execute(a.Destination)
 		if err != nil {
 			r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", a.Destination, err)
 			continue
@@ -125,7 +140,7 @@ func (r *Recipe) PrepareArtifacts(tpl *Template, dryrun bool) {
 func (r *Recipe) PrepareCommands(tpl *Template) {
 	for _, cmd := range r.base.CustomCommands {
 		if cmd.Exec != nil {
-			parsedCmd, err := ParseTemplate(*cmd.Exec, tpl)
+			parsedCmd, err := tpl.Execute(*cmd.Exec)
 			if err != nil {
 				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", *cmd.Exec, err)
 				continue
@@ -147,7 +162,7 @@ func (r *Recipe) PrepareCommands(tpl *Template) {
 
 	if r.base.Commands != nil {
 		for _, c := range *r.base.Commands {
-			parsedCmd, err := ParseTemplate(c, tpl)
+			parsedCmd, err := tpl.Execute(c)
 			if err != nil {
 				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", c, err)
 				continue

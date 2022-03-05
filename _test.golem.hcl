@@ -10,7 +10,7 @@ recipe "test-artifact-template" "local" {
   "signing": {
     "default": {
       "expiry": "87600h",
-      "usages": ["signing", "key encipherment", "server auth", "client auth", "{{.Vars.HASHI_PATH}}"]
+      "usages": ["signing", "key encipherment", "server auth", "client auth", "@golem.HASHI_PATH"]
     }
   }
 }

@@ -20,3 +20,5 @@ golem*.hcl
 builds/*
 hashicorp/*
 template.p*
+
+nomad/certs/*

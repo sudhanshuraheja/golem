@@ -36,9 +36,9 @@ func TestTemplates(t *testing.T) {
 		Servers: servers,
 	}
 
-	message := "foo:{{ .Vars.foo}} {{ (matchOne \"tags\" \"contains\" \"three\").Name }}    {{ range $_, $s := (match \"tags\" \"contains\" \"one\") -}}{{- ($s).Name -}},{{- end -}}"
+	message := "foo:@golem.foo {{ (matchOne \"tags\" \"contains\" \"three\").Name }}    {{ range $_, $s := (match \"tags\" \"contains\" \"one\") -}}{{- ($s).Name -}},{{- end -}}"
 
-	txt, err := ParseTemplate(message, tpl)
+	txt, err := tpl.Execute(message)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, "foo:bar three    one,two,three,", txt)
 }

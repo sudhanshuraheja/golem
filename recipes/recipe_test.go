@@ -44,7 +44,7 @@ func TestRecipe(t *testing.T) {
 	install := []string{"a", "b"}
 	installNU := []string{"c", "d"}
 
-	command1 := "ls -la {{ .Vars.key}}"
+	command1 := "ls -la @golem.key"
 	commands := []string{command1}
 	custom := []config.Command{
 		{Exec: &command1},
@@ -76,11 +76,11 @@ func TestRecipe(t *testing.T) {
 		"key": "value",
 	}
 
-	r.FindServers(servers)
+	r.FindServers(servers, nil)
 	utils.Test().Equals(t, 3, len(r.servers))
 
 	match.Value = "two"
-	r.FindServers(servers)
+	r.FindServers(servers, nil)
 	utils.Test().Equals(t, 2, len(r.servers))
 
 	r.PrepareCommands(&template)

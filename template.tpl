@@ -1,1 +1,2 @@
 {{ .Vars.APP }}
+@golem.APP

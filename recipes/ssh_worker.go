@@ -68,7 +68,8 @@ func (w *SSHWorkerGroup) ExecRecipeOnServer(s config.Server, recipe *Recipe) {
 	ss := SSH{log: w.log}
 	err := ss.Connect(&s)
 	if err != nil {
-		w.log.Error(s.Name).Msgf("%v", err)
+		w.log.Error(s.Name).Msgf("%v, please try", err)
+		w.log.Success(s.Name).Msgf("$ ssh-keyscan -p %d %s >> ~/.ssh/known_hosts", s.Port, *s.PublicIP)
 		return
 	}
 	ss.Upload(recipe.preparedArtifacts)

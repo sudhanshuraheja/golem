@@ -2,7 +2,9 @@ package recipes
 
 import (
 	"bytes"
-	"html/template"
+	"fmt"
+	"strings"
+	"text/template"
 
 	"github.com/sudhanshuraheja/golem/config"
 )
@@ -12,14 +14,21 @@ type Template struct {
 	Vars    map[string]string
 }
 
-func ParseTemplate(text string, tp *Template) (string, error) {
-	t := template.New("template").Funcs(template.FuncMap{
+func (t *Template) Trim() {
+	for k, v := range t.Vars {
+		t.Vars[k] = strings.TrimSuffix(v, "\n")
+	}
+}
+
+func (t *Template) Execute(text string) (string, error) {
+	text = t.ReplaceVars(text)
+	tpl := template.New("template").Funcs(template.FuncMap{
 		"matchOne": func(attribute, operator, value string) config.Server {
 			s, err := NewMatch(config.Match{
 				Attribute: attribute,
 				Operator:  operator,
 				Value:     value,
-			}).Find(tp.Servers)
+			}).Find(t.Servers)
 			if err != nil {
 				return config.Server{}
 			}
@@ -30,7 +39,7 @@ func ParseTemplate(text string, tp *Template) (string, error) {
 				Attribute: attribute,
 				Operator:  operator,
 				Value:     value,
-			}).Find(tp.Servers)
+			}).Find(t.Servers)
 			if err != nil {
 				return []config.Server{}
 			}
@@ -39,15 +48,24 @@ func ParseTemplate(text string, tp *Template) (string, error) {
 	})
 
 	var err error
-	t, err = t.Parse(text)
+	tpl, err = tpl.Parse(text)
 	if err != nil {
 		return "", err
 	}
 
 	var b bytes.Buffer
-	err = t.Execute(&b, tp)
+	err = tpl.Execute(&b, t)
 	if err != nil {
 		return "", err
 	}
+	fmt.Println("==>", b.String())
 	return b.String(), nil
+}
+
+func (t *Template) ReplaceVars(text string) string {
+	for k, v := range t.Vars {
+		key := fmt.Sprintf("@golem.%s", k)
+		text = strings.Replace(text, key, v, -1)
+	}
+	return text
 }

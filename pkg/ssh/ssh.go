@@ -82,8 +82,8 @@ func (c *Connection) dial(user, host string, port int, privateKeyPath string) er
 	if err != nil {
 		return err
 	}
-	knownHosts := fmt.Sprintf("%s/.ssh/known_hosts", homeDir)
 
+	knownHosts := fmt.Sprintf("%s/.ssh/known_hosts", homeDir)
 	hostKeyCallback, err := knownhosts.New(knownHosts)
 	if err != nil {
 		return err
@@ -249,7 +249,7 @@ func (c *Connection) Upload(src, dest string) (int64, error) {
 		return 0, err
 	}
 
-	d, err := c.sftpSession.OpenFile(dest, syscall.O_RDWR|syscall.O_CREAT)
+	d, err := c.sftpSession.OpenFile(dest, syscall.O_RDWR|syscall.O_CREAT|syscall.O_TRUNC)
 	if err != nil {
 		return 0, err
 	}
