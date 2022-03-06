@@ -2,6 +2,7 @@ package localutils
 
 import (
 	"bufio"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"os"
@@ -136,4 +137,12 @@ func Download(log *logger.CLILogger, name, url string) (string, error) {
 		TimeInSecs(startTime),
 	)
 	return response.DataPath, nil
+}
+
+func Base64EncodedRandomNumber(size int) (string, error) {
+	randomNumber, err := utils.Crypto().RandomNumberGenerator(size)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(randomNumber), nil
 }

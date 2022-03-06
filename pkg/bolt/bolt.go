@@ -63,6 +63,17 @@ func (b *Bolt) DeleteBucket(bucket []byte) error {
 	})
 }
 
+func (b *Bolt) ListBuckets() ([]string, error) {
+	buckets := []string{}
+	err := b.db.View(func(tx *bbolt.Tx) error {
+		return tx.ForEach(func(name []byte, _ *bbolt.Bucket) error {
+			buckets = append(buckets, string(name))
+			return nil
+		})
+	})
+	return buckets, err
+}
+
 func (b *Bolt) Put(bucket, key, value []byte) error {
 	return b.db.Update(func(tx *bbolt.Tx) error {
 		bu := tx.Bucket(bucket)

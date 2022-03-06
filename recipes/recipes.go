@@ -6,6 +6,7 @@ import (
 
 	"github.com/betas-in/logger"
 	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/kv"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
 	"github.com/sudhanshuraheja/golem/template"
 )
@@ -18,6 +19,7 @@ type Recipes struct {
 	conf *config.Config
 	log  *logger.CLILogger
 	tpl  *template.Template
+	kv   *kv.KV
 }
 
 func NewRecipes(conf *config.Config, log *logger.CLILogger) *Recipes {
@@ -31,6 +33,7 @@ func NewRecipes(conf *config.Config, log *logger.CLILogger) *Recipes {
 	}
 	r.tpl.Trim()
 	r.tpl.Servers = append(r.tpl.Servers, conf.Servers...)
+	r.kv = kv.NewKV(log)
 	return &r
 }
 
@@ -167,6 +170,80 @@ func (r *Recipes) Servers(query string) {
 			r.log.Info("").Msgf("%s %s", logger.Cyan("tags"), tags)
 		}
 	}
+}
+
+func (r *Recipes) KV(path, action string) {
+	if path == "" {
+		path = "list"
+	}
+	if path == "list" {
+		store, err := r.kv.GetAll()
+		if err != nil {
+			r.log.Error("kv").Msgf("could not read from the database: %v", err)
+			_ = r.kv.Close()
+			return
+		}
+
+		kvLog := func(log *logger.CLILogger, key, value string) {
+			if strings.Contains(key, "secret") || strings.Contains(key, "password") {
+				value = value[:2] + "************"
+			}
+			log.Info("kv").Msgf("%s: %s", logger.Cyan(key), logger.GreenBold(value))
+		}
+
+		for key, value := range store {
+			switch action {
+			case "":
+				kvLog(r.log, key, value)
+			default:
+				if strings.Contains(key, action) {
+					kvLog(r.log, key, value)
+				}
+			}
+		}
+		_ = r.kv.Close()
+		return
+	}
+
+	switch action {
+	case "set":
+		userValue := localutils.Question(r.log, "enter", "please enter a value")
+		userValue = strings.TrimSuffix(userValue, "\n")
+		err := r.kv.Set(path, userValue)
+		if err != nil {
+			r.log.Error("kv").Msgf("could not set the value: %v", err)
+		}
+	case "rand32":
+		err := r.kv.Set(path, action)
+		if err != nil {
+			r.log.Error("kv").Msgf("could not set the value: %v", err)
+		}
+
+		value, err := r.kv.Get(path)
+		if err != nil {
+			r.log.Error("kv").Msgf("could not get value: %v", err)
+		}
+
+		if err == nil {
+			r.log.Info("kv").Msgf("%s: %s", logger.Cyan(path), logger.GreenBold(value))
+		}
+	case "delete":
+		err := r.kv.Delete(path)
+		if err != nil {
+			r.log.Error("kv").Msgf("could not delete the value: %v", err)
+		}
+	default:
+		value, err := r.kv.Get(path)
+		if err != nil {
+			r.log.Error("kv").Msgf("could not get value: %v", err)
+		}
+
+		if err == nil {
+			r.log.Info("kv").Msgf("%s: %s", logger.Cyan(path), logger.GreenBold(value))
+		}
+	}
+
+	_ = r.kv.Close()
 }
 
 func (r *Recipes) Run(name string) {

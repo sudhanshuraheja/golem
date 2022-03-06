@@ -153,6 +153,8 @@ func (k *Kitchen) Exec() {
 		r.List(k.kconf.Param1)
 	case "servers":
 		r.Servers(k.kconf.Param1)
+	case "kv":
+		r.KV(k.kconf.Param1, k.kconf.Param2)
 	default:
 		if k.kconf.Recipe != "" && k.conf != nil && k.conf.MaxParallelProcesses != nil {
 			k.log.Announce(k.kconf.Recipe).Msgf("running with a maximum of %d routines %s", *k.conf.MaxParallelProcesses, logger.CyanBold(k.kconf.Recipe))

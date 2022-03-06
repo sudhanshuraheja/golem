@@ -9,6 +9,9 @@ import (
 func TestLocalUtils(t *testing.T) {
 	str := StringPtrValue(nil, "hello")
 	utils.Test().Equals(t, "hello", str)
+
+	_, err := Base64EncodedRandomNumber(32)
+	utils.Test().Nil(t, err)
 }
 
 func TestTinyString(t *testing.T) {

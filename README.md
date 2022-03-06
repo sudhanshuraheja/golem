@@ -262,10 +262,7 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [ ] Connect to a docker container instead of SSH
 
 ## KV Store
-- [ ] Create a KV store with boltdb
-- [ ] Save logs of recipes and commands in kv store
-
-## Secrets
+- [x] Create a KV store with boltdb
 - [ ] Allow golem to save secrets
 - [ ] Setup local and remote environment variables
 
@@ -286,6 +283,8 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Support variable replacement for local artifacts
 - [x] Support variable replacement for artifact paths
 - [x] Support variable replacement for remote artifacts
+- [ ] Support KV values in artifacts
+- [ ] Support KV values in commands
 
 ## Artifacts
 - [x] Upload local files via SFTP
