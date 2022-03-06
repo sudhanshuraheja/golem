@@ -146,3 +146,16 @@ func Base64EncodedRandomNumber(size int) (string, error) {
 	}
 	return base64.StdEncoding.EncodeToString(randomNumber), nil
 }
+
+func ArrayUnique(ar []string) []string {
+	keys := map[string]bool{}
+	for _, str := range ar {
+		keys[str] = true
+	}
+
+	uniques := []string{}
+	for k, _ := range keys {
+		uniques = append(uniques, k)
+	}
+	return uniques
+}

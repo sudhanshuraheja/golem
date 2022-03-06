@@ -39,6 +39,7 @@ type Recipe struct {
 	Name           string     `hcl:"name,label"`
 	Type           string     `hcl:"type,label"`
 	Match          *Match     `hcl:"match,block"`
+	KeyValues      []KV       `hcl:"kv,block"`
 	Artifacts      []Artifact `hcl:"artifact,block"`
 	Commands       *[]string  `hcl:"commands"`
 	CustomCommands []Command  `hcl:"command,block"`
@@ -48,6 +49,11 @@ type Match struct {
 	Attribute string `hcl:"attribute"`
 	Operator  string `hcl:"operator"`
 	Value     string `hcl:"value"`
+}
+
+type KV struct {
+	Path  string `hcl:"path"`
+	Value string `hcl:"value"`
 }
 
 type Artifact struct {

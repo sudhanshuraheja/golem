@@ -22,7 +22,7 @@ server {
   bootstrap_expect = @golem.NOMAD_BOOTSTRAP_EXPECT
   enabled = true
   data_dir = "/opt/nomad/"
-  encrypt = "@golem.NOMAD_GOSSIP_KEY"
+  encrypt = "@golem.kv.ursa.nomad_encryption_key"
   server_join {
     retry_join = [
 {{- range $_, $s := (match "tags" "contains" "@golem.NOMAD_SERVER_TAG") -}}

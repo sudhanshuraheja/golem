@@ -12,7 +12,6 @@ vars = {
 {{ GetInterfaceIP \"eth1\" }}
     EOF
     NOMAD_BOOTSTRAP_EXPECT = "1"
-    NOMAD_GOSSIP_KEY = "gossip_key"
     NOMAD_SERVER_TAG = "nomad-ursa-server"
     NOMAD_CLIENT_NETWORK_INTERFACE = "eth1"
 }
@@ -20,6 +19,10 @@ vars = {
 recipe "nomad-local-setup" "local" {
     command {
         exec = "mkdir -p @golem.NOMAD_CONFIG_PATH/certs"
+    }
+    kv {
+        path = "ursa.nomad_encryption_key"
+        value = "rand32"
     }
     artifact {
         template {
@@ -124,6 +127,10 @@ recipe "nomad-server-bootstrap" "remote" {
         }
         destination = "/etc/nomad.d/server-key.pem"
     }
+    artifact {
+        source = "./nomad/nomad.service"
+        destination = "/etc/systemd/system/nomad.service"
+    }
     command {
         apt {
             update = true
@@ -147,14 +154,6 @@ recipe "nomad-server-bootstrap" "remote" {
     }
     command {
         exec = "sudo mkdir --parents /opt/nomad"
-    }
-    artifact {
-        source = "./nomad/nomad.service"
-        destination = "/etc/systemd/system/nomad.service"
-    }
-    command {
-        // Not needed because artifacts would create the folder
-        exec = "sudo mkdir --parents /etc/nomad.d"
     }
     command {
         exec = "sudo chmod 700 /etc/nomad.d"

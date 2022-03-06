@@ -27,13 +27,8 @@ func NewRecipes(conf *config.Config, log *logger.CLILogger) *Recipes {
 		conf: conf,
 		log:  log,
 	}
-	r.tpl = &template.Template{}
-	if conf.Vars != nil {
-		r.tpl.Vars = *conf.Vars
-	}
-	r.tpl.Trim()
-	r.tpl.Servers = append(r.tpl.Servers, conf.Servers...)
 	r.kv = kv.NewKV(log)
+	r.tpl = template.NewTemplate(conf, r.kv)
 	return &r
 }
 
@@ -259,6 +254,8 @@ func (r *Recipes) Run(name string) {
 		r.log.Error(name).Msgf("the recipe %s was not found in '~/.golem/' or '.'", logger.Cyan(name))
 		return
 	}
+
+	recipe.SetupKV(r.kv)
 
 	recipe.FindServers(r.conf.Servers, r.tpl)
 

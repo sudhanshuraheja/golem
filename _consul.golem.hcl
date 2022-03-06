@@ -1,5 +1,6 @@
 vars = {
     HASHI_DC = "do1"
+    HASHI_PATH = "./nomad/"
 }
 
 recipe "consul-local-setup" "local" {

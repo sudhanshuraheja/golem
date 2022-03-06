@@ -263,13 +263,14 @@ When the log level is set to `WARN`, you will not see the output of the commands
 
 ## KV Store
 - [x] Create a KV store with boltdb
-- [ ] Allow golem to save secrets
+- [x] Allow golem to save secrets
 - [ ] Setup local and remote environment variables
 
 ## Recipes
 - [x] Read recipes from config and execute them
 - [x] Define variables to be used in recipes
 - [x] Create system level recipes
+- [x] Allow automatic set up of secrets using KV
 - [ ] Use namespaces for variables in recipes
 - [ ] Native recipe to setup docker
 - [ ] Native recipe to setup nomad without consul
@@ -283,8 +284,8 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Support variable replacement for local artifacts
 - [x] Support variable replacement for artifact paths
 - [x] Support variable replacement for remote artifacts
-- [ ] Support KV values in artifacts
-- [ ] Support KV values in commands
+- [x] Support KV values in artifacts
+- [x] Support KV values in commands
 
 ## Artifacts
 - [x] Upload local files via SFTP

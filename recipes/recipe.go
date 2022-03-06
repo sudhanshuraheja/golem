@@ -11,6 +11,7 @@ import (
 	"github.com/betas-in/pool"
 	"github.com/betas-in/utils"
 	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/kv"
 	"github.com/sudhanshuraheja/golem/match"
 	"github.com/sudhanshuraheja/golem/natives"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
@@ -23,6 +24,24 @@ type Recipe struct {
 	servers           []config.Server
 	preparedCommands  []string
 	preparedArtifacts []config.Artifact
+}
+
+func (r *Recipe) SetupKV(k *kv.KV) {
+	for _, configKV := range r.base.KeyValues {
+		val, err := k.Get(configKV.Path)
+		if err != nil || val == "" {
+			err = k.Set(configKV.Path, configKV.Value)
+			if err != nil {
+				r.log.Error(r.base.Name).Msgf("could not set up kv: %s with value %s: %v", configKV.Path, configKV.Value, err)
+				return
+			}
+			r.log.Info(r.base.Name).Msgf(
+				"setup kv %s%s",
+				logger.CyanBold("@golem.kv."),
+				logger.CyanBold(configKV.Path),
+			)
+		}
+	}
 }
 
 func (r *Recipe) FindServers(servers []config.Server, tpl *template.Template) {
