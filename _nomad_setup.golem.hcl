@@ -148,6 +148,9 @@ recipe "nomad-server-bootstrap" "remote" {
             }
             install_no_upgrade = ["nomad"]
         }
+        apt {
+            purge = ["consul"]
+        }
     }
     command {
         exec = "sudo mkdir --parents /opt/nomad"

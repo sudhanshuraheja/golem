@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/betas-in/utils"
 	"github.com/sudhanshuraheja/golem/config"
 )
 
@@ -14,121 +15,132 @@ func NewAPT() *Apt {
 	return &Apt{}
 }
 
-func (a *Apt) PGP(pgp string) (string, error) {
-	if pgp == "" {
-		return "", fmt.Errorf("pgp: pgp should not be empty")
-	}
-	format := "curl -fsSL %s | sudo apt-key add -"
-	return fmt.Sprintf(format, pgp), nil
+func (a *Apt) ifPkgExists(pkg, pgp, repo, cmd string) string {
+	installTemplate := `
+pkg=%s
+status="$(dpkg-query -W --showformat='${db:Status-Status}' "$pkg" 2>&1)"
+if [ ! $? = 0 ] || [ ! "$status" = installed ]; then
+	%s
+	%s
+	%s
+fi
+	`
+	return fmt.Sprintf(installTemplate, pkg, pgp, repo, cmd)
 }
 
-func (a *Apt) Repository(url, sources string) (string, error) {
-	if url == "" || sources == "" {
-		return "", fmt.Errorf("repository: url or sources should not be empty")
-	}
-	format := "sudo apt-add-repository \"deb [arch=$(dpkg --print-architecture)] %s $(lsb_release -cs) %s\""
-	return fmt.Sprintf(format, url, sources), nil
+func (a *Apt) update() string {
+	return "sudo apt-get update --quiet --assume-yes\n"
 }
 
-func (a *Apt) Update() string {
-	return "sudo apt-get update --quiet --assume-yes"
+func (a *Apt) purge(pkg string) string {
+	format := "sudo apt-get purge %s --quiet --assume-yes\n"
+	return fmt.Sprintf(format, pkg)
 }
 
-func (a *Apt) Purge(packages []string) (string, error) {
-	format := "sudo apt-get purge %s"
-	pkg, err := a.flattenStringArray(packages, " ")
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf(format, pkg), nil
+func (a *Apt) pgp(pgp string) string {
+	format := "curl -fsSL %s | sudo apt-key add -\n"
+	return fmt.Sprintf(format, pgp)
 }
 
-func (a *Apt) Install(packages []string) (string, error) {
-	format := "sudo apt-get install %s --quiet --assume-yes"
-	pkg, err := a.flattenStringArray(packages, " ")
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf(format, pkg), nil
+func (a *Apt) addRepository(url, sources string) string {
+	format := "sudo apt-add-repository \"deb [arch=$(dpkg --print-architecture)] %s $(lsb_release -cs) %s\"\n"
+	return fmt.Sprintf(format, url, sources)
 }
 
-func (a *Apt) InstallNoUpgrade(packages []string) (string, error) {
-	format := "sudo apt-get install %s --no-upgrade --quiet --assume-yes"
-	pkg, err := a.flattenStringArray(packages, " ")
-	if err != nil {
-		return "", err
+func (a *Apt) install(pkg string, noUpgradeFlag bool) string {
+	noUpgrade := ""
+	if noUpgradeFlag {
+		noUpgrade = "--no-upgrade"
 	}
-	return fmt.Sprintf(format, pkg), nil
+	format := "sudo apt-get install %s %s --quiet --assume-yes\n"
+	return fmt.Sprintf(format, pkg, noUpgrade)
 }
 
-func (a *Apt) flattenStringArray(packages []string, separator string) (string, error) {
-	if len(packages) == 0 {
-		return "", fmt.Errorf("packages cannot be empty")
-	}
-	merged := strings.Join(packages, separator)
-	if merged == "" {
-		return "", fmt.Errorf("merged packages is empty")
-	}
-	return merged, nil
-}
+func (a *Apt) Prepare(capt []config.Apt) ([]config.Command, []config.Artifact) {
+	commands := []config.Command{}
+	artifacts := []config.Artifact{}
 
-func (a *Apt) ParseConfig(capt []config.Apt) ([]string, error) {
-	commands := []string{}
 	for _, apt := range capt {
+		template := "#!/bin/bash\n"
+
+		curl := ""
+		pgp := ""
 		if apt.PGP != nil {
-			// install curl
-			cmd, err := a.Install([]string{"curl"})
-			if err != nil {
-				return commands, err
-			}
-			commands = append(commands, cmd)
+			curl = a.install("curl", false)
+			template += a.ifPkgExists("curl", "", "", curl)
 
-			// add pgp
-			cmd, err = a.PGP(*apt.PGP)
-			if err != nil {
-				return commands, err
-			}
-			commands = append(commands, cmd)
+			pgp = a.pgp(*apt.PGP)
 		}
+
+		common := ""
+		repo := ""
 		if apt.Repository != nil {
-			// install software-properties-common
-			cmd, err := a.Install([]string{"software-properties-common"})
-			if err != nil {
-				return commands, err
-			}
-			commands = append(commands, cmd)
+			common = a.install("software-properties-common", false)
+			template += a.ifPkgExists("software-properties-common", "", "", common)
 
-			// add repo
-			cmd, err = a.Repository(apt.Repository.URL, apt.Repository.Sources)
-			if err != nil {
-				return commands, err
-			}
-			commands = append(commands, cmd)
+			repo = a.addRepository(apt.Repository.URL, apt.Repository.Sources)
 		}
-		if apt.Update != nil {
-			commands = append(commands, a.Update())
-		}
-		if apt.Purge != nil {
-			cmd, err := a.Purge(*apt.Purge)
-			if err != nil {
-				return commands, err
-			}
-			commands = append(commands, cmd)
-		}
+
+		pkgs := []string{}
 		if apt.Install != nil {
-			cmd, err := a.Install(*apt.Install)
-			if err != nil {
-				return commands, err
+			for _, pkg := range *apt.Install {
+				if pkg != "" {
+					install := a.install(pkg, false)
+					template += a.ifPkgExists(pkg, pgp, repo, install)
+					pgp = ""
+					repo = ""
+					pkgs = append(pkgs, pkg)
+				}
 			}
-			commands = append(commands, cmd)
 		}
+
 		if apt.InstallNoUpgrade != nil {
-			cmd, err := a.InstallNoUpgrade(*apt.InstallNoUpgrade)
-			if err != nil {
-				return commands, err
+			for _, pkg := range *apt.InstallNoUpgrade {
+				if pkg != "" {
+					install := a.install(pkg, true)
+					template += a.ifPkgExists(pkg, pgp, repo, install)
+					pgp = ""
+					repo = ""
+					pkgs = append(pkgs, pkg)
+				}
 			}
-			commands = append(commands, cmd)
 		}
+
+		if apt.Purge != nil {
+			for _, pkg := range *apt.Purge {
+				if pkg != "" {
+					purge := a.purge(pkg)
+					template += purge
+					pkgs = append(pkgs, pkg)
+				}
+			}
+		}
+
+		if apt.Update != nil {
+			template += a.update()
+		}
+
+		destination := fmt.Sprintf(
+			"./temp/apt-%s-%s.sh",
+			strings.Join(pkgs, "_"),
+			utils.UUID().GetShort(),
+		)
+		artifact := config.Artifact{
+			Template: &config.Template{
+				Data: &template,
+			},
+			Destination: destination,
+		}
+		artifacts = append(artifacts, artifact)
+
+		chmod := fmt.Sprintf("chmod 755 %s", destination)
+		execute := destination
+		remove := fmt.Sprintf("rm %s", destination)
+
+		commands = append(commands, config.Command{Exec: &chmod})
+		commands = append(commands, config.Command{Exec: &execute})
+		commands = append(commands, config.Command{Exec: &remove})
+
 	}
-	return commands, nil
+	return commands, artifacts
 }

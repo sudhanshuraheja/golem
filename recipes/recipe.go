@@ -171,14 +171,9 @@ func (r *Recipe) PrepareCommands(tpl *template.Template) {
 		}
 
 		apt := natives.NewAPT()
-		commands, err := apt.ParseConfig(cmd.Apt)
-		if err != nil {
-			r.log.Error(r.base.Name).Msgf("Error parsing apt: %v", err)
-			continue
-		}
-		for _, cmd := range commands {
-			r.AddPreparedCommand(cmd)
-		}
+		commands, artifacts := apt.Prepare(cmd.Apt)
+		r.preparedCommands = append(r.preparedCommands, commands...)
+		r.base.Artifacts = append(r.base.Artifacts, artifacts...)
 	}
 
 	if r.base.Commands != nil {
@@ -272,15 +267,15 @@ func (r *Recipe) Execute(maxParallelProcesses *int) {
 
 func (r *Recipe) DownloadArtifacts() {
 	for i, a := range r.preparedArtifacts {
-		if a.Source != nil && strings.HasPrefix(*a.Source, "http://") || strings.HasPrefix(*a.Source, "https://") {
-
-			filePath, err := localutils.Download(r.log, r.base.Name, *a.Source)
-			if err != nil {
-				r.log.Error(r.base.Name).Msgf("%v", err)
-				os.Exit(1)
+		if a.Source != nil {
+			if strings.HasPrefix(*a.Source, "http://") || strings.HasPrefix(*a.Source, "https://") {
+				filePath, err := localutils.Download(r.log, r.base.Name, *a.Source)
+				if err != nil {
+					r.log.Error(r.base.Name).Msgf("%v", err)
+					os.Exit(1)
+				}
+				r.preparedArtifacts[i].Source = &filePath
 			}
-
-			r.preparedArtifacts[i].Source = &filePath
 		}
 	}
 }

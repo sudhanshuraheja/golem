@@ -262,8 +262,8 @@ func (r *Recipes) Run(name string) {
 
 	recipe.FindServers(r.conf.Servers, r.tpl)
 
-	recipe.PrepareArtifacts(r.tpl, false)
 	recipe.PrepareCommands(r.tpl)
+	recipe.PrepareArtifacts(r.tpl, false)
 
 	recipe.AskPermission()
 
