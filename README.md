@@ -251,6 +251,8 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Setup config file at ~/.golem/config.golem.hcl
 - [x] Show version
 - [x] Merged config files in ~/.golem/*.golem and ./*.golem
+- [ ] Use ~/.config/ instead of .golem
+- [ ] Open recipe file for editing via CLI
 
 ## Servers
 - [x] Connect to servers via SSH
@@ -271,19 +273,26 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Read recipes from config and execute them
 - [x] Define variables to be used in recipes
 - [x] Create system level recipes
+- [ ] Use namespaces for variables in recipes
 - [ ] Native recipe to setup docker
 - [ ] Native recipe to setup nomad without consul
 - [ ] Native recipe to setup consul
 - [ ] Native recipe to setup postgres with nomad
 - [ ] Native recipe to setup redis with nomad
 
+## Templates
+- [x] Support go-template for artifacts
+- [x] Support go-template for commands
+- [x] Support variable replacement for local artifacts
+- [x] Support variable replacement for artifact paths
+- [x] Support variable replacement for remote artifacts
+
 ## Artifacts
 - [x] Upload local files via SFTP
 - [x] Download http artifacts before uploading
-- [ ] Support local artifact via go-template
-- [ ] Support local artifcat via shell
+- [x] Support local artifact via go-template
+- [x] Run go templates on files before uploaded
 - [ ] Upload folders to remote
-- [ ] Run go templates on files before uploaded
 - [ ] Show progress while uploading or downloading
 - [ ] Run local script on all remotes without uploading
 
@@ -303,6 +312,9 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [ ] Increase goroutines if there are more tail tasks than routines
 - [ ] Get docker logs from remote
 
+## Others
+- [ ] Use hashicorp go-changelog
+- [ ] move localutils back into utils
 
 [Hashicorp HCL]: https://github.com/hashicorp/hcl
 [Getting Started]: #getting-started

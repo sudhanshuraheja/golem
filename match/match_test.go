@@ -1,4 +1,4 @@
-package recipes
+package match
 
 import (
 	"testing"

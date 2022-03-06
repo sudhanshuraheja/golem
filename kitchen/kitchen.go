@@ -13,13 +13,23 @@ import (
 )
 
 type Kitchen struct {
+	kconf       *Config
 	conf        *config.Config
 	log         *logger.CLILogger
 	configFiles []string
 }
 
-func NewKitchen() *Kitchen {
+type Config struct {
+	Recipe string `arg:"positional"`
+	Param1 string `arg:"positional"`
+	Param2 string `arg:"positional"`
+	Param3 string `arg:"positional"`
+	Param4 string `arg:"positional"`
+}
+
+func NewKitchen(conf *Config) {
 	k := Kitchen{}
+	k.kconf = conf
 	k.log = logger.NewCLILogger(6, 12)
 	k.conf = &config.Config{}
 
@@ -50,7 +60,7 @@ func NewKitchen() *Kitchen {
 	if k.conf.LogLevel != nil {
 		k.log = logger.NewCLILogger(*k.conf.LogLevel, 12)
 	}
-	return &k
+	k.Exec()
 }
 
 func (k *Kitchen) mergeConfig(conf *config.Config) {
@@ -132,21 +142,21 @@ func (k *Kitchen) initConfigFile() error {
 	return nil
 }
 
-func (k *Kitchen) Exec(recipe string, param1 string) {
+func (k *Kitchen) Exec() {
 	r := recipes.NewRecipes(k.conf, k.log)
-	switch recipe {
+	switch k.kconf.Recipe {
 	case "":
-		r.List(param1)
+		r.List(k.kconf.Param1)
 	case "version":
 		k.log.Highlight("golem").Msgf("version: %s", version)
 	case "list":
-		r.List(param1)
+		r.List(k.kconf.Param1)
 	case "servers":
-		r.Servers(param1)
+		r.Servers(k.kconf.Param1)
 	default:
-		if recipe != "" && k.conf != nil && k.conf.MaxParallelProcesses != nil {
-			k.log.Announce(recipe).Msgf("running with a maximum of %d routines %s", *k.conf.MaxParallelProcesses, logger.CyanBold(recipe))
+		if k.kconf.Recipe != "" && k.conf != nil && k.conf.MaxParallelProcesses != nil {
+			k.log.Announce(k.kconf.Recipe).Msgf("running with a maximum of %d routines %s", *k.conf.MaxParallelProcesses, logger.CyanBold(k.kconf.Recipe))
 		}
-		r.Run(recipe)
+		r.Run(k.kconf.Recipe)
 	}
 }

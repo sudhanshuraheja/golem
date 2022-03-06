@@ -1,4 +1,4 @@
-package recipes
+package template
 
 import (
 	"testing"

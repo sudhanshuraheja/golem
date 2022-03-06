@@ -14,12 +14,12 @@ func TestLocalUtils(t *testing.T) {
 func TestTinyString(t *testing.T) {
 	str := "how to get the last x chars of a string"
 	tiny := TinyString(str, 20)
-	utils.Test().Equals(t, "how to g⋆⋆⋆⋆a string", tiny)
+	utils.Test().Equals(t, "how to g----a string", tiny)
 
 	str = `how to
 	 get the 
 	last x chars of
 	 a string`
 	tiny = TinyString(str, 20)
-	utils.Test().Equals(t, "how to g⋆⋆⋆⋆a string", tiny)
+	utils.Test().Equals(t, "how to g----a string", tiny)
 }

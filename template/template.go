@@ -1,4 +1,4 @@
-package recipes
+package template
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/match"
 )
 
 type Template struct {
@@ -24,7 +25,7 @@ func (t *Template) Execute(text string) (string, error) {
 	text = t.ReplaceVars(text)
 	tpl := template.New("template").Funcs(template.FuncMap{
 		"matchOne": func(attribute, operator, value string) config.Server {
-			s, err := NewMatch(config.Match{
+			s, err := match.NewMatch(config.Match{
 				Attribute: attribute,
 				Operator:  operator,
 				Value:     value,
@@ -35,7 +36,7 @@ func (t *Template) Execute(text string) (string, error) {
 			return s[0]
 		},
 		"match": func(attribute, operator, value string) []config.Server {
-			s, err := NewMatch(config.Match{
+			s, err := match.NewMatch(config.Match{
 				Attribute: attribute,
 				Operator:  operator,
 				Value:     value,

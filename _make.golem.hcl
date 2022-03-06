@@ -1,27 +1,3 @@
-recipe "go-dev" "local" {
-    command {
-        exec = "go run main.go"
-    }
-}
-
-recipe "go-test" "local" {
-    command {
-        exec = "go test ./... -timeout 15s -race -cover -coverprofile=coverage.out -v"
-    }
-    command {
-        exec = "go tool cover -html=coverage.out -o coverage.html"
-    }
-}
-
-recipe "go-test-norace" "local" {
-    command {
-        exec = "go test ./... -timeout 15s -cover -coverprofile=coverage.out -v"
-    }
-    command {
-        exec = "go tool cover -html=coverage.out -o coverage.html"
-    }
-}
-
 recipe "go-install" "local" {
     command {
         exec = "./version.sh"

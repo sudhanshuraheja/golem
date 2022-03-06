@@ -11,8 +11,10 @@ import (
 	"github.com/betas-in/pool"
 	"github.com/betas-in/utils"
 	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/match"
 	"github.com/sudhanshuraheja/golem/natives"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
+	"github.com/sudhanshuraheja/golem/template"
 )
 
 type Recipe struct {
@@ -23,7 +25,7 @@ type Recipe struct {
 	preparedArtifacts []config.Artifact
 }
 
-func (r *Recipe) FindServers(servers []config.Server, tpl *Template) {
+func (r *Recipe) FindServers(servers []config.Server, tpl *template.Template) {
 	switch r.base.Type {
 	case "remote":
 		if r.base.Match == nil {
@@ -40,7 +42,7 @@ func (r *Recipe) FindServers(servers []config.Server, tpl *Template) {
 			}
 		}
 
-		r.servers, err = NewMatch(*r.base.Match).Find(servers)
+		r.servers, err = match.NewMatch(*r.base.Match).Find(servers)
 		if err != nil {
 			r.log.Error(r.base.Name).Msgf("%v", err)
 			return
@@ -63,7 +65,7 @@ func (r *Recipe) FindServers(servers []config.Server, tpl *Template) {
 	}
 }
 
-func (r *Recipe) PrepareArtifacts(tpl *Template, dryrun bool) {
+func (r *Recipe) PrepareArtifacts(tpl *template.Template, dryrun bool) {
 	for _, a := range r.base.Artifacts {
 		artifact := config.Artifact{}
 
@@ -79,7 +81,7 @@ func (r *Recipe) PrepareArtifacts(tpl *Template, dryrun bool) {
 
 				if strings.HasPrefix(*a.Template.Path, "http://") || strings.HasPrefix(*a.Template.Path, "https://") {
 					// Url based template
-					path, err := Download(r.log, r.base.Name, *a.Template.Path)
+					path, err := localutils.Download(r.log, r.base.Name, *a.Template.Path)
 					if err != nil {
 						r.log.Error(r.base.Name).Msgf("%v", err)
 						os.Exit(1)
@@ -137,7 +139,7 @@ func (r *Recipe) PrepareArtifacts(tpl *Template, dryrun bool) {
 	}
 }
 
-func (r *Recipe) PrepareCommands(tpl *Template) {
+func (r *Recipe) PrepareCommands(tpl *template.Template) {
 	for _, cmd := range r.base.CustomCommands {
 		if cmd.Exec != nil {
 			parsedCmd, err := tpl.Execute(*cmd.Exec)
@@ -249,13 +251,13 @@ func (r *Recipe) DownloadArtifacts() {
 	for i, a := range r.preparedArtifacts {
 		if a.Source != nil && strings.HasPrefix(*a.Source, "http://") || strings.HasPrefix(*a.Source, "https://") {
 
-			filePath, err := Download(r.log, r.base.Name, *a.Source)
+			filePath, err := localutils.Download(r.log, r.base.Name, *a.Source)
 			if err != nil {
 				r.log.Error(r.base.Name).Msgf("%v", err)
 				os.Exit(1)
 			}
 
-			r.base.Artifacts[i].Source = &filePath
+			r.preparedArtifacts[i].Source = &filePath
 		}
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/betas-in/utils"
 	"github.com/sudhanshuraheja/golem/config"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
+	"github.com/sudhanshuraheja/golem/template"
 )
 
 func TestRecipe(t *testing.T) {
@@ -70,9 +71,9 @@ func TestRecipe(t *testing.T) {
 	r.base = &recipe
 	r.log = log
 
-	template := Template{}
-	template.Servers = servers
-	template.Vars = map[string]string{
+	tpl := template.Template{}
+	tpl.Servers = servers
+	tpl.Vars = map[string]string{
 		"key": "value",
 	}
 
@@ -83,16 +84,17 @@ func TestRecipe(t *testing.T) {
 	r.FindServers(servers, nil)
 	utils.Test().Equals(t, 2, len(r.servers))
 
-	r.PrepareCommands(&template)
+	r.PrepareCommands(&tpl)
 	utils.Test().Equals(t, 5, len(r.preparedCommands))
 	utils.Test().Contains(t, r.preparedCommands[1], "sudo apt-get update")
 	utils.Test().Contains(t, r.preparedCommands[2], "sudo apt-get install")
 
+	r.PrepareArtifacts(&tpl, true)
 	r.DownloadArtifacts()
 	if localutils.DetectCI() {
-		utils.Test().Contains(t, *r.base.Artifacts[0].Source, "/tmp")
+		utils.Test().Contains(t, *r.preparedArtifacts[0].Source, "/tmp")
 	} else {
-		utils.Test().Contains(t, *r.base.Artifacts[0].Source, "/var/folders/")
+		utils.Test().Contains(t, *r.preparedArtifacts[0].Source, "/var/folders/")
 	}
 
 }

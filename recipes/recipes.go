@@ -7,6 +7,7 @@ import (
 	"github.com/betas-in/logger"
 	"github.com/sudhanshuraheja/golem/config"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
+	"github.com/sudhanshuraheja/golem/template"
 )
 
 var (
@@ -16,7 +17,7 @@ var (
 type Recipes struct {
 	conf *config.Config
 	log  *logger.CLILogger
-	tpl  *Template
+	tpl  *template.Template
 }
 
 func NewRecipes(conf *config.Config, log *logger.CLILogger) *Recipes {
@@ -24,7 +25,7 @@ func NewRecipes(conf *config.Config, log *logger.CLILogger) *Recipes {
 		conf: conf,
 		log:  log,
 	}
-	r.tpl = &Template{}
+	r.tpl = &template.Template{}
 	if conf.Vars != nil {
 		r.tpl.Vars = *conf.Vars
 	}

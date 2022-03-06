@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/betas-in/getter"
 	"github.com/betas-in/logger"
 	"github.com/betas-in/utils"
 )
@@ -105,4 +106,34 @@ func TinyString(text string, length int) string {
 
 	tiny := fmt.Sprintf("%s%s%s", start, logger.YellowBold(middle), end)
 	return tiny
+}
+
+func Download(log *logger.CLILogger, name, url string) (string, error) {
+	log.Info(name).Msgf("%s %s", logger.Cyan("downloading"), TinyString(url, 50))
+
+	glog := logger.NewLogger(3, true)
+	g := getter.NewGetter(glog)
+
+	startTime := time.Now()
+	response := g.FetchResponse(getter.Request{
+		Path:       url,
+		SaveToDisk: true,
+	})
+
+	if response.Error != nil {
+		return "", response.Error
+	}
+	if response.Code != 200 {
+		return "", fmt.Errorf("received error code for %s: %d", url, response.Code)
+	}
+
+	log.Info(name).Msgf(
+		"%s %s %s %s %s",
+		logger.GreenBold("downloaded"),
+		TinyString(url, 50),
+		logger.GreenBold("to"),
+		TinyString(response.DataPath, 50),
+		TimeInSecs(startTime),
+	)
+	return response.DataPath, nil
 }
