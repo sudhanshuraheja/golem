@@ -16,10 +16,7 @@ vars = {
     NOMAD_CLIENT_NETWORK_INTERFACE = "eth1"
 }
 
-recipe "nomad-local-setup" "local" {
-    command {
-        exec = "mkdir -p @golem.NOMAD_CONFIG_PATH/certs"
-    }
+recipe "nomad-local-bootstrap" "local" {
     kv {
         path = "ursa.nomad_encryption_key"
         value = "rand32"

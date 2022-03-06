@@ -16,7 +16,7 @@ type Cmd struct {
 	output []cmd.Out
 }
 
-func (c *Cmd) Run(commands []string) {
+func (c *Cmd) Run(commands []config.Command) {
 	name := "local"
 	c.output = []cmd.Out{}
 	cm := cmd.NewCmd(name)
@@ -46,15 +46,18 @@ func (c *Cmd) Run(commands []string) {
 	}(c.log, wait)
 
 	for _, command := range commands {
+		if command.Exec == nil {
+			continue
+		}
 		startTime := time.Now()
-		c.log.Highlight(name).Msgf("$ %s", command)
-		err := cm.Run(command)
+		c.log.Highlight(name).Msgf("$ %s", *command.Exec)
+		err := cm.Run(*command.Exec)
 		if err != nil {
-			c.log.Error(name).Msgf("error in running command <%s>: %v", command, err)
+			c.log.Error(name).Msgf("error in running command <%s>: %v", *command.Exec, err)
 			continue
 		}
 		<-wait
-		c.log.Success(name).Msgf("$ %s %s", command, localutils.TimeInSecs(startTime))
+		c.log.Success(name).Msgf("$ %s %s", *command.Exec, localutils.TimeInSecs(startTime))
 	}
 }
 

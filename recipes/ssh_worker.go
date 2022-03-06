@@ -73,6 +73,13 @@ func (w *SSHWorkerGroup) ExecRecipeOnServer(s config.Server, recipe *Recipe) {
 		return
 	}
 	ss.Upload(recipe.preparedArtifacts)
-	ss.Run(recipe.preparedCommands)
+	cmds := []string{}
+	for _, cmd := range recipe.preparedCommands {
+		if cmd.Exec == nil {
+			continue
+		}
+		cmds = append(cmds, *cmd.Exec)
+	}
+	ss.Run(cmds)
 	ss.Close()
 }

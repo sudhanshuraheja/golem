@@ -22,7 +22,7 @@ type Recipe struct {
 	base              *config.Recipe
 	log               *logger.CLILogger
 	servers           []config.Server
-	preparedCommands  []string
+	preparedCommands  []config.Command
 	preparedArtifacts []config.Artifact
 }
 
@@ -189,13 +189,14 @@ func (r *Recipe) PrepareCommands(tpl *template.Template) {
 				continue
 			}
 			parsedCmd = strings.TrimSuffix(parsedCmd, "\n")
-			r.preparedCommands = append(r.preparedCommands, parsedCmd)
+			r.AddPreparedCommand(parsedCmd)
 		}
 	}
 }
 
 func (r *Recipe) AddPreparedCommand(cmd string) {
-	r.preparedCommands = append(r.preparedCommands, cmd)
+	newCommand := config.Command{Exec: &cmd}
+	r.preparedCommands = append(r.preparedCommands, newCommand)
 }
 
 func (r *Recipe) AskPermission() {
@@ -231,7 +232,10 @@ func (r *Recipe) AskPermission() {
 	}
 
 	for _, command := range r.preparedCommands {
-		r.log.Info(r.base.Name).Msgf("$ %s", command)
+		if command.Exec == nil {
+			continue
+		}
+		r.log.Info(r.base.Name).Msgf("$ %s", *command.Exec)
 	}
 
 	answer := localutils.Question(r.log, r.base.Name, "Are you sure you want to continue [y/n]?")

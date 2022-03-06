@@ -86,8 +86,8 @@ func TestRecipe(t *testing.T) {
 
 	r.PrepareCommands(&tpl)
 	utils.Test().Equals(t, 5, len(r.preparedCommands))
-	utils.Test().Contains(t, r.preparedCommands[1], "sudo apt-get update")
-	utils.Test().Contains(t, r.preparedCommands[2], "sudo apt-get install")
+	utils.Test().Contains(t, *r.preparedCommands[1].Exec, "sudo apt-get update")
+	utils.Test().Contains(t, *r.preparedCommands[2].Exec, "sudo apt-get install")
 
 	r.PrepareArtifacts(&tpl, true)
 	r.DownloadArtifacts()

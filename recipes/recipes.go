@@ -106,7 +106,10 @@ func (r *Recipes) List(query string) {
 		recipe.PrepareCommands(r.tpl)
 
 		for _, command := range recipe.preparedCommands {
-			r.log.Info("").Msgf("$ %s", command)
+			if command.Exec == nil {
+				continue
+			}
+			r.log.Info("").Msgf("$ %s", *command.Exec)
 		}
 	}
 }
