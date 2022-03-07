@@ -67,60 +67,27 @@ func (r *Recipe) AddServers(srvs []servers.Server) {
 func (r *Recipe) PrepareArtifacts(artfs []artifacts.Artifact, dryrun bool) {
 	newArtfs := []artifacts.Artifact{}
 	for _, a := range artfs {
-		var err error
-		if a.Template.Path != "" {
-			a.Template.Path, err = r.tpl.Execute(a.Template.Path)
-			if err != nil {
-				r.log.Error(r.Name).Msgf("Error parsing template <%s>: %v", a.Template.Path, err)
-				continue
-			}
-
-			if strings.HasPrefix(a.Template.Path, "http://") || strings.HasPrefix(a.Template.Path, "https://") {
-				// Url based template
-				a.Template.Path, err = localutils.Download(r.log, r.Name, a.Template.Path)
-				if err != nil {
-					r.log.Error(r.Name).Msgf("%v", err)
-					os.Exit(1)
-				}
-			} // else File base template
-
-			bytes, err := os.ReadFile(a.Template.Path)
-			if err != nil {
-				r.log.Error(r.Name).Msgf("%v", err)
-				os.Exit(1)
-			}
-			bytesString := string(bytes)
-			a.Template.Data = bytesString
-		}
-
-		if a.Template.Data != "" {
-			a.Template.Data, err = r.tpl.Execute(a.Template.Data)
-			if err != nil {
-				r.log.Error(r.Name).Msgf("Error parsing template <%s>: %v", a.Template.Data, err)
-				continue
-			}
-
-			if !dryrun {
-				fileName, err := localutils.FileCopy(a.Template.Data)
-				if err != nil {
-					r.log.Error(r.Name).Msgf("could not save file: %v", err)
-					os.Exit(1)
-				}
-				a.Source = fileName
-			}
-		}
-
-		if a.Source != "" {
-			a.Source, err = r.tpl.Execute(a.Source)
-			if err != nil {
-				r.log.Error(r.Name).Msgf("Error parsing template <%s>: %v", a.Source, err)
-				continue
-			}
-		}
-
-		a.Destination, err = r.tpl.Execute(a.Destination)
+		err := a.HandlePath(r.log, r.tpl)
 		if err != nil {
-			r.log.Error(r.Name).Msgf("Error parsing template <%s>: %v", a.Destination, err)
+			r.log.Error(r.Name).Msgf("coult not handle path: %v", err)
+			continue
+		}
+
+		err = a.HandleData(r.tpl, dryrun)
+		if err != nil {
+			r.log.Error(r.Name).Msgf("could not handle data: %v", err)
+			continue
+		}
+
+		err = a.HandleSource(r.tpl)
+		if err != nil {
+			r.log.Error(r.Name).Msgf("could not handle source: %v", err)
+			continue
+		}
+
+		err = a.HandleDestination(r.tpl)
+		if err != nil {
+			r.log.Error(r.Name).Msgf("could not handle destination: %v", err)
 			continue
 		}
 
@@ -273,15 +240,11 @@ func (r *Recipe) run(maxParallelProcesses int) {
 
 func (r *Recipe) downloadArtifacts() {
 	for i, a := range r.artfs {
-		if a.Source != "" {
-			if strings.HasPrefix(a.Source, "http://") || strings.HasPrefix(a.Source, "https://") {
-				filePath, err := localutils.Download(r.log, r.Name, a.Source)
-				if err != nil {
-					r.log.Error(r.Name).Msgf("%v", err)
-					os.Exit(1)
-				}
-				r.artfs[i].Source = filePath
-			}
+		var err error
+		r.artfs[i].Source, err = a.Download(r.log)
+		if err != nil {
+			r.log.Error(r.Name).Msgf("%v", err)
+			os.Exit(1)
 		}
 	}
 }

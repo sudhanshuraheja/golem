@@ -57,7 +57,7 @@ func TestRecipe(t *testing.T) {
 		}
 		artfs := []artifacts.Artifact{}
 		for _, art := range crcp.Artifacts {
-			artfs = append(artfs, artifacts.NewArtifact(art))
+			artfs = append(artfs, *artifacts.NewArtifact(art))
 		}
 		rcp.PrepareArtifacts(artfs, true)
 		recipes = append(recipes, *rcp)

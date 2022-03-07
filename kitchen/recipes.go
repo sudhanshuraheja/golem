@@ -53,7 +53,7 @@ func NewRecipes(conf *config.Config, log *logger.CLILogger) *Recipes {
 		}
 		for _, cmd := range crcp.CustomCommands {
 			if cmd.Exec != nil {
-				rcp.AddCommand(commands.Command{Exec: *cmd.Exec})
+				rcp.AddCommand(*commands.NewCommand(*cmd.Exec))
 			}
 
 			apt := plugins.NewAPT()
@@ -67,11 +67,11 @@ func NewRecipes(conf *config.Config, log *logger.CLILogger) *Recipes {
 		}
 		if crcp.Commands != nil {
 			for _, cmd := range *crcp.Commands {
-				rcp.AddCommand(commands.Command{Exec: cmd})
+				rcp.AddCommand(*commands.NewCommand(cmd))
 			}
 		}
 		for _, art := range crcp.Artifacts {
-			rcp.AddArtifact(artifacts.NewArtifact(art))
+			rcp.AddArtifact(*artifacts.NewArtifact(art))
 		}
 
 		r.Recipes = append(r.Recipes, *rcp)

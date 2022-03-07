@@ -18,3 +18,7 @@ type APTRepository struct {
 	URL     string
 	Sources string
 }
+
+func NewCommand(exec string) *Command {
+	return &Command{Exec: exec}
+}
