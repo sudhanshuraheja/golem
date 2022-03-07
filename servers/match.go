@@ -1,4 +1,4 @@
-package match
+package servers
 
 import (
 	"fmt"
@@ -6,19 +6,24 @@ import (
 	"strings"
 
 	"github.com/betas-in/utils"
-	"github.com/sudhanshuraheja/golem/config"
 )
 
 type Match struct {
-	match config.Match
+	Attribute string
+	Operator  string
+	Value     string
 }
 
-func NewMatch(m config.Match) *Match {
-	return &Match{match: m}
+func NewMatch(attribute, operator, value string) *Match {
+	return &Match{
+		Attribute: attribute,
+		Operator:  operator,
+		Value:     value,
+	}
 }
 
-func (m *Match) Find(c []config.Server) ([]config.Server, error) {
-	var servers []config.Server
+func (m *Match) Find(c []Server) ([]Server, error) {
+	var servers []Server
 	for _, s := range c {
 		matched, err := m.server(s)
 		if err != nil {
@@ -31,23 +36,17 @@ func (m *Match) Find(c []config.Server) ([]config.Server, error) {
 	return servers, nil
 }
 
-func (m *Match) server(s config.Server) (bool, error) {
+func (m *Match) server(s Server) (bool, error) {
 	if s.Name == "" {
 		return false, nil
 	}
-	switch m.match.Attribute {
+	switch m.Attribute {
 	case "name":
 		return m.string("name", s.Name)
 	case "public_ip":
-		if s.PublicIP == nil {
-			return false, nil
-		}
-		return m.string("public_ip", *s.PublicIP)
+		return m.string("public_ip", s.PublicIP)
 	case "private_ip":
-		if s.PrivateIP == nil {
-			return false, nil
-		}
-		return m.string("private_ip", *s.PrivateIP)
+		return m.string("private_ip", s.PrivateIP)
 	case "hostname":
 		return m.array("hostname", s.HostName)
 	case "user":
@@ -57,13 +56,13 @@ func (m *Match) server(s config.Server) (bool, error) {
 	case "tags":
 		return m.array("tags", s.Tags)
 	default:
-		return false, fmt.Errorf("servers does not support attribute %s", m.match.Attribute)
+		return false, fmt.Errorf("servers does not support attribute %s", m.Attribute)
 	}
 }
 
 func (m *Match) array(oftype string, list []string) (bool, error) {
-	contains := utils.Array().Contains(list, m.match.Value, true)
-	switch m.match.Operator {
+	contains := utils.Array().Contains(list, m.Value, true)
+	switch m.Operator {
 	case "contains":
 		if contains > -1 {
 			return true, nil
@@ -79,17 +78,17 @@ func (m *Match) array(oftype string, list []string) (bool, error) {
 }
 
 func (m *Match) string(oftype, name string) (bool, error) {
-	switch m.match.Operator {
+	switch m.Operator {
 	case "=":
-		if name == m.match.Value {
+		if name == m.Value {
 			return true, nil
 		}
 	case "!=":
-		if name != m.match.Value {
+		if name != m.Value {
 			return true, nil
 		}
 	case "like":
-		if strings.Contains(name, m.match.Value) {
+		if strings.Contains(name, m.Value) {
 			return true, nil
 		}
 	default:
@@ -100,11 +99,11 @@ func (m *Match) string(oftype, name string) (bool, error) {
 }
 
 func (m *Match) int(oftype string, name int) (bool, error) {
-	valueInt, err := strconv.Atoi(m.match.Value)
+	valueInt, err := strconv.Atoi(m.Value)
 	if err != nil {
 		return false, nil
 	}
-	switch m.match.Operator {
+	switch m.Operator {
 	case "=":
 		if name == valueInt {
 			return true, nil

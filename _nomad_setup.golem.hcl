@@ -1,5 +1,5 @@
 vars = {
-    NOMAD_CONFIG_PATH = "./nomad"
+    NOMAD_CONFIG_PATH = "./testdata/nomad"
     NOMAD_DC = "dcu"
     NOMAD_REGION = "global"
     NOMAD_BIND_ADDRESS = <<EOF
@@ -125,7 +125,7 @@ recipe "nomad-server-bootstrap" "remote" {
         destination = "/etc/nomad.d/server-key.pem"
     }
     artifact {
-        source = "./nomad/nomad.service"
+        source = "@golem.NOMAD_CONFIG_PATH/nomad.service"
         destination = "/etc/systemd/system/nomad.service"
     }
     command {

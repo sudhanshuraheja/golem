@@ -2,6 +2,7 @@ package recipes
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -10,60 +11,194 @@ import (
 	"github.com/betas-in/logger"
 	"github.com/betas-in/pool"
 	"github.com/betas-in/utils"
-	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/artifacts"
+	"github.com/sudhanshuraheja/golem/commands"
 	"github.com/sudhanshuraheja/golem/kv"
-	"github.com/sudhanshuraheja/golem/match"
-	"github.com/sudhanshuraheja/golem/natives"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
+	"github.com/sudhanshuraheja/golem/servers"
 	"github.com/sudhanshuraheja/golem/template"
 )
 
+var (
+	tiny = 50
+)
+
 type Recipe struct {
-	base              *config.Recipe
-	log               *logger.CLILogger
-	servers           []config.Server
-	preparedCommands  []config.Command
-	preparedArtifacts []config.Artifact
+	Name    string
+	OfType  string
+	Match   *servers.Match
+	KV      map[string]string
+	log     *logger.CLILogger
+	tpl     *template.Template
+	servers []servers.Server
+	cmds    []commands.Command
+	artfs   []artifacts.Artifact
 }
 
-func (r *Recipe) SetupKV(k *kv.KV) {
-	for _, configKV := range r.base.KeyValues {
-		val, err := k.Get(configKV.Path)
-		if err != nil || val == "" {
-			err = k.Set(configKV.Path, configKV.Value)
+func NewRecipe(log *logger.CLILogger, tpl *template.Template) *Recipe {
+	return &Recipe{
+		log: log,
+		tpl: tpl,
+		KV:  map[string]string{},
+	}
+}
+
+func (r *Recipe) Execute(srvs []servers.Server, kv *kv.KV, maxParallelProcesses int) {
+	r.processKV(kv)
+	r.findServers(srvs)
+	r.PrepareArtifacts(r.artfs, false)
+	r.askPermission()
+
+	r.run(maxParallelProcesses)
+}
+
+func (r *Recipe) AddCommand(cmd commands.Command) {
+	r.cmds = append(r.cmds, cmd)
+}
+
+func (r *Recipe) AddArtifact(artf artifacts.Artifact) {
+	r.artfs = append(r.artfs, artf)
+}
+
+func (r *Recipe) AddServers(srvs []servers.Server) {
+	r.servers = srvs
+}
+
+func (r *Recipe) PrepareArtifacts(artfs []artifacts.Artifact, dryrun bool) {
+	newArtfs := []artifacts.Artifact{}
+	for _, a := range artfs {
+		var err error
+		if a.Template.Path != "" {
+			a.Template.Path, err = r.tpl.Execute(a.Template.Path)
 			if err != nil {
-				r.log.Error(r.base.Name).Msgf("could not set up kv: %s with value %s: %v", configKV.Path, configKV.Value, err)
+				r.log.Error(r.Name).Msgf("Error parsing template <%s>: %v", a.Template.Path, err)
+				continue
+			}
+
+			if strings.HasPrefix(a.Template.Path, "http://") || strings.HasPrefix(a.Template.Path, "https://") {
+				// Url based template
+				a.Template.Path, err = localutils.Download(r.log, r.Name, a.Template.Path)
+				if err != nil {
+					r.log.Error(r.Name).Msgf("%v", err)
+					os.Exit(1)
+				}
+			} // else File base template
+
+			bytes, err := os.ReadFile(a.Template.Path)
+			if err != nil {
+				r.log.Error(r.Name).Msgf("%v", err)
+				os.Exit(1)
+			}
+			bytesString := string(bytes)
+			a.Template.Data = bytesString
+		}
+
+		if a.Template.Data != "" {
+			a.Template.Data, err = r.tpl.Execute(a.Template.Data)
+			if err != nil {
+				r.log.Error(r.Name).Msgf("Error parsing template <%s>: %v", a.Template.Data, err)
+				continue
+			}
+
+			if !dryrun {
+				fileName, err := localutils.FileCopy(a.Template.Data)
+				if err != nil {
+					r.log.Error(r.Name).Msgf("could not save file: %v", err)
+					os.Exit(1)
+				}
+				a.Source = fileName
+			}
+		}
+
+		if a.Source != "" {
+			a.Source, err = r.tpl.Execute(a.Source)
+			if err != nil {
+				r.log.Error(r.Name).Msgf("Error parsing template <%s>: %v", a.Source, err)
+				continue
+			}
+		}
+
+		a.Destination, err = r.tpl.Execute(a.Destination)
+		if err != nil {
+			r.log.Error(r.Name).Msgf("Error parsing template <%s>: %v", a.Destination, err)
+			continue
+		}
+
+		newArtfs = append(newArtfs, a)
+	}
+	r.artfs = newArtfs
+}
+
+func (r *Recipe) processKV(k *kv.KV) {
+	for key, value := range r.KV {
+		existingValue, err := k.Get(key)
+		if err != nil || existingValue == "" {
+			err = k.Set(key, value)
+			if err != nil {
+				r.log.Error(r.Name).Msgf("could not set up kv: %s with value %s: %v", key, value, err)
 				return
 			}
-			r.log.Info(r.base.Name).Msgf(
+			r.log.Info(r.Name).Msgf(
 				"setup kv %s%s",
 				logger.CyanBold("@golem.kv."),
-				logger.CyanBold(configKV.Path),
+				logger.CyanBold(key),
 			)
 		}
 	}
 }
 
-func (r *Recipe) FindServers(servers []config.Server, tpl *template.Template) {
-	switch r.base.Type {
+func (r *Recipe) Display(query string) {
+	name := logger.CyanBold(r.Name)
+	if r.OfType == "local" {
+		name = logger.Cyan(r.Name)
+	}
+
+	var attribute, operator, value string
+	match := ""
+	if r.Match != nil {
+		attribute = r.Match.Attribute
+		operator = r.Match.Operator
+		value = r.Match.Value
+		match = fmt.Sprintf("%s %s %s ", attribute, operator, value)
+		match = logger.Yellow(match)
+	}
+
+	if len(query) > 0 {
+		if !strings.Contains(name, query) {
+			return
+		}
+	}
+
+	r.log.Info(r.OfType).Msgf(
+		"%s %s",
+		name,
+		match,
+	)
+
+	r.PrepareArtifacts(r.artfs, true)
+	r.displayPrepared()
+}
+
+func (r *Recipe) findServers(all []servers.Server) {
+	switch r.OfType {
 	case "remote":
-		if r.base.Match == nil {
-			r.log.Error(r.base.Name).Msgf("recipe needs a 'match' block because of 'remote' execution")
+		if r.Match == nil {
+			r.log.Error(r.Name).Msgf("recipe needs a 'match' block because of 'remote' execution")
 			return
 		}
 
 		var err error
-		if tpl != nil {
-			r.base.Match.Value, err = tpl.Execute(r.base.Match.Value)
+		if r.tpl != nil {
+			r.Match.Value, err = r.tpl.Execute(r.Match.Value)
 			if err != nil {
-				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", r.base.Match.Value, err)
+				r.log.Error(r.Name).Msgf("Error parsing template <%s>: %v", r.Match.Value, err)
 				return
 			}
 		}
 
-		r.servers, err = match.NewMatch(*r.base.Match).Find(servers)
+		r.servers, err = servers.NewMatch(r.Match.Attribute, r.Match.Operator, r.Match.Value).Find(all)
 		if err != nil {
-			r.log.Error(r.base.Name).Msgf("%v", err)
+			r.log.Error(r.Name).Msgf("%v", err)
 			return
 		}
 		serverNames := []string{}
@@ -72,215 +207,86 @@ func (r *Recipe) FindServers(servers []config.Server, tpl *template.Template) {
 		}
 
 		if len(r.servers) == 0 {
-			r.log.Highlight(r.base.Name).Msgf("no servers matched '%s %s %s'", r.base.Match.Attribute, r.base.Match.Operator, r.base.Match.Value)
+			r.log.Highlight(r.Name).Msgf("no servers matched '%s %s %s'", r.Match.Attribute, r.Match.Operator, r.Match.Value)
 			return
 		}
 
-		r.log.Info(r.base.Name).Msgf("found %d matching servers - %s", len(r.servers), strings.Join(serverNames, ", "))
+		r.log.Info(r.Name).Msgf("found %d matching servers - %s", len(r.servers), strings.Join(serverNames, ", "))
 
 	case "local":
 	default:
-		r.log.Error(r.base.Name).Msgf("recipe only supports ['remote', 'local'] types")
+		r.log.Error(r.Name).Msgf("recipe only supports ['remote', 'local'] types")
 	}
 }
 
-func (r *Recipe) PrepareArtifacts(tpl *template.Template, dryrun bool) {
-	for _, a := range r.base.Artifacts {
-		artifact := config.Artifact{}
-
-		if a.Template != nil {
-
-			if a.Template.Path != nil {
-				parsedPath, err := tpl.Execute(*a.Template.Path)
-				if err != nil {
-					r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", *a.Template.Path, err)
-					continue
-				}
-				a.Template.Path = &parsedPath
-
-				if strings.HasPrefix(*a.Template.Path, "http://") || strings.HasPrefix(*a.Template.Path, "https://") {
-					// Url based template
-					path, err := localutils.Download(r.log, r.base.Name, *a.Template.Path)
-					if err != nil {
-						r.log.Error(r.base.Name).Msgf("%v", err)
-						os.Exit(1)
-					}
-					a.Template.Path = &path
-				} // else File base template
-
-				bytes, err := os.ReadFile(*a.Template.Path)
-				if err != nil {
-					r.log.Error(r.base.Name).Msgf("%v", err)
-					os.Exit(1)
-				}
-				bytesString := string(bytes)
-				a.Template.Data = &bytesString
-			}
-
-			if a.Template.Data != nil {
-				parsedTemplate, err := tpl.Execute(*a.Template.Data)
-				if err != nil {
-					r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", *a.Template.Data, err)
-					continue
-				}
-				artifact.Template = &config.Template{
-					Data: &parsedTemplate,
-				}
-
-				if !dryrun {
-					fileName, err := localutils.FileCopy(parsedTemplate)
-					if err != nil {
-						r.log.Error(r.base.Name).Msgf("could not save file: %v", err)
-						os.Exit(1)
-					}
-					artifact.Source = &fileName
-				}
-			}
+func (r *Recipe) askPermission() {
+	for _, a := range r.artfs {
+		sourcePath := ""
+		switch {
+		case a.Template.Data != "":
+			sourcePath = a.Template.Data
+		case a.Template.Path != "":
+			sourcePath = a.Template.Path
+		default:
+			sourcePath = a.Source
 		}
 
-		if a.Source != nil {
-			parsedSource, err := tpl.Execute(*a.Source)
-			if err != nil {
-				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", *a.Source, err)
-				continue
-			}
-			artifact.Source = &parsedSource
-		}
-
-		parsedDestination, err := tpl.Execute(a.Destination)
-		if err != nil {
-			r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", a.Destination, err)
-			continue
-		}
-		artifact.Destination = parsedDestination
-
-		r.preparedArtifacts = append(r.preparedArtifacts, artifact)
-	}
-}
-
-func (r *Recipe) PrepareCommands(tpl *template.Template) {
-	for _, cmd := range r.base.CustomCommands {
-		if cmd.Exec != nil {
-			parsedCmd, err := tpl.Execute(*cmd.Exec)
-			if err != nil {
-				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", *cmd.Exec, err)
-				continue
-			}
-			parsedCmd = strings.TrimSuffix(parsedCmd, "\n")
-			r.AddPreparedCommand(parsedCmd)
-		}
-
-		apt := natives.NewAPT()
-		commands, artifacts := apt.Prepare(cmd.Apt)
-		r.preparedCommands = append(r.preparedCommands, commands...)
-		r.base.Artifacts = append(r.base.Artifacts, artifacts...)
+		r.log.Info(r.Name).Msgf(
+			"%s %s %s %s",
+			logger.Cyan("uploading"),
+			localutils.TinyString(sourcePath, tiny*2),
+			logger.Cyan("to"),
+			a.Destination,
+		)
 	}
 
-	if r.base.Commands != nil {
-		for _, c := range *r.base.Commands {
-			parsedCmd, err := tpl.Execute(c)
-			if err != nil {
-				r.log.Error(r.base.Name).Msgf("Error parsing template <%s>: %v", c, err)
-				continue
-			}
-			parsedCmd = strings.TrimSuffix(parsedCmd, "\n")
-			r.AddPreparedCommand(parsedCmd)
-		}
-	}
-}
-
-func (r *Recipe) AddPreparedCommand(cmd string) {
-	newCommand := config.Command{Exec: &cmd}
-	r.preparedCommands = append(r.preparedCommands, newCommand)
-}
-
-func (r *Recipe) AskPermission() {
-	for _, a := range r.preparedArtifacts {
-		if a.Template != nil {
-			if a.Template.Data != nil {
-				r.log.Info(r.base.Name).Msgf(
-					"%s %s %s %s",
-					logger.Cyan("uploading"),
-					localutils.TinyString(*a.Template.Data, tiny*2),
-					logger.Cyan("to"),
-					a.Destination,
-				)
-			}
-			if a.Template.Path != nil {
-				r.log.Info(r.base.Name).Msgf(
-					"%s %s %s %s",
-					logger.Cyan("uploading"),
-					*a.Template.Path,
-					logger.Cyan("to"),
-					a.Destination,
-				)
-			}
-		} else {
-			r.log.Info(r.base.Name).Msgf(
-				"%s %s %s %s",
-				logger.Cyan("uploading"),
-				*a.Source,
-				logger.Cyan("to"),
-				a.Destination,
-			)
-		}
+	for _, command := range r.cmds {
+		r.log.Info(r.Name).Msgf("$ %s", command.Exec)
 	}
 
-	for _, command := range r.preparedCommands {
-		if command.Exec == nil {
-			continue
-		}
-		r.log.Info(r.base.Name).Msgf("$ %s", *command.Exec)
-	}
-
-	answer := localutils.Question(r.log, r.base.Name, "Are you sure you want to continue [y/n]?")
+	answer := localutils.Question(r.log, r.Name, "Are you sure you want to continue [y/n]?")
 	if utils.Array().Contains([]string{"y", "yes"}, answer, false) == -1 {
-		r.log.Error(r.base.Name).Msgf("Quitting, because you said %s", answer)
+		r.log.Error(r.Name).Msgf("Quitting, because you said %s", answer)
 		os.Exit(0)
 	}
 }
 
-func (r *Recipe) Execute(maxParallelProcesses *int) {
-	r.DownloadArtifacts()
+func (r *Recipe) run(maxParallelProcesses int) {
+	r.downloadArtifacts()
 
-	switch r.base.Type {
+	switch r.OfType {
 	case "remote":
 		if len(r.servers) == 0 {
-			r.log.Error(r.base.Name).Msgf("no matching servers found")
+			r.log.Error(r.Name).Msgf("no matching servers found")
 			return
 		}
 
-		maxProcs := 4
-		if maxParallelProcesses != nil {
-			maxProcs = *maxParallelProcesses
-		}
-
-		r.StartSSHPool(int64(maxProcs))
+		r.startSSHPool(int64(maxParallelProcesses))
 	case "local":
 		c := Cmd{log: r.log}
-		c.Upload(r.preparedArtifacts)
-		c.Run(r.preparedCommands)
+		c.Upload(r.artfs)
+		c.Run(r.cmds)
 	default:
-		r.log.Error(r.base.Name).Msgf("recipe only supports ['remote', 'local'] types")
+		r.log.Error(r.Name).Msgf("recipe only supports ['remote', 'local'] types")
 	}
 }
 
-func (r *Recipe) DownloadArtifacts() {
-	for i, a := range r.preparedArtifacts {
-		if a.Source != nil {
-			if strings.HasPrefix(*a.Source, "http://") || strings.HasPrefix(*a.Source, "https://") {
-				filePath, err := localutils.Download(r.log, r.base.Name, *a.Source)
+func (r *Recipe) downloadArtifacts() {
+	for i, a := range r.artfs {
+		if a.Source != "" {
+			if strings.HasPrefix(a.Source, "http://") || strings.HasPrefix(a.Source, "https://") {
+				filePath, err := localutils.Download(r.log, r.Name, a.Source)
 				if err != nil {
-					r.log.Error(r.base.Name).Msgf("%v", err)
+					r.log.Error(r.Name).Msgf("%v", err)
 					os.Exit(1)
 				}
-				r.preparedArtifacts[i].Source = &filePath
+				r.artfs[i].Source = filePath
 			}
 		}
 	}
 }
 
-func (r *Recipe) StartSSHPool(maxProcs int64) {
+func (r *Recipe) startSSHPool(maxProcs int64) {
 	log := logger.NewLogger(2, true)
 
 	wp := pool.NewPool("ssh", log)
@@ -330,5 +336,31 @@ func (r *Recipe) StartSSHPool(maxProcs int64) {
 		}
 	}
 
-	r.log.Announce(r.base.Name).Msgf("completed %s", localutils.TimeInSecs(startTime))
+	r.log.Announce(r.Name).Msgf("completed %s", localutils.TimeInSecs(startTime))
+}
+
+func (r *Recipe) displayPrepared() {
+	for _, ar := range r.artfs {
+		sourcePath := ""
+		switch {
+		case ar.Template.Data != "":
+			sourcePath = ar.Template.Data
+		case ar.Template.Path != "":
+			sourcePath = ar.Template.Path
+		case ar.Source != "":
+			sourcePath = ar.Source
+		}
+
+		r.log.Info("").Msgf(
+			"%s %s %s %s",
+			logger.Cyan("uploading"),
+			localutils.TinyString(sourcePath, tiny),
+			logger.Cyan("to"),
+			localutils.TinyString(ar.Destination, tiny),
+		)
+	}
+
+	for _, command := range r.cmds {
+		r.log.Info("").Msgf("$ %s", localutils.TinyString(command.Exec, tiny*2))
+	}
 }

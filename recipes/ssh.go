@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"github.com/betas-in/logger"
-	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/artifacts"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
 	"github.com/sudhanshuraheja/golem/pkg/ssh"
+	"github.com/sudhanshuraheja/golem/servers"
 )
 
 type SSH struct {
@@ -18,15 +19,15 @@ type SSH struct {
 }
 
 type SSHJob struct {
-	Server config.Server
+	Server servers.Server
 	Recipe *Recipe
 }
 
-func (ss *SSH) Connect(s *config.Server) error {
+func (ss *SSH) Connect(s *servers.Server) error {
 	var host string
 	switch {
-	case s.PublicIP != nil:
-		host = *s.PublicIP
+	case s.PublicIP != "":
+		host = s.PublicIP
 	case len(s.HostName) > 0:
 		host = s.HostName[0]
 	default:
@@ -87,23 +88,23 @@ func (ss *SSH) Run(commands []string) {
 	}
 }
 
-func (ss *SSH) Upload(artifacts []config.Artifact) {
-	for _, artifact := range artifacts {
+func (ss *SSH) Upload(artfs []artifacts.Artifact) {
+	for _, artifact := range artfs {
 		startTime := time.Now()
 		ss.log.Info(ss.name).Msgf(
 			"%s %s %s %s:%s",
 			logger.Cyan("uploading"),
-			localutils.TinyString(*artifact.Source, tiny),
+			localutils.TinyString(artifact.Source, tiny),
 			logger.Cyan("to"),
 			ss.name,
 			localutils.TinyString(artifact.Destination, tiny),
 		)
-		copied, err := ss.conn.Upload(*artifact.Source, artifact.Destination)
+		copied, err := ss.conn.Upload(artifact.Source, artifact.Destination)
 		if err != nil {
-			ss.log.Error(ss.name).Msgf("failed to upload local:<%s> to remote:<%s>: %v", *artifact.Source, artifact.Destination, err)
+			ss.log.Error(ss.name).Msgf("failed to upload local:<%s> to remote:<%s>: %v", artifact.Source, artifact.Destination, err)
 			continue
 		}
-		ss.log.Success(ss.name).Msgf("uploaded %s to %s:%s %s", localutils.TinyString(*artifact.Source, tiny), ss.name, artifact.Destination, localutils.TransferRate(copied, startTime))
+		ss.log.Success(ss.name).Msgf("uploaded %s to %s:%s %s", localutils.TinyString(artifact.Source, tiny), ss.name, artifact.Destination, localutils.TransferRate(copied, startTime))
 	}
 }
 

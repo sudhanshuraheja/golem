@@ -1,100 +1,68 @@
 package recipes
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/betas-in/logger"
 	"github.com/betas-in/utils"
+	"github.com/sudhanshuraheja/golem/artifacts"
+	"github.com/sudhanshuraheja/golem/commands"
 	"github.com/sudhanshuraheja/golem/config"
-	"github.com/sudhanshuraheja/golem/pkg/localutils"
+	"github.com/sudhanshuraheja/golem/plugins"
+	"github.com/sudhanshuraheja/golem/servers"
 	"github.com/sudhanshuraheja/golem/template"
 )
 
 func TestRecipe(t *testing.T) {
 	log := logger.NewCLILogger(5, 8)
 
-	publicIP := "127.0.0.1"
-	servers := []config.Server{
-		{
-			Name:     "one",
-			HostName: []string{"one"},
-			Port:     22,
-			Tags:     []string{"one"},
-		},
-		{
-			Name:     "two",
-			PublicIP: &publicIP,
-			HostName: []string{"two"},
-			Port:     22,
-			Tags:     []string{"one", "two"},
-		},
-		{
-			Name:     "three",
-			HostName: []string{"three"},
-			Port:     22,
-			Tags:     []string{"one", "two", "three"},
-		},
+	conf := config.NewConfig("../testdata/sample.hcl")
+	srvs := servers.NewServers(conf.Servers)
+	tpl := template.NewTemplate(srvs, *conf.Vars, nil)
+
+	recipes := []Recipe{}
+	for _, crcp := range conf.Recipes {
+		rcp := NewRecipe(log, tpl)
+		rcp.Name = crcp.Name
+		rcp.OfType = crcp.Type
+		if crcp.Match != nil {
+			rcp.Match = servers.NewMatch(crcp.Match.Attribute, crcp.Match.Operator, crcp.Match.Value)
+		}
+		for _, keyValue := range crcp.KeyValues {
+			rcp.KV[keyValue.Path] = keyValue.Value
+		}
+		for _, cmd := range crcp.CustomCommands {
+			if cmd.Exec != nil {
+				parsedCmd, err := tpl.Execute(*cmd.Exec)
+				utils.Test().Nil(t, err)
+				parsedCmd = strings.TrimSuffix(parsedCmd, "\n")
+				rcp.AddCommand(commands.Command{Exec: parsedCmd})
+			}
+
+			apt := plugins.NewAPT()
+			cmds, artfs := apt.Prepare(cmd.Apt)
+			for _, cmd := range cmds {
+				rcp.AddCommand(cmd)
+			}
+			rcp.PrepareArtifacts(artfs, true)
+		}
+		if crcp.Commands != nil {
+			for _, cmd := range *crcp.Commands {
+				parsedCmd, err := tpl.Execute(cmd)
+				utils.Test().Nil(t, err)
+				parsedCmd = strings.TrimSuffix(parsedCmd, "\n")
+				rcp.AddCommand(commands.Command{Exec: parsedCmd})
+			}
+		}
+		artfs := []artifacts.Artifact{}
+		for _, art := range crcp.Artifacts {
+			artfs = append(artfs, artifacts.NewArtifact(art))
+		}
+		rcp.PrepareArtifacts(artfs, true)
+		recipes = append(recipes, *rcp)
 	}
 
-	match := config.Match{}
-	match.Attribute = "tags"
-	match.Operator = "contains"
-	match.Value = "one"
-
-	isTrue := true
-	install := []string{"a", "b"}
-	installNU := []string{"c", "d"}
-
-	command1 := "ls -la @golem.key"
-	commands := []string{command1}
-	custom := []config.Command{
-		{Exec: &command1},
-		{Apt: []config.Apt{{Update: &isTrue, Install: &install, InstallNoUpgrade: &installNU}}},
-	}
-
-	licencePath := "https://raw.githubusercontent.com/sudhanshuraheja/golem/main/LICENSE"
-
-	recipe := config.Recipe{}
-	recipe.Name = "test"
-	recipe.Type = "remote"
-	recipe.Match = &match
-	recipe.Commands = &commands
-	recipe.CustomCommands = custom
-	recipe.Artifacts = []config.Artifact{
-		{
-			Source:      &licencePath,
-			Destination: "",
-		},
-	}
-
-	r := Recipe{}
-	r.base = &recipe
-	r.log = log
-
-	tpl := template.Template{}
-	tpl.Servers = servers
-	tpl.Vars = map[string]string{
-		"key": "value",
-	}
-
-	r.FindServers(servers, nil)
-	utils.Test().Equals(t, 3, len(r.servers))
-
-	match.Value = "two"
-	r.FindServers(servers, nil)
-	utils.Test().Equals(t, 2, len(r.servers))
-
-	r.PrepareCommands(&tpl)
-	utils.Test().Equals(t, 5, len(r.preparedCommands))
-	utils.Test().Contains(t, *r.preparedCommands[1].Exec, "sudo apt-get update")
-	utils.Test().Contains(t, *r.preparedCommands[2].Exec, "sudo apt-get install")
-
-	r.PrepareArtifacts(&tpl, true)
-	r.DownloadArtifacts()
-	if localutils.DetectCI() {
-		utils.Test().Contains(t, *r.preparedArtifacts[0].Source, "/tmp")
-	} else {
-		utils.Test().Contains(t, *r.preparedArtifacts[0].Source, "/var/folders/")
-	}
-
+	recipes[0].findServers(srvs)
+	utils.Test().Equals(t, 1, len(recipes[0].servers))
 }

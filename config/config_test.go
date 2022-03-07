@@ -7,7 +7,7 @@ import (
 )
 
 func TestConfig(t *testing.T) {
-	path := "./sample.hcl"
+	path := "./../testdata/sample.hcl"
 	conf := NewConfig(path)
 
 	utils.Test().Equals(t, 1, len(conf.ServerProviders))

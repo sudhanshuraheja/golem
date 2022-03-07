@@ -17,8 +17,8 @@
 coverage.*
 todo.txt
 golem*.hcl
-builds/*
+bin/*
 hashicorp/*
 template.p*
 
-nomad/certs/*
+testdata/nomad/certs/*

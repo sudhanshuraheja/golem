@@ -9,17 +9,16 @@ import (
 	"github.com/betas-in/logger"
 
 	"github.com/sudhanshuraheja/golem/config"
-	"github.com/sudhanshuraheja/golem/recipes"
 )
 
 type Kitchen struct {
-	kconf       *Config
+	cliConf     *CLIConfig
 	conf        *config.Config
 	log         *logger.CLILogger
 	configFiles []string
 }
 
-type Config struct {
+type CLIConfig struct {
 	Recipe string `arg:"positional"`
 	Param1 string `arg:"positional"`
 	Param2 string `arg:"positional"`
@@ -27,9 +26,9 @@ type Config struct {
 	Param4 string `arg:"positional"`
 }
 
-func NewKitchen(conf *Config) {
+func NewKitchen(cliConf *CLIConfig) {
 	k := Kitchen{}
-	k.kconf = conf
+	k.cliConf = cliConf
 	k.log = logger.NewCLILogger(6, 12)
 	k.conf = &config.Config{}
 
@@ -61,6 +60,27 @@ func NewKitchen(conf *Config) {
 		k.log = logger.NewCLILogger(*k.conf.LogLevel, 12)
 	}
 	k.Exec()
+}
+
+func (k *Kitchen) Exec() {
+	r := NewRecipes(k.conf, k.log)
+	switch k.cliConf.Recipe {
+	case "":
+		r.ListRecipes(k.cliConf.Param1)
+	case "version":
+		k.log.Highlight("golem").Msgf("version: %s", version)
+	case "list":
+		r.ListRecipes(k.cliConf.Param1)
+	case "servers":
+		r.ListServers(k.cliConf.Param1)
+	case "kv":
+		r.KV(k.cliConf.Param1, k.cliConf.Param2)
+	default:
+		if k.cliConf.Recipe != "" && k.conf != nil && k.conf.MaxParallelProcesses != nil {
+			k.log.Announce(k.cliConf.Recipe).Msgf("running with a maximum of %d routines %s", *k.conf.MaxParallelProcesses, logger.CyanBold(k.cliConf.Recipe))
+		}
+		r.Run(k.cliConf.Recipe)
+	}
 }
 
 func (k *Kitchen) mergeConfig(conf *config.Config) {
@@ -140,25 +160,4 @@ func (k *Kitchen) initConfigFile() error {
 		return fmt.Errorf("error checking conf file <%s>: %v", confFile, err)
 	}
 	return nil
-}
-
-func (k *Kitchen) Exec() {
-	r := recipes.NewRecipes(k.conf, k.log)
-	switch k.kconf.Recipe {
-	case "":
-		r.List(k.kconf.Param1)
-	case "version":
-		k.log.Highlight("golem").Msgf("version: %s", version)
-	case "list":
-		r.List(k.kconf.Param1)
-	case "servers":
-		r.Servers(k.kconf.Param1)
-	case "kv":
-		r.KV(k.kconf.Param1, k.kconf.Param2)
-	default:
-		if k.kconf.Recipe != "" && k.conf != nil && k.conf.MaxParallelProcesses != nil {
-			k.log.Announce(k.kconf.Recipe).Msgf("running with a maximum of %d routines %s", *k.conf.MaxParallelProcesses, logger.CyanBold(k.kconf.Recipe))
-		}
-		r.Run(k.kconf.Recipe)
-	}
 }

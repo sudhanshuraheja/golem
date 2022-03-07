@@ -5,7 +5,7 @@ import (
 
 	"github.com/betas-in/logger"
 	"github.com/betas-in/utils"
-	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/commands"
 )
 
 func TestRecipeCmd(t *testing.T) {
@@ -13,8 +13,8 @@ func TestRecipeCmd(t *testing.T) {
 	c := Cmd{log: log}
 
 	ls := "ls cmd*"
-	c.Run([]config.Command{
-		{Exec: &ls},
+	c.Run([]commands.Command{
+		{Exec: ls},
 	})
 	utils.Test().Equals(t, 3, len(c.output))
 }

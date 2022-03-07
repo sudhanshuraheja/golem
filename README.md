@@ -251,6 +251,7 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Setup config file at ~/.golem/config.golem.hcl
 - [x] Show version
 - [x] Merged config files in ~/.golem/*.golem and ./*.golem
+- [x] Migrate config to a separate struct with fewer pointers
 - [ ] Use ~/.config/ instead of .golem
 - [ ] Open recipe file for editing via CLI
 
@@ -277,6 +278,7 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [ ] Native recipe to setup consul
 - [ ] Native recipe to setup postgres with nomad
 - [ ] Native recipe to setup redis with nomad
+- [ ] Download system recipes from the server
 
 ## Templates
 - [x] Support go-template for artifacts
@@ -292,9 +294,9 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Download http artifacts before uploading
 - [x] Support local artifact via go-template
 - [x] Run go templates on files before uploaded
+- [x] Run local script on all remotes without uploading
 - [ ] Upload folders to remote
 - [ ] Show progress while uploading or downloading
-- [ ] Run local script on all remotes without uploading
 
 ## Commands
 - [x] Create a worker pool for ssh connections

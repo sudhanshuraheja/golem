@@ -7,7 +7,7 @@ import (
 
 	"github.com/betas-in/logger"
 	"github.com/betas-in/pool"
-	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/servers"
 )
 
 type SSHWorkerGroup struct {
@@ -64,21 +64,21 @@ func (w *SSHWorkerGroup) Name(id string) string {
 	return fmt.Sprintf("%s-%s", w.name, id)
 }
 
-func (w *SSHWorkerGroup) ExecRecipeOnServer(s config.Server, recipe *Recipe) {
+func (w *SSHWorkerGroup) ExecRecipeOnServer(s servers.Server, recipe *Recipe) {
 	ss := SSH{log: w.log}
 	err := ss.Connect(&s)
 	if err != nil {
 		w.log.Error(s.Name).Msgf("%v, please try", err)
-		w.log.Success(s.Name).Msgf("$ ssh-keyscan -p %d %s >> ~/.ssh/known_hosts", s.Port, *s.PublicIP)
+		w.log.Success(s.Name).Msgf("$ ssh-keyscan -p %d %s >> ~/.ssh/known_hosts", s.Port, s.PublicIP)
 		return
 	}
-	ss.Upload(recipe.preparedArtifacts)
+	ss.Upload(recipe.artfs)
 	cmds := []string{}
-	for _, cmd := range recipe.preparedCommands {
-		if cmd.Exec == nil {
+	for _, cmd := range recipe.cmds {
+		if cmd.Exec == "" {
 			continue
 		}
-		cmds = append(cmds, *cmd.Exec)
+		cmds = append(cmds, cmd.Exec)
 	}
 	ss.Run(cmds)
 	ss.Close()

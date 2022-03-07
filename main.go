@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	conf := kitchen.Config{}
+	conf := kitchen.CLIConfig{}
 	arg.MustParse(&conf)
 	kitchen.NewKitchen(&conf)
 }

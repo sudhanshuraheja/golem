@@ -1,15 +1,13 @@
-package match
+package servers
 
 import (
 	"testing"
 
 	"github.com/betas-in/utils"
-	"github.com/sudhanshuraheja/golem/config"
 )
 
 func TestMatcher(t *testing.T) {
-	publicIP := "127.0.0.1"
-	servers := []config.Server{
+	servers := []Server{
 		{
 			Name:     "one",
 			HostName: []string{"one"},
@@ -18,7 +16,7 @@ func TestMatcher(t *testing.T) {
 		},
 		{
 			Name:     "two",
-			PublicIP: &publicIP,
+			PublicIP: "127.0.0.1",
 			HostName: []string{"two"},
 			Port:     22,
 			Tags:     []string{"one", "two"},
@@ -31,52 +29,35 @@ func TestMatcher(t *testing.T) {
 		},
 	}
 
-	match := config.Match{}
-
-	match.Attribute = "tags"
-	match.Operator = "contains"
-	match.Value = "one"
-	found, err := NewMatch(match).Find(servers)
+	found, err := NewMatch("tags", "contains", "one").Find(servers)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, 3, len(found))
 
-	match.Value = "two"
-	found, err = NewMatch(match).Find(servers)
+	found, err = NewMatch("tags", "contains", "two").Find(servers)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, 2, len(found))
 
-	match.Value = "three"
-	found, err = NewMatch(match).Find(servers)
+	found, err = NewMatch("tags", "contains", "three").Find(servers)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, 1, len(found))
 
-	match.Operator = "not-contains"
-	match.Value = "two"
-	found, err = NewMatch(match).Find(servers)
+	found, err = NewMatch("tags", "not-contains", "two").Find(servers)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, 1, len(found))
 
-	match.Attribute = "public_ip"
-	match.Operator = "="
-	match.Value = publicIP
-	found, err = NewMatch(match).Find(servers)
+	found, err = NewMatch("public_ip", "=", "127.0.0.1").Find(servers)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, 1, len(found))
 
-	match.Operator = "!="
-	found, err = NewMatch(match).Find(servers)
+	found, err = NewMatch("public_ip", "!=", "127.0.0.1").Find(servers)
 	utils.Test().Nil(t, err)
-	utils.Test().Equals(t, 0, len(found))
+	utils.Test().Equals(t, 2, len(found))
 
-	match.Attribute = "port"
-	match.Operator = "="
-	match.Value = "22"
-	found, err = NewMatch(match).Find(servers)
+	found, err = NewMatch("port", "=", "22").Find(servers)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, 3, len(found))
 
-	match.Operator = "!="
-	found, err = NewMatch(match).Find(servers)
+	found, err = NewMatch("port", "!=", "22").Find(servers)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, 0, len(found))
 
