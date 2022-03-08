@@ -208,7 +208,11 @@ func (r *Recipe) askPermission() {
 	}
 
 	for _, command := range r.cmds {
-		r.log.Info(r.Name).Msgf("$ %s", command.Exec)
+		exec, err := r.tpl.Execute(command.Exec)
+		if err != nil {
+			r.log.Error(r.Name).Msgf("could not parse template %s: %v", command.Exec, err)
+		}
+		r.log.Info(r.Name).Msgf("$ %s", localutils.TinyString(exec, tiny*2))
 	}
 
 	answer := localutils.Question(r.log, r.Name, "Are you sure you want to continue [y/n]?")
@@ -324,6 +328,10 @@ func (r *Recipe) displayPrepared() {
 	}
 
 	for _, command := range r.cmds {
-		r.log.Info("").Msgf("$ %s", localutils.TinyString(command.Exec, tiny*2))
+		exec, err := r.tpl.Execute(command.Exec)
+		if err != nil {
+			r.log.Error(r.Name).Msgf("could not parse template %s: %v", command.Exec, err)
+		}
+		r.log.Info(r.Name).Msgf("$ %s", localutils.TinyString(exec, tiny*2))
 	}
 }
