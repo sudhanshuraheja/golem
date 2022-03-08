@@ -1,3 +1,9 @@
+loglevel = 4
+
+vars = {
+    SERVERS = 4
+}
+
 server "test1" {
     hostname = ["localhost"]
     user = "sudhanshu"

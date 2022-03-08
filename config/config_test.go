@@ -12,6 +12,8 @@ func TestServerHCL(t *testing.T) {
 	conf, err := NewConfig(path)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, 4, len(conf.Servers))
+	utils.Test().Equals(t, 1, len(*conf.Vars))
+	utils.Test().Equals(t, 4, *conf.LogLevel)
 	test1, err := conf.Servers.Search(servers.Match{
 		Attribute: "name",
 		Operator:  "=",
@@ -24,14 +26,14 @@ func TestServerHCL(t *testing.T) {
 	utils.Test().Equals(t, "sudhanshu", test1[0].User)
 	utils.Test().Equals(t, 22, test1[0].Port)
 	utils.Test().Equals(t, 4, len(*test1[0].Tags))
-}
 
-func TestServerProviderHCL(t *testing.T) {
-	path := "./../testdata/serverprovider.hcl"
-	conf, err := NewConfig(path)
+	path = "./../testdata/serverprovider.hcl"
+	confSP, err := NewConfig(path)
 	utils.Test().Nil(t, err)
-	utils.Test().Equals(t, 3, len(conf.Servers))
-	test1, err := conf.Servers.Search(servers.Match{
+	utils.Test().Equals(t, 3, len(confSP.Servers))
+	utils.Test().Equals(t, 1, len(*confSP.Vars))
+	utils.Test().Equals(t, 5, *confSP.LogLevel)
+	test1, err = confSP.Servers.Search(servers.Match{
 		Attribute: "name",
 		Operator:  "=",
 		Value:     "skye",
@@ -42,6 +44,11 @@ func TestServerProviderHCL(t *testing.T) {
 	utils.Test().Equals(t, "root", test1[0].User)
 	utils.Test().Equals(t, 22, test1[0].Port)
 	utils.Test().Equals(t, 2, len(*test1[0].Tags))
+
+	conf.Merge(confSP)
+	utils.Test().Equals(t, 7, len(conf.Servers))
+	utils.Test().Equals(t, 2, len(*conf.Vars))
+	utils.Test().Equals(t, 5, *conf.LogLevel)
 }
 
 func TestRecipesHCL(t *testing.T) {

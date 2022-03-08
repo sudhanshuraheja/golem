@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/hashicorp/hcl/v2"
@@ -56,13 +55,8 @@ func showHCLDiagnostics(parser *hclparse.Parser, diags hcl.Diagnostics) {
 	)
 
 	for _, diag := range diags {
-		err := wr.WriteDiagnostic(diag)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		_ = wr.WriteDiagnostic(diag)
 	}
-	os.Exit(1)
 }
 
 func (c *Config) ParseServerProviders() error {
