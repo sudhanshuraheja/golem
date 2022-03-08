@@ -66,7 +66,7 @@ func (w *SSHWorkerGroup) Name(id string) string {
 	return fmt.Sprintf("%s-%s", w.name, id)
 }
 
-func (w *SSHWorkerGroup) ExecRecipeOnServer(s servers.Server, cmds commands.Commands, artfs artifacts.Artifacts) {
+func (w *SSHWorkerGroup) ExecRecipeOnServer(s servers.Server, cmds *[]commands.Command, artfs []*artifacts.Artifact) {
 	shell := SSH{log: w.log}
 	err := shell.Connect(&s)
 	if err != nil {
@@ -75,7 +75,11 @@ func (w *SSHWorkerGroup) ExecRecipeOnServer(s servers.Server, cmds commands.Comm
 		return
 	}
 
-	shell.Upload(artfs)
-	shell.Run(cmds)
+	if artfs != nil {
+		shell.Upload(artfs)
+	}
+	if cmds != nil {
+		shell.Run(*cmds)
+	}
 	shell.Close()
 }

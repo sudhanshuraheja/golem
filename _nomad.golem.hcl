@@ -1,13 +1,9 @@
 recipe "nomad-ls" "local" {
-    command {
-        exec = "nomad node status -allocs"
-    }
-    command {
-        exec = "nomad job status"
-    }
-    command {
-        exec = "nomad deployment list"
-    }
+    commands = [
+        "nomad node status -allocs",
+        "nomad job status",
+        "nomad deployment list",
+    ]
 }
 
 recipe "nomad-remote-setup" "remote" {
@@ -16,7 +12,7 @@ recipe "nomad-remote-setup" "remote" {
         operator = "="
         value = "skye-c2"
     }
-    command {
+    script {
         apt {
             update = true
         }
@@ -115,8 +111,8 @@ recipe "nomad-tail" "remote" {
         operator = "contains"
         value = "nomad"
     }
-    command {
-        exec = "journalctl -f -u nomad.service"
+    script {
+        command = "journalctl -f -u nomad.service"
     }
 }
 

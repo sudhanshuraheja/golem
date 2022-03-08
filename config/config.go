@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclparse"
-	"github.com/sudhanshuraheja/golem/domain/natives"
 	"github.com/sudhanshuraheja/golem/domain/recipes"
 	"github.com/sudhanshuraheja/golem/domain/serverproviders"
 	"github.com/sudhanshuraheja/golem/domain/servers"
@@ -18,8 +17,8 @@ type Config struct {
 	Servers              servers.Servers                 `hcl:"server,block"`
 	ServerProviders      serverproviders.ServerProviders `hcl:"server_provider,block"`
 	Recipes              recipes.Recipes                 `hcl:"recipe,block"`
-	LogLevel             *natives.Int                    `hcl:"loglevel"`
-	MaxParallelProcesses *natives.Int                    `hcl:"max_parallel_processes"`
+	LogLevel             *int                            `hcl:"loglevel"`
+	MaxParallelProcesses *int                            `hcl:"max_parallel_processes"`
 	Vars                 *vars.Vars                      `hcl:"vars"`
 }
 

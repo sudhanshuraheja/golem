@@ -15,5 +15,8 @@ func TestRecipeCmd(t *testing.T) {
 	c.Run(commands.Commands{
 		commands.NewCommand("ls cmd*"),
 	})
-	utils.Test().Equals(t, 3, len(c.output))
+
+	c.mu.Lock()
+	utils.Test().Equals(t, 2, len(c.output))
+	c.mu.Unlock()
 }

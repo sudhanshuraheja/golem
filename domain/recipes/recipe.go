@@ -11,20 +11,19 @@ import (
 	"github.com/sudhanshuraheja/golem/domain/execcmd"
 	"github.com/sudhanshuraheja/golem/domain/execssh"
 	"github.com/sudhanshuraheja/golem/domain/kv"
-	"github.com/sudhanshuraheja/golem/domain/natives"
 	"github.com/sudhanshuraheja/golem/domain/servers"
 	"github.com/sudhanshuraheja/golem/domain/template"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
 
 type Recipe struct {
-	Name      natives.String      `hcl:"name,label"`
-	Type      natives.String      `hcl:"type,label"`
-	Match     *servers.Match      `hcl:"match,block"`
-	KeyValues kv.KeyValues        `hcl:"kv,block"`
-	Artifacts artifacts.Artifacts `hcl:"artifact,block"`
-	Commands  commands.Commands   `hcl:"commands"`
-	Scripts   commands.Script     `hcl:"script,block"`
+	Name      string                `hcl:"name,label"`
+	Type      string                `hcl:"type,label"`
+	Match     *servers.Match        `hcl:"match,block"`
+	KeyValues []*kv.KeyValue        `hcl:"kv,block"`
+	Artifacts []*artifacts.Artifact `hcl:"artifact,block"`
+	Scripts   []*commands.Script    `hcl:"script,block"`
+	Commands  *[]commands.Command   `hcl:"commands"`
 }
 
 func (r *Recipe) Execute(log *logger.CLILogger, srvs servers.Servers, procs int) {
@@ -45,24 +44,28 @@ func (r *Recipe) Display(log *logger.CLILogger, tpl *template.Template, query st
 		return
 	}
 
-	for _, artf := range r.Artifacts {
-		source := artf.GetSource()
+	if r.Artifacts != nil {
+		for _, artf := range r.Artifacts {
+			source := artf.GetSource()
 
-		log.Info("").Msgf(
-			"%s %s %s %s",
-			logger.Cyan("uploading"),
-			localutils.TinyString(source, 50),
-			logger.Cyan("to"),
-			localutils.TinyString(artf.Destination, 50),
-		)
+			log.Info("").Msgf(
+				"%s %s %s %s",
+				logger.Cyan("uploading"),
+				localutils.TinyString(source, 50),
+				logger.Cyan("to"),
+				localutils.TinyString(artf.Destination, 50),
+			)
+		}
 	}
 
-	for _, command := range r.Commands {
-		exec, err := tpl.Execute(string(command))
-		if err != nil {
-			log.Error("").Msgf("could not parse template %s: %v", command, err)
+	if r.Commands != nil {
+		for _, command := range *r.Commands {
+			exec, err := tpl.Execute(string(command))
+			if err != nil {
+				log.Error("").Msgf("could not parse template %s: %v", command, err)
+			}
+			log.Info("").Msgf("$ %s", localutils.TinyString(exec, 100))
 		}
-		log.Info("").Msgf("$ %s", localutils.TinyString(exec, 100))
 	}
 }
 

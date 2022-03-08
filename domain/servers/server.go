@@ -9,13 +9,13 @@ import (
 )
 
 type Server struct {
-	Name      string   `hcl:"name,label"`
-	PublicIP  *string  `hcl:"public_ip"`
-	PrivateIP *string  `hcl:"private_ip"`
-	HostName  []string `hcl:"hostname"`
-	User      string   `hcl:"user"`
-	Port      int      `hcl:"port"`
-	Tags      []string `hcl:"tags"`
+	Name      string    `hcl:"name,label"`
+	PublicIP  *string   `hcl:"public_ip"`
+	PrivateIP *string   `hcl:"private_ip"`
+	HostName  *[]string `hcl:"hostname"`
+	User      string    `hcl:"user"`
+	Port      int       `hcl:"port"`
+	Tags      *[]string `hcl:"tags"`
 }
 
 func (s *Server) Display(log *logger.CLILogger, query string) {
@@ -37,13 +37,13 @@ func (s *Server) Display(log *logger.CLILogger, query string) {
 
 	log.Info(s.Name).Msgf("%s%s%s%s", Cyan("user", s.User), fmt.Sprintf("%s %d ", logger.Cyan("port"), s.Port), publicIP, privateIP)
 
-	hostnames := strings.Join(s.HostName, ", ")
-	if hostnames != "" {
+	if s.HostName != nil {
+		hostnames := strings.Join(*s.HostName, ", ")
 		log.Info("").Msgf("%s %s", logger.Cyan("hosts"), hostnames)
 	}
 
-	tags := strings.Join(s.Tags, ", ")
-	if tags != "" {
+	if s.Tags != nil {
+		tags := strings.Join(*s.Tags, ", ")
 		log.Info("").Msgf("%s %s", logger.Cyan("tags"), tags)
 	}
 
@@ -55,8 +55,8 @@ func (s *Server) GetHostName() (string, error) {
 	switch {
 	case s.PublicIP != nil:
 		host = *s.PublicIP
-	case len(s.HostName) > 0:
-		host = s.HostName[0]
+	case s.HostName != nil && len(*s.HostName) > 0:
+		host = (*s.HostName)[0]
 	default:
 		return host, fmt.Errorf("could not find a public ip or a hostname in config")
 	}
@@ -77,13 +77,13 @@ func (s *Server) Search(m Match) (bool, error) {
 	case "private_ip":
 		return m.CompareString(localutils.StringPtrValue(s.PrivateIP, ""))
 	case "hostname":
-		return m.CompareStringArray(s.HostName)
+		return m.CompareStringArray(localutils.ArrayPtrValue(s.HostName))
 	case "user":
 		return m.CompareString(s.User)
 	case "port":
 		return m.CompareInt(s.Port)
 	case "tags":
-		return m.CompareStringArray(s.Tags)
+		return m.CompareStringArray(localutils.ArrayPtrValue(s.Tags))
 	default:
 		return false, fmt.Errorf("servers does not support attribute %s", m.Attribute)
 	}

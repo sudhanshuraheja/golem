@@ -4,8 +4,8 @@ recipe "server-all" "remote" {
         operator = "contains"
         value = "nomad"
     }
-    command {
-        exec = "sudo dpkg --configure -a"
+    script {
+        command = "sudo dpkg --configure -a"
     }
 }
 
@@ -15,7 +15,7 @@ recipe "server-apt-update" "remote" {
         operator = "contains"
         value = "nomad"
     }
-    command {
+    script {
         apt {
             update = true
         }

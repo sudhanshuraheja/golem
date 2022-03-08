@@ -22,14 +22,14 @@ func (s *Servers) MergesHosts(dips *DomainIPs) {
 			found := false
 			for i, srv := range *s {
 				if srv.PublicIP != nil && *srv.PublicIP == dip.IP {
-					(*s)[i].HostName = append((*s)[i].HostName, dip.Host)
+					*((*s)[i].HostName) = append(*((*s)[i].HostName), dip.Host)
 					// found = true
 				}
 			}
 			if !found {
 				srv := Server{}
 				srv.PublicIP = &dip.IP
-				srv.HostName = []string{dip.Host}
+				srv.HostName = &[]string{dip.Host}
 				*s = append(*s, srv)
 			}
 		}

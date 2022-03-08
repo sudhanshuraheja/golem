@@ -34,6 +34,13 @@ func StringPtrValue(s *string, def string) string {
 	return *s
 }
 
+func ArrayPtrValue(a *[]string) []string {
+	if a == nil {
+		return []string{}
+	}
+	return *a
+}
+
 func Question(clog *logger.CLILogger, where, format string, v ...interface{}) string {
 	reader := bufio.NewReader(os.Stdin)
 

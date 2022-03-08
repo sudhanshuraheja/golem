@@ -3,6 +3,7 @@ package execcmd
 import (
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/betas-in/logger"
@@ -15,6 +16,7 @@ import (
 type ExecCmd struct {
 	log    *logger.CLILogger
 	output []cmd.Out
+	mu     sync.RWMutex
 }
 
 func NewExecCmd(log *logger.CLILogger) *ExecCmd {
@@ -23,9 +25,19 @@ func NewExecCmd(log *logger.CLILogger) *ExecCmd {
 	}
 }
 
-func (c *ExecCmd) Start(cmds commands.Commands, artfs artifacts.Artifacts) {
-	c.Upload(artfs)
-	c.Run(cmds)
+func (c *ExecCmd) Start(cmds *[]commands.Command, artfs []*artifacts.Artifact) {
+	if artfs != nil {
+		c.Upload(artfs)
+	}
+	if cmds != nil {
+		c.Run(*cmds)
+	}
+}
+
+func (c *ExecCmd) OutputAppend(out cmd.Out) {
+	c.mu.Lock()
+	c.output = append(c.output, out)
+	c.mu.Unlock()
 }
 
 func (c *ExecCmd) Run(cmds commands.Commands) {
@@ -39,7 +51,7 @@ func (c *ExecCmd) Run(cmds commands.Commands) {
 		for {
 			select {
 			case stdout := <-shell.Stdout:
-				c.output = append(c.output, stdout)
+				c.OutputAppend(stdout)
 				if stdout.Message != "" {
 					c.log.Debug(stdout.Name).Msgf("%s", stdout.Message)
 				}
@@ -47,7 +59,7 @@ func (c *ExecCmd) Run(cmds commands.Commands) {
 					wait <- true
 				}
 			case stderr := <-shell.Stderr:
-				c.output = append(c.output, stderr)
+				c.OutputAppend(stderr)
 				if stderr.Message != "" {
 					c.log.Error(stderr.Name).Msgf("%s", stderr.Message)
 				}
@@ -74,7 +86,7 @@ func (c *ExecCmd) Run(cmds commands.Commands) {
 	}
 }
 
-func (c *ExecCmd) Upload(artfs artifacts.Artifacts) {
+func (c *ExecCmd) Upload(artfs []*artifacts.Artifact) {
 	name := "local"
 	for _, artf := range artfs {
 		startTime := time.Now()

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cat << EOF > kitchen/version.go
+cat << EOF > golem/version.go
 package kitchen
 
 const (

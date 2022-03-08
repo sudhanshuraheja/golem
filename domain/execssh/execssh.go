@@ -82,7 +82,7 @@ func (ss *SSH) Run(cmds commands.Commands) {
 	}
 }
 
-func (ss *SSH) Upload(artfs artifacts.Artifacts) {
+func (ss *SSH) Upload(artfs []*artifacts.Artifact) {
 	for _, artf := range artfs {
 		if artf.Source == nil {
 			ss.log.Error(ss.name).Msgf("source does not exist for destination %s", artf.Destination)

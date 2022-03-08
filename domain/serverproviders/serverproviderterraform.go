@@ -73,7 +73,7 @@ func (s *ServerProviderTerraform) GetServers(file, user string, port int) (serve
 				srv.HostName = nil
 				srv.User = user
 				srv.Port = port
-				srv.Tags = tfResourceInstance.Attributes.Tags
+				srv.Tags = &tfResourceInstance.Attributes.Tags
 				srvs.Append(srv)
 			}
 		}

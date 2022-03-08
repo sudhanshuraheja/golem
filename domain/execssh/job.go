@@ -8,6 +8,6 @@ import (
 
 type SSHJob struct {
 	Server    servers.Server
-	Commands  commands.Commands
-	Artifacts artifacts.Artifacts
+	Commands  *[]commands.Command
+	Artifacts []*artifacts.Artifact
 }

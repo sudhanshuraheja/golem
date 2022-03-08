@@ -12,22 +12,22 @@ func TestTemplates(t *testing.T) {
 	servers := []servers.Server{
 		{
 			Name:     "one",
-			HostName: []string{"one"},
+			HostName: &[]string{"one"},
 			Port:     22,
-			Tags:     []string{"one"},
+			Tags:     &[]string{"one"},
 		},
 		{
 			Name:     "two",
 			PublicIP: &publicIP,
-			HostName: []string{"two"},
+			HostName: &[]string{"two"},
 			Port:     22,
-			Tags:     []string{"one", "two"},
+			Tags:     &[]string{"one", "two"},
 		},
 		{
 			Name:     "three",
-			HostName: []string{"three"},
+			HostName: &[]string{"three"},
 			Port:     22,
-			Tags:     []string{"one", "two", "three"},
+			Tags:     &[]string{"one", "two", "three"},
 		},
 	}
 

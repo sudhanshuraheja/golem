@@ -24,7 +24,7 @@ func NewSSHPool(log *logger.CLILogger) *SSHPool {
 	}
 }
 
-func (s *SSHPool) Start(srvs servers.Servers, cmds commands.Commands, artfs artifacts.Artifacts, procs int) {
+func (s *SSHPool) Start(srvs servers.Servers, cmds *[]commands.Command, artfs []*artifacts.Artifact, procs int) {
 	log := logger.NewLogger(2, true)
 
 	wp := pool.NewPool("ssh", log)

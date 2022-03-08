@@ -36,25 +36,25 @@ recipe "nomad-local-bootstrap" "local" {
         }
         destination = "@golem.NOMAD_CONFIG_PATH/certs/cfssl.json"
     }
-    command {
-        // Install cfssl
-        exec = "go install github.com/cloudflare/cfssl/cmd/cfssl@latest"
+    script {
+        commands = [
+            // Install cfssl
+            "go install github.com/cloudflare/cfssl/cmd/cfssl@latest",
+
+            // Install cfssljson
+            "go install github.com/cloudflare/cfssl/cmd/cfssljson@latest",
+
+            // NOMAD_CONFIG_PATH/certs/nomad-ca-key.pem -> private key
+            // NOMAD_CONFIG_PATH/certs/nomad-ca.csr -> certificate signing request
+            // NOMAD_CONFIG_PATH/certs/nomad-ca.pem -> public key
+            "cfssl print-defaults csr | cfssl gencert -initca - | cfssljson -bare @golem.NOMAD_CONFIG_PATH/certs/nomad-ca",
+        ]
     }
-    command {
-        // Install cfssljson
-        exec = "go install github.com/cloudflare/cfssl/cmd/cfssljson@latest"
-    }
-    command {
-        // NOMAD_CONFIG_PATH/certs/nomad-ca-key.pem -> private key
-        // NOMAD_CONFIG_PATH/certs/nomad-ca.csr -> certificate signing request
-        // NOMAD_CONFIG_PATH/certs/nomad-ca.pem -> public key
-        exec = "cfssl print-defaults csr | cfssl gencert -initca - | cfssljson -bare @golem.NOMAD_CONFIG_PATH/certs/nomad-ca"
-    }
-    command {
+    script {
         // server-key.pem -> private key
         // server.csr -> certificate signing request
         // server.pem -> public key
-        exec = <<EOF
+        command = <<EOF
 echo '{}' | cfssl gencert -ca=@golem.NOMAD_CONFIG_PATH/certs/nomad-ca.pem -ca-key=@golem.NOMAD_CONFIG_PATH/certs/nomad-ca-key.pem -config=@golem.NOMAD_CONFIG_PATH/certs/cfssl.json -hostname="server.@golem.NOMAD_REGION.nomad,localhost,127.0.0.1,
 {{- range $_, $s := (match "tags" "contains" "@golem.NOMAD_SERVER_TAG") -}}
     {{- if not ($s).PublicIP -}}
@@ -68,11 +68,11 @@ echo '{}' | cfssl gencert -ca=@golem.NOMAD_CONFIG_PATH/certs/nomad-ca.pem -ca-ke
 {{- end -}}" - | cfssljson -bare @golem.NOMAD_CONFIG_PATH/certs/server
         EOF
     }
-    command {
+    script {
         // client-key.pem -> private key
         // client.csr -> certificate signing request
         // client.pem -> public key
-        exec = <<EOF
+        command = <<EOF
 echo '{}' | cfssl gencert -ca=@golem.NOMAD_CONFIG_PATH/certs/nomad-ca.pem -ca-key=@golem.NOMAD_CONFIG_PATH/certs/nomad-ca-key.pem -config=@golem.NOMAD_CONFIG_PATH/certs/cfssl.json -hostname="client.@golem.NOMAD_REGION.nomad,localhost,127.0.0.1,
 {{- range $_, $s := (match "tags" "contains" "@golem.NOMAD_SERVER_TAG") -}}
     {{- if not ($s).PublicIP -}}
@@ -86,11 +86,11 @@ echo '{}' | cfssl gencert -ca=@golem.NOMAD_CONFIG_PATH/certs/nomad-ca.pem -ca-ke
 {{ end }}" - | cfssljson -bare @golem.NOMAD_CONFIG_PATH/certs/client
         EOF
     }
-    command {
-        exec = "echo '{}' | cfssl gencert -ca=@golem.NOMAD_CONFIG_PATH/certs/nomad-ca.pem -ca-key=@golem.NOMAD_CONFIG_PATH/certs/nomad-ca-key.pem -profile=client - | cfssljson -bare @golem.NOMAD_CONFIG_PATH/certs/cli"
-    }
-    command {
-        exec = "openssl rand 32 | base64 > @golem.NOMAD_CONFIG_PATH/certs/nomad.key"
+    script {
+        commands = [
+            "echo '{}' | cfssl gencert -ca=@golem.NOMAD_CONFIG_PATH/certs/nomad-ca.pem -ca-key=@golem.NOMAD_CONFIG_PATH/certs/nomad-ca-key.pem -profile=client - | cfssljson -bare @golem.NOMAD_CONFIG_PATH/certs/cli",
+            "openssl rand 32 | base64 > @golem.NOMAD_CONFIG_PATH/certs/nomad.key",
+        ]
     }
 }
 
@@ -128,7 +128,7 @@ recipe "nomad-server-bootstrap" "remote" {
         source = "@golem.NOMAD_CONFIG_PATH/nomad.service"
         destination = "/etc/systemd/system/nomad.service"
     }
-    command {
+    script {
         apt {
             update = true
         }
@@ -151,23 +151,13 @@ recipe "nomad-server-bootstrap" "remote" {
         apt {
             purge = ["consul"]
         }
-    }
-    command {
-        exec = "sudo mkdir --parents /opt/nomad"
-    }
-    command {
-        exec = "sudo chmod 700 /etc/nomad.d"
-    }
-    command {
-        exec = "chown nomad:nomad /etc/nomad.d/server-key.pem"
-    }
-    command {
-        exec = "systemctl daemon-reload"
-    }
-    command {
-        exec = "systemctl stop nomad"
-    }
-    command {
-        exec = "systemctl start nomad"
+        commands = [
+            "sudo mkdir --parents /opt/nomad",
+            "sudo chmod 700 /etc/nomad.d",
+            "chown nomad:nomad /etc/nomad.d/server-key.pem",
+            "systemctl daemon-reload",
+            "systemctl stop nomad",
+            "systemctl start nomad",
+        ]
     }
 }
