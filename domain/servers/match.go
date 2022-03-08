@@ -6,12 +6,13 @@ import (
 	"strings"
 
 	"github.com/betas-in/utils"
+	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
 
 type Match struct {
-	Attribute string
-	Operator  string
-	Value     string
+	Attribute string `hcl:"attribute"`
+	Operator  string `hcl:"operator"`
+	Value     string `hcl:"value"`
 }
 
 func NewMatch(attribute, operator, value string) *Match {
@@ -40,13 +41,14 @@ func (m *Match) server(s Server) (bool, error) {
 	if s.Name == "" {
 		return false, nil
 	}
+
 	switch m.Attribute {
 	case "name":
 		return m.string("name", s.Name)
 	case "public_ip":
-		return m.string("public_ip", s.PublicIP)
+		return m.string("public_ip", localutils.StringPtrValue(s.PublicIP, ""))
 	case "private_ip":
-		return m.string("private_ip", s.PrivateIP)
+		return m.string("private_ip", localutils.StringPtrValue(s.PrivateIP, ""))
 	case "hostname":
 		return m.array("hostname", s.HostName)
 	case "user":

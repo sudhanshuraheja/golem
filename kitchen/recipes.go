@@ -2,7 +2,7 @@ package kitchen
 
 import (
 	"github.com/betas-in/logger"
-	"github.com/sudhanshuraheja/golem/artifacts"
+	"github.com/sudhanshuraheja/golem/domain/artifacts"
 	"github.com/sudhanshuraheja/golem/commands"
 	"github.com/sudhanshuraheja/golem/config"
 	"github.com/sudhanshuraheja/golem/kv"

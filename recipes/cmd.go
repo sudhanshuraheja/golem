@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/betas-in/logger"
-	"github.com/sudhanshuraheja/golem/artifacts"
 	"github.com/sudhanshuraheja/golem/commands"
+	"github.com/sudhanshuraheja/golem/domain/artifacts"
 	"github.com/sudhanshuraheja/golem/pkg/cmd"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
@@ -71,7 +71,7 @@ func (c *Cmd) Upload(artfs []artifacts.Artifact) {
 			c.log.Error(name).Msgf("could not create directory <%s>: %v", filepath.Dir(artifact.Destination), err)
 			continue
 		}
-		err = os.Rename(artifact.Source, artifact.Destination)
+		err = os.Rename(*artifact.Source, artifact.Destination)
 		if err != nil {
 			c.log.Error(name).Msgf("error in moving from <%s> to <%s>: %v", artifact.Source, artifact.Destination, err)
 			continue
@@ -79,7 +79,7 @@ func (c *Cmd) Upload(artfs []artifacts.Artifact) {
 		c.log.Success(name).Msgf(
 			"%s %s %s %s %s",
 			logger.Cyan("Moved"),
-			localutils.TinyString(artifact.Source, tiny),
+			localutils.TinyString(*artifact.Source, tiny),
 			logger.Cyan("to"),
 			artifact.Destination,
 			localutils.TimeInSecs(startTime))

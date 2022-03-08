@@ -7,7 +7,7 @@ import (
 
 	"github.com/betas-in/logger"
 	"github.com/betas-in/pool"
-	"github.com/sudhanshuraheja/golem/servers"
+	"github.com/sudhanshuraheja/golem/domain/servers"
 )
 
 type SSHWorkerGroup struct {

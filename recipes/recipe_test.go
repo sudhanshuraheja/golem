@@ -6,19 +6,19 @@ import (
 
 	"github.com/betas-in/logger"
 	"github.com/betas-in/utils"
-	"github.com/sudhanshuraheja/golem/artifacts"
 	"github.com/sudhanshuraheja/golem/commands"
 	"github.com/sudhanshuraheja/golem/config"
-	"github.com/sudhanshuraheja/golem/plugins"
-	"github.com/sudhanshuraheja/golem/servers"
-	"github.com/sudhanshuraheja/golem/template"
+	"github.com/sudhanshuraheja/golem/domain/artifacts"
+	"github.com/sudhanshuraheja/golem/domain/plugins"
+	"github.com/sudhanshuraheja/golem/domain/servers"
+	"github.com/sudhanshuraheja/golem/domain/template"
 )
 
 func TestRecipe(t *testing.T) {
 	log := logger.NewCLILogger(5, 8)
 
 	conf := config.NewConfig("../testdata/sample.hcl")
-	srvs := servers.NewServers(conf.Servers)
+	srvs := conf.Servers
 	tpl := template.NewTemplate(srvs, *conf.Vars, nil)
 
 	recipes := []Recipe{}
@@ -57,7 +57,7 @@ func TestRecipe(t *testing.T) {
 		}
 		artfs := []artifacts.Artifact{}
 		for _, art := range crcp.Artifacts {
-			artfs = append(artfs, *artifacts.NewArtifact(art))
+			artfs = append(artfs, art)
 		}
 		rcp.PrepareArtifacts(artfs, true)
 		recipes = append(recipes, *rcp)

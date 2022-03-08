@@ -3,6 +3,7 @@ package recipes
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"os"
 	"os/signal"
 	"strings"
@@ -11,12 +12,11 @@ import (
 	"github.com/betas-in/logger"
 	"github.com/betas-in/pool"
 	"github.com/betas-in/utils"
-	"github.com/sudhanshuraheja/golem/artifacts"
 	"github.com/sudhanshuraheja/golem/commands"
-	"github.com/sudhanshuraheja/golem/kv"
+	"github.com/sudhanshuraheja/golem/domain/artifacts"
+	"github.com/sudhanshuraheja/golem/domain/kv"
+	"github.com/sudhanshuraheja/golem/domain/servers"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
-	"github.com/sudhanshuraheja/golem/servers"
-	"github.com/sudhanshuraheja/golem/template"
 )
 
 var (
@@ -187,34 +187,7 @@ func (r *Recipe) findServers(all []servers.Server) {
 }
 
 func (r *Recipe) askPermission() {
-	for _, a := range r.artfs {
-		sourcePath := ""
-		switch {
-		case a.Template.Data != "":
-			sourcePath = a.Template.Data
-		case a.Template.Path != "":
-			sourcePath = a.Template.Path
-		default:
-			sourcePath = a.Source
-		}
-
-		r.log.Info(r.Name).Msgf(
-			"%s %s %s %s",
-			logger.Cyan("uploading"),
-			localutils.TinyString(sourcePath, tiny*2),
-			logger.Cyan("to"),
-			a.Destination,
-		)
-	}
-
-	for _, command := range r.cmds {
-		exec, err := r.tpl.Execute(command.Exec)
-		if err != nil {
-			r.log.Error(r.Name).Msgf("could not parse template %s: %v", command.Exec, err)
-		}
-		r.log.Info(r.Name).Msgf("$ %s", localutils.TinyString(exec, tiny*2))
-	}
-
+	r.displayPrepared()
 	answer := localutils.Question(r.log, r.Name, "Are you sure you want to continue [y/n]?")
 	if utils.Array().Contains([]string{"y", "yes"}, answer, false) == -1 {
 		r.log.Error(r.Name).Msgf("Quitting, because you said %s", answer)
@@ -244,12 +217,12 @@ func (r *Recipe) run(maxParallelProcesses int) {
 
 func (r *Recipe) downloadArtifacts() {
 	for i, a := range r.artfs {
-		var err error
-		r.artfs[i].Source, err = a.Download(r.log)
+		source, err := a.Download(r.log)
 		if err != nil {
 			r.log.Error(r.Name).Msgf("%v", err)
 			os.Exit(1)
 		}
+		r.artfs[i].Source = &source
 	}
 }
 
@@ -310,12 +283,12 @@ func (r *Recipe) displayPrepared() {
 	for _, ar := range r.artfs {
 		sourcePath := ""
 		switch {
-		case ar.Template.Data != "":
-			sourcePath = ar.Template.Data
-		case ar.Template.Path != "":
-			sourcePath = ar.Template.Path
-		case ar.Source != "":
-			sourcePath = ar.Source
+		case ar.Template.Data != nil:
+			sourcePath = *ar.Template.Data
+		case ar.Template.Path != nil:
+			sourcePath = *ar.Template.Path
+		case ar.Source != nil:
+			sourcePath = *ar.Source
 		}
 
 		r.log.Info("").Msgf(

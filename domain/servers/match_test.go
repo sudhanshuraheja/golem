@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/betas-in/utils"
+	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
 
 func TestMatcher(t *testing.T) {
@@ -16,7 +17,7 @@ func TestMatcher(t *testing.T) {
 		},
 		{
 			Name:     "two",
-			PublicIP: "127.0.0.1",
+			PublicIP: localutils.StrPtr("127.0.0.1"),
 			HostName: []string{"two"},
 			Port:     22,
 			Tags:     []string{"one", "two"},

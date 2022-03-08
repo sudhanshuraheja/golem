@@ -51,7 +51,7 @@ func NewKitchen(cliConf *CLIConfig) {
 		k.mergeConfig(conf)
 	}
 
-	err = k.conf.ResolveServerProvider()
+	err = k.conf.ResolveServerProviders()
 	if err != nil {
 		k.log.Error("golem").Msgf("%v", err)
 	}

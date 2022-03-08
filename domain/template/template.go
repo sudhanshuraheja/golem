@@ -8,9 +8,9 @@ import (
 	"text/template"
 
 	"github.com/betas-in/logger"
-	"github.com/sudhanshuraheja/golem/kv"
+	"github.com/sudhanshuraheja/golem/domain/kv"
+	"github.com/sudhanshuraheja/golem/domain/servers"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
-	"github.com/sudhanshuraheja/golem/servers"
 )
 
 type Template struct {

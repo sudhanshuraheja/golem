@@ -154,8 +154,12 @@ func ArrayUnique(ar []string) []string {
 	}
 
 	uniques := []string{}
-	for k, _ := range keys {
+	for k := range keys {
 		uniques = append(uniques, k)
 	}
 	return uniques
+}
+
+func StrPtr(s string) *string {
+	return &s
 }

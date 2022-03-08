@@ -1,25 +1,34 @@
-package plugins
+package commands
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/betas-in/utils"
-	"github.com/sudhanshuraheja/golem/artifacts"
-	"github.com/sudhanshuraheja/golem/commands"
-	"github.com/sudhanshuraheja/golem/config"
+	"github.com/sudhanshuraheja/golem/domain/artifacts"
 )
 
 type Apt struct {
+	PGP              *string        `hcl:"pgp"`
+	Repository       *APTRepository `hcl:"repository,block"`
+	Update           *bool          `hcl:"update"`
+	Purge            *[]string      `hcl:"purge"`
+	Install          *[]string      `hcl:"install"`
+	InstallNoUpgrade *[]string      `hcl:"install_no_upgrade"`
+}
+
+type APTRepository struct {
+	URL     string `hcl:"url"`
+	Sources string `hcl:"sources"`
 }
 
 func NewAPT() *Apt {
 	return &Apt{}
 }
 
-func (a *Apt) Prepare(capt []config.Apt) ([]commands.Command, []artifacts.Artifact) {
-	cmds := []commands.Command{}
-	artfs := []artifacts.Artifact{}
+func (a *Apt) Prepare(capt []Apt) (Commands, artifacts.Artifacts) {
+	cmds := Commands{}
+	artfs := artifacts.Artifacts{}
 
 	for _, apt := range capt {
 		template := "#!/bin/bash\n"
@@ -87,8 +96,8 @@ func (a *Apt) Prepare(capt []config.Apt) ([]commands.Command, []artifacts.Artifa
 			utils.UUID().GetShort(),
 		)
 		artifact := artifacts.Artifact{
-			Template: artifacts.Template{
-				Data: template,
+			Template: &artifacts.ArtifactTemplate{
+				Data: &template,
 			},
 			Destination: destination,
 		}
@@ -98,9 +107,9 @@ func (a *Apt) Prepare(capt []config.Apt) ([]commands.Command, []artifacts.Artifa
 		execute := destination
 		remove := fmt.Sprintf("rm %s", destination)
 
-		cmds = append(cmds, commands.Command{Exec: chmod})
-		cmds = append(cmds, commands.Command{Exec: execute})
-		cmds = append(cmds, commands.Command{Exec: remove})
+		cmds.Append(NewCommand(chmod))
+		cmds.Append(NewCommand(execute))
+		cmds.Append(NewCommand(remove))
 
 	}
 	return cmds, artfs

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/betas-in/utils"
-	"github.com/sudhanshuraheja/golem/servers"
+	"github.com/sudhanshuraheja/golem/domain/servers"
 )
 
 func TestTemplates(t *testing.T) {
@@ -18,7 +18,7 @@ func TestTemplates(t *testing.T) {
 		},
 		{
 			Name:     "two",
-			PublicIP: publicIP,
+			PublicIP: &publicIP,
 			HostName: []string{"two"},
 			Port:     22,
 			Tags:     []string{"one", "two"},
