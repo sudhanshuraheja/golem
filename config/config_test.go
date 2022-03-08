@@ -8,7 +8,8 @@ import (
 
 func TestConfig(t *testing.T) {
 	path := "./../testdata/sample.hcl"
-	conf := NewConfig(path)
+	conf, err := NewConfig(path)
+	utils.Test().Nil(t, err)
 
 	utils.Test().Equals(t, 1, len(conf.ServerProviders))
 	utils.Test().Equals(t, "terraform", conf.ServerProviders[0].Name)

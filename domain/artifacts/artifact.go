@@ -1,7 +1,6 @@
 package artifacts
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -21,23 +20,33 @@ type ArtifactTemplate struct {
 	Path *string `hcl:"path"`
 }
 
-func (a *Artifact) HandlePath(log *logger.CLILogger, tpl *template.Template) error {
+func (a *Artifact) TemplatePathPopulate(tpl *template.Template) error {
 	if a.Template.Path != nil {
 		templatePath, err := tpl.Execute(*a.Template.Path)
 		if err != nil {
 			return err
 		}
 		a.Template.Path = &templatePath
+	}
+	return nil
+}
 
+func (a *Artifact) TemplatePathDownload(log *logger.CLILogger) error {
+	if a.Template.Path != nil {
 		if strings.HasPrefix(*a.Template.Path, "http://") || strings.HasPrefix(*a.Template.Path, "https://") {
 			// Url based template
-			templatePath, err = localutils.Download(log, "", *a.Template.Path)
+			templatePath, err := localutils.Download(log, "", *a.Template.Path)
 			if err != nil {
 				return err
 			}
 			a.Template.Path = &templatePath
 		} // else File base template
+	}
+	return nil
+}
 
+func (a *Artifact) TemplatePathToData() error {
+	if a.Template.Path != nil {
 		bytes, err := os.ReadFile(*a.Template.Path)
 		if err != nil {
 			return err
@@ -48,26 +57,29 @@ func (a *Artifact) HandlePath(log *logger.CLILogger, tpl *template.Template) err
 	return nil
 }
 
-func (a *Artifact) HandleData(tpl *template.Template, dryrun bool) error {
+func (a *Artifact) TemplateDataPopulate(tpl *template.Template) error {
 	if a.Template.Data != nil {
 		templateData, err := tpl.Execute(*a.Template.Data)
 		if err != nil {
 			return err
 		}
 		a.Template.Data = &templateData
-
-		if !dryrun {
-			fileName, err := localutils.FileCopy(*a.Template.Data)
-			if err != nil {
-				return err
-			}
-			a.Source = &fileName
-		}
 	}
 	return nil
 }
 
-func (a *Artifact) HandleSource(tpl *template.Template) error {
+func (a *Artifact) TemplateDataToSource() error {
+	if a.Template.Data != nil {
+		fileName, err := localutils.FileCopy(*a.Template.Data)
+		if err != nil {
+			return err
+		}
+		a.Source = &fileName
+	}
+	return nil
+}
+
+func (a *Artifact) SourcePopulate(tpl *template.Template) error {
 	if a.Source != nil {
 		source, err := tpl.Execute(*a.Source)
 		if err != nil {
@@ -78,21 +90,37 @@ func (a *Artifact) HandleSource(tpl *template.Template) error {
 	return nil
 }
 
-func (a *Artifact) HandleDestination(tpl *template.Template) error {
-	var err error
-	a.Destination, err = tpl.Execute(a.Destination)
-	return err
-}
-
-func (a *Artifact) Download(log *logger.CLILogger) (string, error) {
+func (a *Artifact) SourceDownload(log *logger.CLILogger) error {
 	if a.Source != nil {
 		if strings.HasPrefix(*a.Source, "http://") || strings.HasPrefix(*a.Source, "https://") {
 			filePath, err := localutils.Download(log, "", *a.Source)
 			if err != nil {
-				return "", err
+				return err
 			}
-			return filePath, nil
+			a.Source = &filePath
 		}
 	}
-	return "", fmt.Errorf("source has not been set up yet")
+	return nil
+}
+
+func (a *Artifact) DestinationPopulate(tpl *template.Template) error {
+	parsedDestination, err := tpl.Execute(a.Destination)
+	if err != nil {
+		return err
+	}
+	a.Destination = parsedDestination
+	return err
+}
+
+func (a *Artifact) GetSource() string {
+	source := ""
+	switch {
+	case a.Template.Data != nil:
+		source = *a.Template.Data
+	case a.Template.Path != nil:
+		source = *a.Template.Path
+	case a.Source != nil:
+		source = *a.Source
+	}
+	return source
 }

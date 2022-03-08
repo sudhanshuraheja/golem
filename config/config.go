@@ -23,7 +23,7 @@ type Config struct {
 	Vars                 *vars.Vars                      `hcl:"vars"`
 }
 
-func NewConfig(path string) *Config {
+func NewConfig(path string) (*Config, error) {
 	var conf Config
 
 	parser := hclparse.NewParser()
@@ -31,16 +31,21 @@ func NewConfig(path string) *Config {
 	f, diags := parser.ParseHCLFile(path)
 	if diags.HasErrors() {
 		showHCLDiagnostics(parser, diags)
-		return nil
+		return nil, diags
 	}
 
 	diags = gohcl.DecodeBody(f.Body, nil, &conf)
 	if diags.HasErrors() {
 		showHCLDiagnostics(parser, diags)
-		return nil
+		return nil, diags
 	}
 
-	return &conf
+	err := conf.ParseServerProviders()
+	if err != nil {
+		return nil, err
+	}
+
+	return &conf, nil
 }
 
 func showHCLDiagnostics(parser *hclparse.Parser, diags hcl.Diagnostics) {
@@ -68,4 +73,26 @@ func (c *Config) ParseServerProviders() error {
 	}
 	c.Servers.Merge(srvs)
 	return nil
+}
+
+func (c *Config) Merge(conf *Config) {
+	c.Servers.Merge(conf.Servers)
+	c.Recipes.Merge(conf.Recipes)
+
+	if conf.LogLevel != nil {
+		c.LogLevel = conf.LogLevel
+	}
+
+	if conf.MaxParallelProcesses != nil {
+		c.MaxParallelProcesses = conf.MaxParallelProcesses
+	}
+
+	if conf.Vars != nil {
+		if c.Vars == nil {
+			c.Vars = vars.NewVars()
+		}
+		for key, value := range *conf.Vars {
+			(*c.Vars)[key] = value
+		}
+	}
 }

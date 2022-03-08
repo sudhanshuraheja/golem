@@ -10,27 +10,24 @@ import (
 	"github.com/betas-in/logger"
 	"github.com/sudhanshuraheja/golem/domain/kv"
 	"github.com/sudhanshuraheja/golem/domain/servers"
+	"github.com/sudhanshuraheja/golem/domain/vars"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
 
 type Template struct {
-	Servers []servers.Server
-	Vars    map[string]string
+	Servers servers.Servers
+	Vars    vars.Vars
 }
 
-func NewTemplate(s []servers.Server, c map[string]string, k *kv.KV) *Template {
+func NewTemplate(s []servers.Server, vr vars.Vars, store *kv.Store) *Template {
 	t := Template{}
 
-	t.Vars = make(map[string]string)
-	if c != nil {
-		t.Vars = c
-	}
+	t.Vars = vr
 	t.trim()
+	t.Servers.Merge(s)
 
-	t.Servers = append(t.Servers, s...)
-
-	if k != nil {
-		store, err := k.GetAll()
+	if store != nil {
+		store, err := store.GetAll()
 		if err == nil {
 			for key, value := range store {
 				storeKey := fmt.Sprintf("kv.%s", key)
@@ -52,14 +49,14 @@ func (t *Template) Execute(text string) (string, error) {
 
 	tpl := template.New("template").Funcs(template.FuncMap{
 		"matchOne": func(attribute, operator, value string) servers.Server {
-			s, err := servers.NewMatch(attribute, operator, value).Find(t.Servers)
+			s, err := t.Servers.Search(*servers.NewMatch(attribute, operator, value))
 			if err != nil {
 				return servers.Server{}
 			}
 			return s[0]
 		},
 		"match": func(attribute, operator, value string) []servers.Server {
-			s, err := servers.NewMatch(attribute, operator, value).Find(t.Servers)
+			s, err := t.Servers.Search(*servers.NewMatch(attribute, operator, value))
 			if err != nil {
 				return []servers.Server{}
 			}

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/betas-in/logger"
+	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
 
 type Server struct {
@@ -17,7 +18,7 @@ type Server struct {
 	Tags      []string `hcl:"tags"`
 }
 
-func (s *Server) Log(log *logger.CLILogger, query string) {
+func (s *Server) Display(log *logger.CLILogger, query string) {
 	if len(query) > 0 {
 		if !strings.Contains(s.Name, query) {
 			return
@@ -46,6 +47,46 @@ func (s *Server) Log(log *logger.CLILogger, query string) {
 		log.Info("").Msgf("%s %s", logger.Cyan("tags"), tags)
 	}
 
+}
+
+func (s *Server) GetHostName() (string, error) {
+	host := ""
+
+	switch {
+	case s.PublicIP != nil:
+		host = *s.PublicIP
+	case len(s.HostName) > 0:
+		host = s.HostName[0]
+	default:
+		return host, fmt.Errorf("could not find a public ip or a hostname in config")
+	}
+
+	return host, nil
+}
+
+func (s *Server) Search(m Match) (bool, error) {
+	if s.Name == "" {
+		return false, nil
+	}
+
+	switch m.Attribute {
+	case "name":
+		return m.CompareString(s.Name)
+	case "public_ip":
+		return m.CompareString(localutils.StringPtrValue(s.PublicIP, ""))
+	case "private_ip":
+		return m.CompareString(localutils.StringPtrValue(s.PrivateIP, ""))
+	case "hostname":
+		return m.CompareStringArray(s.HostName)
+	case "user":
+		return m.CompareString(s.User)
+	case "port":
+		return m.CompareInt(s.Port)
+	case "tags":
+		return m.CompareStringArray(s.Tags)
+	default:
+		return false, fmt.Errorf("servers does not support attribute %s", m.Attribute)
+	}
 }
 
 func Cyan(name, value string) string {

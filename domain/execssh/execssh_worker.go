@@ -1,4 +1,4 @@
-package recipes
+package execssh
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 
 	"github.com/betas-in/logger"
 	"github.com/betas-in/pool"
+	"github.com/sudhanshuraheja/golem/domain/artifacts"
+	"github.com/sudhanshuraheja/golem/domain/commands"
 	"github.com/sudhanshuraheja/golem/domain/servers"
 )
 
@@ -41,7 +43,7 @@ func (w *SSHWorkerGroup) Process(ctx context.Context, workerCtx *pool.WorkerCont
 			if !ok {
 				w.log.Error(w.Name(id)).Msgf("invalid job")
 			}
-			w.ExecRecipeOnServer(job.Server, job.Recipe)
+			w.ExecRecipeOnServer(job.Server, job.Commands, job.Artifacts)
 
 			workerCtx.Heartbeat <- pool.Heartbeat{ID: id, Processed: 1}
 			workerCtx.Processed <- j
@@ -64,22 +66,16 @@ func (w *SSHWorkerGroup) Name(id string) string {
 	return fmt.Sprintf("%s-%s", w.name, id)
 }
 
-func (w *SSHWorkerGroup) ExecRecipeOnServer(s servers.Server, recipe *Recipe) {
-	ss := SSH{log: w.log}
-	err := ss.Connect(&s)
+func (w *SSHWorkerGroup) ExecRecipeOnServer(s servers.Server, cmds commands.Commands, artfs artifacts.Artifacts) {
+	shell := SSH{log: w.log}
+	err := shell.Connect(&s)
 	if err != nil {
 		w.log.Error(s.Name).Msgf("%v, please try", err)
 		w.log.Success(s.Name).Msgf("$ ssh-keyscan -p %d %s >> ~/.ssh/known_hosts", s.Port, s.PublicIP)
 		return
 	}
-	ss.Upload(recipe.artfs)
-	cmds := []string{}
-	for _, cmd := range recipe.cmds {
-		if cmd.Exec == "" {
-			continue
-		}
-		cmds = append(cmds, cmd.Exec)
-	}
-	ss.Run(cmds)
-	ss.Close()
+
+	shell.Upload(artfs)
+	shell.Run(cmds)
+	shell.Close()
 }

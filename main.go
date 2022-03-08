@@ -2,11 +2,11 @@ package main
 
 import (
 	"github.com/alexflint/go-arg"
-	"github.com/sudhanshuraheja/golem/kitchen"
+	"github.com/sudhanshuraheja/golem/golem"
 )
 
 func main() {
-	conf := kitchen.CLIConfig{}
+	conf := golem.Config{}
 	arg.MustParse(&conf)
-	kitchen.NewKitchen(&conf)
+	golem.NewGolem(&conf)
 }
