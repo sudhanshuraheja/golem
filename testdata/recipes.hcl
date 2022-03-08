@@ -50,10 +50,14 @@ testing_value:@golem.kv.test.testing_value
         source = "config"
         destination = "config4"
     }
-    // commands = [
-    //     "ls -la",
-    //     "ls -ls m*",
-    // ]
+    artifact {
+        source = "https://raw.githubusercontent.com/sudhanshuraheja/golem/main/testdata/nomad/nomad_client.template.hcl"
+        destination = "destination"
+    }
+    commands = [
+        "ls -la",
+        "ls -ls m*",
+    ]
     script {
         apt {
             update = true

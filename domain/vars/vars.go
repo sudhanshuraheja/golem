@@ -8,7 +8,7 @@ func NewVars() *Vars {
 }
 
 func (v *Vars) Add(key, value string) {
-	if v == nil {
+	if v != nil {
 		(*v)[key] = value
 	}
 }

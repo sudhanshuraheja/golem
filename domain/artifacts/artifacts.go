@@ -15,7 +15,7 @@ func (a *Artifacts) Merge(arts Artifacts) {
 	*a = append(*a, arts...)
 }
 
-func (a *Artifacts) Prepare(log *logger.CLILogger, tpl *template.Template, dryrun bool) {
+func (a *Artifacts) Prepare(log *logger.CLILogger, tpl *template.Template) {
 	for _, art := range *a {
 		err := art.TemplatePathPopulate(tpl)
 		if err != nil {
