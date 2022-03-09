@@ -14,7 +14,15 @@ import (
 	"golang.org/x/crypto/ssh/knownhosts"
 )
 
-type Connection struct {
+type Connection interface {
+	Stdout() chan Out
+	Stderr() chan Out
+	Run(command string) (int, error)
+	Upload(src, dest string) (int64, error)
+	Close()
+}
+
+type connection struct {
 	name        string
 	conn        *ssh.Client
 	sshSession  *ssh.Session
@@ -22,8 +30,8 @@ type Connection struct {
 	stdin       io.Writer
 	stdout      io.Reader
 	stderr      io.Reader
-	Stdout      chan Out
-	Stderr      chan Out
+	stdoutCh    chan Out
+	stderrCh    chan Out
 }
 
 type Out struct {
@@ -34,11 +42,11 @@ type Out struct {
 	Completed bool
 }
 
-func NewSSHConnection(name, user, host string, port int, privateKeyPath string) (*Connection, error) {
-	connection := Connection{}
+func NewSSHConnection(name, user, host string, port int, privateKeyPath string) (Connection, error) {
+	connection := connection{}
 	connection.name = name
-	connection.Stdout = make(chan Out, 1000)
-	connection.Stderr = make(chan Out, 1000)
+	connection.stdoutCh = make(chan Out, 1000)
+	connection.stderrCh = make(chan Out, 1000)
 
 	err := connection.dial(user, host, port, privateKeyPath)
 	if err != nil {
@@ -47,7 +55,7 @@ func NewSSHConnection(name, user, host string, port int, privateKeyPath string) 
 	return &connection, nil
 }
 
-func (c *Connection) dial(user, host string, port int, privateKeyPath string) error {
+func (c *connection) dial(user, host string, port int, privateKeyPath string) error {
 	if user == "" {
 		return fmt.Errorf("user cannot be empty")
 	}
@@ -107,7 +115,7 @@ func (c *Connection) dial(user, host string, port int, privateKeyPath string) er
 	return nil
 }
 
-func (c *Connection) getSSHSession(id, command string) error {
+func (c *connection) getSSHSession(id, command string) error {
 	var err error
 	c.sshSession, err = c.conn.NewSession()
 	if err != nil {
@@ -127,7 +135,7 @@ func (c *Connection) getSSHSession(id, command string) error {
 	return nil
 }
 
-func (c *Connection) pty() error {
+func (c *connection) pty() error {
 	// Set up terminal modes
 	modes := ssh.TerminalModes{
 		ssh.ECHO:          0,     // disable echoing
@@ -144,7 +152,7 @@ func (c *Connection) pty() error {
 	return nil
 }
 
-func (c *Connection) pipes(id, command string) error {
+func (c *connection) pipes(id, command string) error {
 	var err error
 	c.stdin, err = c.sshSession.StdinPipe()
 	if err != nil {
@@ -168,7 +176,7 @@ func (c *Connection) pipes(id, command string) error {
 				received := scanner.Bytes()
 				data := make([]byte, len(received))
 				copy(data, received)
-				c.Stdout <- Out{
+				c.stdoutCh <- Out{
 					Name:    name,
 					ID:      id,
 					Command: command,
@@ -176,7 +184,7 @@ func (c *Connection) pipes(id, command string) error {
 				}
 			} else {
 				if scanner.Err() != nil {
-					c.Stderr <- Out{
+					c.stderrCh <- Out{
 						Name:      name,
 						ID:        id,
 						Command:   command,
@@ -184,7 +192,7 @@ func (c *Connection) pipes(id, command string) error {
 						Completed: true,
 					}
 				} else {
-					c.Stdout <- Out{
+					c.stdoutCh <- Out{
 						Name:      name,
 						ID:        id,
 						Command:   command,
@@ -199,7 +207,7 @@ func (c *Connection) pipes(id, command string) error {
 	go func(name, id, command string) {
 		scanner := bufio.NewScanner(c.stderr)
 		for scanner.Scan() {
-			c.Stderr <- Out{
+			c.stderrCh <- Out{
 				Name:    name,
 				ID:      id,
 				Command: command,
@@ -211,7 +219,7 @@ func (c *Connection) pipes(id, command string) error {
 	return nil
 }
 
-func (c *Connection) Run(command string) (int, error) {
+func (c *connection) Run(command string) (int, error) {
 	exitStatus := -1
 
 	err := c.getSSHSession(utils.UUID().GetShort(), command)
@@ -233,7 +241,7 @@ func (c *Connection) Run(command string) (int, error) {
 	return exitStatus, err
 }
 
-func (c *Connection) getSFTPSession() error {
+func (c *connection) getSFTPSession() error {
 	var err error
 	// c.sftpSession, err = sftp.NewClient(c.conn, sftp.MaxPacket(1e9))
 	c.sftpSession, err = sftp.NewClient(c.conn)
@@ -243,7 +251,7 @@ func (c *Connection) getSFTPSession() error {
 	return nil
 }
 
-func (c *Connection) Upload(src, dest string) (int64, error) {
+func (c *connection) Upload(src, dest string) (int64, error) {
 	err := c.getSFTPSession()
 	if err != nil {
 		return 0, err
@@ -278,6 +286,14 @@ func (c *Connection) Upload(src, dest string) (int64, error) {
 	return copied, nil
 }
 
-func (c *Connection) Close() {
+func (c *connection) Stdout() chan Out {
+	return c.stdoutCh
+}
+
+func (c *connection) Stderr() chan Out {
+	return c.stderrCh
+}
+
+func (c *connection) Close() {
 	c.conn.Close()
 }

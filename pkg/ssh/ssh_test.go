@@ -25,16 +25,18 @@ func TestSSH(t *testing.T) {
 	utils.Test().Equals(t, int64(10), copied)
 
 	go func(log *logger.CLILogger, wait chan bool) {
+		stdoutCh := conn.Stdout()
+		stderrCh := conn.Stderr()
 		for {
 			select {
-			case stdout := <-conn.Stdout:
+			case stdout := <-stdoutCh:
 				if stdout.Completed {
 					wait <- true
 				}
 				if stdout.Message != "" {
 					log.Debug(stdout.Name).Msgf("%s", stdout.Message)
 				}
-			case stderr := <-conn.Stderr:
+			case stderr := <-stderrCh:
 				if stderr.Completed {
 					wait <- true
 				}
