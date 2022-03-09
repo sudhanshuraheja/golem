@@ -13,7 +13,7 @@ import (
 )
 
 type SSH struct {
-	conn   *ssh.Connection
+	conn   ssh.Connection
 	log    *logger.CLILogger
 	name   string
 	output []ssh.Out
@@ -43,9 +43,11 @@ func (ss *SSH) Run(cmds commands.Commands) {
 	wait := make(chan bool)
 
 	go func(log *logger.CLILogger, wait chan bool) {
+		stdoutCh := ss.conn.Stdout()
+		stderrCh := ss.conn.Stderr()
 		for {
 			select {
-			case stdout := <-ss.conn.Stdout:
+			case stdout := <-stdoutCh:
 				ss.output = append(ss.output, stdout)
 				if stdout.Message != "" {
 					ss.log.Debug(stdout.Name).Msgf("%s", stdout.Message)
@@ -53,7 +55,7 @@ func (ss *SSH) Run(cmds commands.Commands) {
 				if stdout.Completed {
 					wait <- true
 				}
-			case stderr := <-ss.conn.Stderr:
+			case stderr := <-stderrCh:
 				ss.output = append(ss.output, stderr)
 				if stderr.Message != "" {
 					ss.log.Error(stderr.Name).Msgf("%s", stderr.Message)
