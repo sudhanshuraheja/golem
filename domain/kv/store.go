@@ -88,24 +88,24 @@ func (s *Store) Delete(path string) error {
 }
 
 func (s *Store) GetAll() (map[string]string, error) {
-	store := map[string]string{}
+	st := map[string]string{}
 	buckets, err := s.bolt.ListBuckets()
 	if err != nil {
-		return store, err
+		return st, err
 	}
 
 	for _, bucket := range buckets {
 		bucketStore, err := s.bolt.FindAll([]byte(bucket))
 		if err != nil {
-			return store, err
+			return st, err
 		}
 
 		for key, value := range bucketStore {
 			storeKey := fmt.Sprintf("%s.%s", bucket, key)
-			store[storeKey] = string(value)
+			st[storeKey] = string(value)
 		}
 	}
-	return store, nil
+	return st, nil
 }
 
 func (s *Store) splitBucketAndKey(path string) (string, string, error) {
@@ -116,11 +116,10 @@ func (s *Store) splitBucketAndKey(path string) (string, string, error) {
 	return splits[0], splits[1], nil
 }
 
-func (s *Store) Display(log *logger.CLILogger, action string) {
+func (s *Store) Display(log *logger.CLILogger, query string) {
 	store, err := s.GetAll()
 	if err != nil {
 		log.Error("kv").Msgf("could not read from the database: %v", err)
-		_ = s.Close()
 		return
 	}
 
@@ -132,16 +131,15 @@ func (s *Store) Display(log *logger.CLILogger, action string) {
 	}
 
 	for key, value := range store {
-		switch action {
+		switch query {
 		case "":
 			kvLog(log, key, value)
 		default:
-			if strings.Contains(key, action) {
+			if strings.Contains(key, query) {
 				kvLog(log, key, value)
 			}
 		}
 	}
-	_ = s.Close()
 }
 
 func (s *Store) SetUserValue(path string) {
