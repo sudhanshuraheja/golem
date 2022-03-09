@@ -48,7 +48,7 @@ func (r *Recipe) Display(log *logger.CLILogger, tpl *template.Template, query st
 		for _, artf := range r.Artifacts {
 			source := artf.GetSource()
 
-			log.Info("").Msgf(
+			log.Info(r.Name).Msgf(
 				"%s %s %s %s",
 				logger.Cyan("uploading"),
 				localutils.TinyString(source, 50),
@@ -62,9 +62,9 @@ func (r *Recipe) Display(log *logger.CLILogger, tpl *template.Template, query st
 		for _, command := range *r.Commands {
 			exec, err := tpl.Execute(string(command))
 			if err != nil {
-				log.Error("").Msgf("could not parse template %s: %v", command, err)
+				log.Error(r.Name).Msgf("could not parse template %s: %v", command, err)
 			}
-			log.Info("").Msgf("$ %s", localutils.TinyString(exec, 100))
+			log.Info(r.Name).Msgf("$ %s", localutils.TinyString(exec, 100))
 		}
 	}
 }

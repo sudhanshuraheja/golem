@@ -115,9 +115,9 @@ func (a *Artifact) DestinationPopulate(tpl *template.Template) error {
 func (a *Artifact) GetSource() string {
 	source := ""
 	switch {
-	case a.Template.Data != nil:
+	case a.Template != nil && a.Template.Data != nil:
 		source = *a.Template.Data
-	case a.Template.Path != nil:
+	case a.Template != nil && a.Template.Path != nil:
 		source = *a.Template.Path
 	case a.Source != nil:
 		source = *a.Source
