@@ -21,6 +21,13 @@ func getArtifact(data, path, source, destination string) Artifact {
 	}
 }
 
+func getArtifactWithoutTemplate(source, destination string) Artifact {
+	return Artifact{
+		Source:      &source,
+		Destination: destination,
+	}
+}
+
 func TestArtifact(t *testing.T) {
 	log := logger.NewCLILogger(6, 8)
 
@@ -33,6 +40,8 @@ func TestArtifact(t *testing.T) {
 	err := art.TemplatePathPopulate(tpl)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, "value", *art.Template.Path)
+	artSource := art.GetSource()
+	utils.Test().Equals(t, "data", artSource)
 
 	path := "https://raw.githubusercontent.com/sudhanshuraheja/golem/main/testdata/template.tpl"
 	art = getArtifact("data", path, "source", "destination")
@@ -64,6 +73,42 @@ func TestArtifact(t *testing.T) {
 	utils.Test().Equals(t, "value", *art.Source)
 
 	art = getArtifact("data", "", "", "@golem.key")
+	err = art.DestinationPopulate(tpl)
+	utils.Test().Nil(t, err)
+	utils.Test().Equals(t, "value", art.Destination)
+
+	// Without template
+	art = getArtifactWithoutTemplate("source", "destination")
+	err = art.TemplatePathPopulate(tpl)
+	utils.Test().Nil(t, err)
+	artSource = art.GetSource()
+	utils.Test().Equals(t, "source", artSource)
+
+	art = getArtifactWithoutTemplate("source", "destination")
+	err = art.TemplatePathDownload(log)
+	utils.Test().Nil(t, err)
+
+	art = getArtifactWithoutTemplate("source", "destination")
+	err = art.TemplatePathToData()
+	utils.Test().Nil(t, err)
+
+	err = art.TemplateDataPopulate(tpl)
+	utils.Test().Nil(t, err)
+
+	vrs.Add("APP", "golem")
+	err = art.TemplateDataPopulate(tpl)
+	utils.Test().Nil(t, err)
+
+	err = art.TemplateDataToSource()
+	utils.Test().Nil(t, err)
+	utils.Test().Equals(t, "source", *art.Source)
+
+	art = getArtifactWithoutTemplate("@golem.key", "destination")
+	err = art.SourcePopulate(tpl)
+	utils.Test().Nil(t, err)
+	utils.Test().Equals(t, "value", *art.Source)
+
+	art = getArtifactWithoutTemplate("", "@golem.key")
 	err = art.DestinationPopulate(tpl)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, "value", art.Destination)

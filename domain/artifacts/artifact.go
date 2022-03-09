@@ -21,7 +21,7 @@ type ArtifactTemplate struct {
 }
 
 func (a *Artifact) TemplatePathPopulate(tpl *template.Template) error {
-	if a.Template.Path != nil {
+	if a.Template != nil && a.Template.Path != nil {
 		templatePath, err := tpl.Execute(*a.Template.Path)
 		if err != nil {
 			return err
@@ -32,7 +32,7 @@ func (a *Artifact) TemplatePathPopulate(tpl *template.Template) error {
 }
 
 func (a *Artifact) TemplatePathDownload(log *logger.CLILogger) error {
-	if a.Template.Path != nil {
+	if a.Template != nil && a.Template.Path != nil {
 		if strings.HasPrefix(*a.Template.Path, "http://") || strings.HasPrefix(*a.Template.Path, "https://") {
 			// Url based template
 			templatePath, err := localutils.Download(log, "", *a.Template.Path)
@@ -46,7 +46,7 @@ func (a *Artifact) TemplatePathDownload(log *logger.CLILogger) error {
 }
 
 func (a *Artifact) TemplatePathToData() error {
-	if a.Template.Path != nil {
+	if a.Template != nil && a.Template.Path != nil {
 		bytes, err := os.ReadFile(*a.Template.Path)
 		if err != nil {
 			return err
@@ -58,7 +58,7 @@ func (a *Artifact) TemplatePathToData() error {
 }
 
 func (a *Artifact) TemplateDataPopulate(tpl *template.Template) error {
-	if a.Template.Data != nil {
+	if a.Template != nil && a.Template.Data != nil {
 		templateData, err := tpl.Execute(*a.Template.Data)
 		if err != nil {
 			return err
@@ -69,7 +69,7 @@ func (a *Artifact) TemplateDataPopulate(tpl *template.Template) error {
 }
 
 func (a *Artifact) TemplateDataToSource() error {
-	if a.Template.Data != nil {
+	if a.Template != nil && a.Template.Data != nil {
 		fileName, err := localutils.FileCopy(*a.Template.Data)
 		if err != nil {
 			return err
