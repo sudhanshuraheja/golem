@@ -48,7 +48,11 @@ func Question(clog *logger.CLILogger, where, format string, v ...interface{}) st
 	fmt.Printf("%s", logger.MagentaBold("               "))
 	text, err := reader.ReadString('\n')
 	if err != nil {
+		if err.Error() == "EOF" {
+			return err.Error()
+		}
 		clog.Error(where).Msgf("could not read input: %v", err)
+		return ""
 	}
 	return text
 }

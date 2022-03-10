@@ -24,3 +24,13 @@ func (a *Artifacts) PrepareForExecution(log *logger.CLILogger, tpl *template.Tem
 		(*a)[i] = art
 	}
 }
+
+func (a *Artifacts) ToPointerArray() []*Artifact {
+	aa := []*Artifact{}
+	if a != nil {
+		for _, art := range *a {
+			aa = append(aa, art)
+		}
+	}
+	return aa
+}

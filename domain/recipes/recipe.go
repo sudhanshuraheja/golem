@@ -26,19 +26,6 @@ type Recipe struct {
 	Commands  *[]commands.Command   `hcl:"commands"`
 }
 
-func (r *Recipe) Execute(log *logger.CLILogger, srvs servers.Servers, procs int) {
-	switch r.Type {
-	case "remote":
-		pool := execssh.NewSSHPool(log)
-		pool.Start(srvs, r.Commands, r.Artifacts, procs)
-	case "local":
-		pool := execcmd.NewExecCmd(log)
-		pool.Start(r.Commands, r.Artifacts)
-	default:
-		log.Error(string(r.Name)).Msgf("recipe only supports ['remote', 'local'] types")
-	}
-}
-
 func (r *Recipe) Prepare(log *logger.CLILogger, store *kv.Store) error {
 	_cmds := commands.Commands{}
 	_artfs := artifacts.Artifacts{}
@@ -90,6 +77,7 @@ func (r *Recipe) PrepareForExecution(log *logger.CLILogger, tpl *template.Templa
 		if err != nil {
 			log.Error(r.Name).Msgf("%v", err)
 		}
+		_artfs.Append(*a)
 	}
 
 	// Commands
@@ -105,9 +93,22 @@ func (r *Recipe) PrepareForExecution(log *logger.CLILogger, tpl *template.Templa
 
 	cmds := _cmds.ToArray()
 	r.Commands = &cmds
-	r.Artifacts = _artfs
+	r.Artifacts = _artfs.ToPointerArray()
 
 	return nil
+}
+
+func (r *Recipe) Execute(log *logger.CLILogger, srvs servers.Servers, procs int) {
+	switch r.Type {
+	case "remote":
+		pool := execssh.NewSSHPool(log)
+		pool.Start(srvs, r.Commands, r.Artifacts, procs)
+	case "local":
+		pool := execcmd.NewExecCmd(log)
+		pool.Start(r.Commands, r.Artifacts)
+	default:
+		log.Error(string(r.Name)).Msgf("recipe only supports ['remote', 'local'] types")
+	}
 }
 
 func (r *Recipe) Display(log *logger.CLILogger, tpl *template.Template, query string) {
@@ -146,6 +147,8 @@ func (r *Recipe) AskPermission(log *logger.CLILogger) {
 	answer := localutils.Question(log, "", "Are you sure you want to continue [y/n]?")
 	if utils.Array().Contains([]string{"y", "yes"}, answer, false) == -1 {
 		log.Error("").Msgf("Quitting, because you said %s", answer)
-		os.Exit(0)
+		if answer != "EOF" {
+			os.Exit(0)
+		}
 	}
 }

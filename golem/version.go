@@ -1,5 +1,5 @@
 package golem
 
 const (
-	version = "v0.2.0-15-g286a9a9"
+	version = "v0.2.0-16-g97846bb"
 )

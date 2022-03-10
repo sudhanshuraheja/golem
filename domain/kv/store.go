@@ -39,6 +39,10 @@ func (s *Store) Close() error {
 }
 
 func (s *Store) Set(path, value string) error {
+	if s == nil || s.bolt == nil {
+		return fmt.Errorf("store or bbolt has not been defined yet")
+	}
+
 	bucket, key, err := s.splitBucketAndKey(path)
 	if err != nil {
 		return err
@@ -65,6 +69,10 @@ func (s *Store) Set(path, value string) error {
 }
 
 func (s *Store) Get(path string) (string, error) {
+	if s == nil || s.bolt == nil {
+		return "", fmt.Errorf("store or bbolt has not been defined yet")
+	}
+
 	bucket, key, err := s.splitBucketAndKey(path)
 	if err != nil {
 		return "", err
@@ -79,6 +87,10 @@ func (s *Store) Get(path string) (string, error) {
 }
 
 func (s *Store) Delete(path string) error {
+	if s == nil || s.bolt == nil {
+		return fmt.Errorf("store or bbolt has not been defined yet")
+	}
+
 	bucket, key, err := s.splitBucketAndKey(path)
 	if err != nil {
 		return err
@@ -88,6 +100,10 @@ func (s *Store) Delete(path string) error {
 }
 
 func (s *Store) GetAll() (map[string]string, error) {
+	if s == nil || s.bolt == nil {
+		return nil, fmt.Errorf("store or bbolt has not been defined yet")
+	}
+
 	st := map[string]string{}
 	buckets, err := s.bolt.ListBuckets()
 	if err != nil {
