@@ -95,6 +95,10 @@ func (c *ExecCmd) Upload(artfs []*artifacts.Artifact) {
 			c.log.Error(name).Msgf("could not create directory <%s>: %v", filepath.Dir(artf.Destination), err)
 			continue
 		}
+		if artf.Source == nil {
+			c.log.Error(name).Msgf("source has not been setup yet for destination %s", artf.Destination)
+			continue
+		}
 		err = os.Rename(*artf.Source, artf.Destination)
 		if err != nil {
 			c.log.Error(name).Msgf("error in moving from <%s> to <%s>: %v", artf.Source, artf.Destination, err)

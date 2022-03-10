@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/betas-in/logger"
+	"github.com/sudhanshuraheja/golem/domain/kv"
 	"github.com/sudhanshuraheja/golem/domain/template"
 )
 
@@ -40,4 +41,30 @@ func (r *Recipes) Search(name string) (*Recipe, error) {
 		}
 	}
 	return nil, fmt.Errorf("could not find this recipe")
+}
+
+func (r *Recipes) Prepare(log *logger.CLILogger, store *kv.Store) error {
+	if r != nil {
+		for i, rcp := range *r {
+			err := rcp.Prepare(log, store)
+			if err != nil {
+				return err
+			}
+			(*r)[i] = rcp
+		}
+	}
+	return nil
+}
+
+func (r *Recipes) PrepareForExecution(log *logger.CLILogger, tpl *template.Template) error {
+	if r != nil {
+		for i, rcp := range *r {
+			err := rcp.PrepareForExecution(log, tpl)
+			if err != nil {
+				return err
+			}
+			(*r)[i] = rcp
+		}
+	}
+	return nil
 }

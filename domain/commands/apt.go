@@ -26,92 +26,90 @@ func NewAPT() *Apt {
 	return &Apt{}
 }
 
-func (a *Apt) Prepare(capt []Apt) (Commands, artifacts.Artifacts) {
+func (a *Apt) Prepare() (Commands, artifacts.Artifacts) {
 	cmds := Commands{}
 	artfs := artifacts.Artifacts{}
 
-	for _, apt := range capt {
-		template := "#!/bin/bash\n"
+	template := "#!/bin/bash\n"
 
-		curl := ""
-		pgp := ""
-		if apt.PGP != nil {
-			curl = a.install("curl", false)
-			template += a.ifPkgExists("curl", "", "", curl)
+	curl := ""
+	pgp := ""
+	if a.PGP != nil {
+		curl = a.install("curl", false)
+		template += a.ifPkgExists("curl", "", "", curl)
 
-			pgp = a.pgp(*apt.PGP)
-		}
-
-		common := ""
-		repo := ""
-		if apt.Repository != nil && apt.Repository.URL != "" && apt.Repository.Sources != "" {
-			common = a.install("software-properties-common", false)
-			template += a.ifPkgExists("software-properties-common", "", "", common)
-
-			repo = a.addRepository(apt.Repository.URL, apt.Repository.Sources)
-		}
-
-		pkgs := []string{}
-		if apt.Install != nil {
-			for _, pkg := range *apt.Install {
-				if pkg != "" {
-					install := a.install(pkg, false)
-					template += a.ifPkgExists(pkg, pgp, repo, install)
-					pgp = ""
-					repo = ""
-					pkgs = append(pkgs, pkg)
-				}
-			}
-		}
-
-		if apt.InstallNoUpgrade != nil {
-			for _, pkg := range *apt.InstallNoUpgrade {
-				if pkg != "" {
-					install := a.install(pkg, true)
-					template += a.ifPkgExists(pkg, pgp, repo, install)
-					pgp = ""
-					repo = ""
-					pkgs = append(pkgs, pkg)
-				}
-			}
-		}
-
-		if apt.Purge != nil {
-			for _, pkg := range *apt.Purge {
-				if pkg != "" {
-					purge := a.purge(pkg)
-					template += purge
-					pkgs = append(pkgs, pkg)
-				}
-			}
-		}
-
-		if apt.Update != nil {
-			template += a.update()
-		}
-
-		destination := fmt.Sprintf(
-			"./temp/apt-%s-%s.sh",
-			strings.Join(pkgs, "_"),
-			utils.UUID().GetShort(),
-		)
-		artifact := artifacts.Artifact{
-			Template: &artifacts.ArtifactTemplate{
-				Data: &template,
-			},
-			Destination: destination,
-		}
-		artfs = append(artfs, artifact)
-
-		chmod := fmt.Sprintf("chmod 755 %s", destination)
-		execute := destination
-		remove := fmt.Sprintf("rm %s", destination)
-
-		cmds.Append(NewCommand(chmod))
-		cmds.Append(NewCommand(execute))
-		cmds.Append(NewCommand(remove))
-
+		pgp = a.pgp(*a.PGP)
 	}
+
+	common := ""
+	repo := ""
+	if a.Repository != nil && a.Repository.URL != "" && a.Repository.Sources != "" {
+		common = a.install("software-properties-common", false)
+		template += a.ifPkgExists("software-properties-common", "", "", common)
+
+		repo = a.addRepository(a.Repository.URL, a.Repository.Sources)
+	}
+
+	pkgs := []string{}
+	if a.Install != nil {
+		for _, pkg := range *a.Install {
+			if pkg != "" {
+				install := a.install(pkg, false)
+				template += a.ifPkgExists(pkg, pgp, repo, install)
+				pgp = ""
+				repo = ""
+				pkgs = append(pkgs, pkg)
+			}
+		}
+	}
+
+	if a.InstallNoUpgrade != nil {
+		for _, pkg := range *a.InstallNoUpgrade {
+			if pkg != "" {
+				install := a.install(pkg, true)
+				template += a.ifPkgExists(pkg, pgp, repo, install)
+				pgp = ""
+				repo = ""
+				pkgs = append(pkgs, pkg)
+			}
+		}
+	}
+
+	if a.Purge != nil {
+		for _, pkg := range *a.Purge {
+			if pkg != "" {
+				purge := a.purge(pkg)
+				template += purge
+				pkgs = append(pkgs, pkg)
+			}
+		}
+	}
+
+	if a.Update != nil {
+		template += a.update()
+	}
+
+	destination := fmt.Sprintf(
+		"./temp/apt-%s-%s.sh",
+		strings.Join(pkgs, "_"),
+		utils.UUID().GetShort(),
+	)
+	artifact := artifacts.Artifact{
+		Template: &artifacts.ArtifactTemplate{
+			Data: &template,
+		},
+		Destination: destination,
+	}
+	artfs = append(artfs, &artifact)
+
+	chmod := fmt.Sprintf("chmod 755 %s", destination)
+	execute := destination
+	remove := fmt.Sprintf("rm %s", destination)
+
+	cmds.Append(NewCommand(chmod))
+	cmds.Append(NewCommand(execute))
+	cmds.Append(NewCommand(remove))
+
 	return cmds, artfs
 }
 

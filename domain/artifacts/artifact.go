@@ -1,6 +1,7 @@
 package artifacts
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -134,12 +135,56 @@ func (a *Artifact) DestinationPopulate(tpl *template.Template) error {
 func (a *Artifact) GetSource() string {
 	source := ""
 	switch {
+	case a.Source != nil:
+		source = *a.Source
 	case a.Template != nil && a.Template.Data != nil:
 		source = *a.Template.Data
 	case a.Template != nil && a.Template.Path != nil:
 		source = *a.Template.Path
-	case a.Source != nil:
-		source = *a.Source
 	}
 	return source
+}
+
+func (a *Artifact) PrepareForExecution(log *logger.CLILogger, tpl *template.Template) error {
+	err := a.TemplatePathPopulate(tpl)
+	if err != nil {
+		return fmt.Errorf("could not populate template path: %v", err)
+	}
+
+	err = a.TemplatePathDownload(log)
+	if err != nil {
+		return fmt.Errorf("coult not download template path: %v", err)
+	}
+
+	err = a.TemplatePathToData()
+	if err != nil {
+		return fmt.Errorf("coult not move to template data: %v", err)
+	}
+
+	err = a.TemplateDataPopulate(tpl)
+	if err != nil {
+		return fmt.Errorf("coult not populate template data: %v", err)
+	}
+
+	err = a.TemplateDataToSource()
+	if err != nil {
+		return fmt.Errorf("coult not move to source: %v", err)
+	}
+
+	err = a.SourcePopulate(tpl)
+	if err != nil {
+		return fmt.Errorf("coult not populate source: %v", err)
+	}
+
+	err = a.SourceDownload(log)
+	if err != nil {
+		return fmt.Errorf("coult not download source: %v", err)
+	}
+
+	err = a.DestinationPopulate(tpl)
+	if err != nil {
+		return fmt.Errorf("coult not populate destination: %v", err)
+	}
+
+	return nil
 }

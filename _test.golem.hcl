@@ -20,13 +20,13 @@ recipe "test-artifact-template" "local" {
     }
     artifact {
         template {
-            path = "./template.tpl"
+            path = "./testdata/template.tpl"
         }
         destination = "template.parsed2"
     }
     artifact {
         template {
-            path = "https://raw.githubusercontent.com/sudhanshuraheja/golem/main/template.tpl"
+            path = "https://raw.githubusercontent.com/sudhanshuraheja/golem/main/testdata/template.tpl"
         }
         destination = "template.parsed3"
     }

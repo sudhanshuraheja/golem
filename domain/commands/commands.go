@@ -17,3 +17,13 @@ func (c *Commands) Append(cmd Command) {
 func (c *Commands) Merge(cmds Commands) {
 	*c = append(*c, cmds...)
 }
+
+func (c *Commands) ToArray() []Command {
+	_cmds := []Command{}
+	if c != nil {
+		for _, cm := range *c {
+			_cmds = append(_cmds, cm)
+		}
+	}
+	return _cmds
+}

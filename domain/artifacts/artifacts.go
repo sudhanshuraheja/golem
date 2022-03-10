@@ -5,66 +5,22 @@ import (
 	"github.com/sudhanshuraheja/golem/domain/template"
 )
 
-type Artifacts []Artifact
+type Artifacts []*Artifact
 
 func (a *Artifacts) Append(art Artifact) {
-	*a = append(*a, art)
+	*a = append(*a, &art)
 }
 
 func (a *Artifacts) Merge(arts Artifacts) {
 	*a = append(*a, arts...)
 }
 
-func (a *Artifacts) Prepare(log *logger.CLILogger, tpl *template.Template) {
+func (a *Artifacts) PrepareForExecution(log *logger.CLILogger, tpl *template.Template) {
 	for i, art := range *a {
-		err := art.TemplatePathPopulate(tpl)
+		err := art.PrepareForExecution(log, tpl)
 		if err != nil {
-			log.Error("").Msgf("could not populate template path: %v", err)
-			continue
+			log.Error("").Msgf("%v", err)
 		}
-
-		err = art.TemplatePathDownload(log)
-		if err != nil {
-			log.Error("").Msgf("coult not download template path: %v", err)
-			continue
-		}
-
-		err = art.TemplatePathToData()
-		if err != nil {
-			log.Error("").Msgf("coult not move to template data: %v", err)
-			continue
-		}
-
-		err = art.TemplateDataPopulate(tpl)
-		if err != nil {
-			log.Error("").Msgf("coult not populate template data: %v", err)
-			continue
-		}
-
-		err = art.TemplateDataToSource()
-		if err != nil {
-			log.Error("").Msgf("coult not move to source: %v", err)
-			continue
-		}
-
-		err = art.SourcePopulate(tpl)
-		if err != nil {
-			log.Error("").Msgf("coult not populate source: %v", err)
-			continue
-		}
-
-		err = art.SourceDownload(log)
-		if err != nil {
-			log.Error("").Msgf("coult not download source: %v", err)
-			continue
-		}
-
-		err = art.DestinationPopulate(tpl)
-		if err != nil {
-			log.Error("").Msgf("coult not populate destination: %v", err)
-			continue
-		}
-
 		(*a)[i] = art
 	}
 }

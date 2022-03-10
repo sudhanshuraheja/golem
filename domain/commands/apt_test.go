@@ -7,8 +7,6 @@ import (
 )
 
 func TestApt(t *testing.T) {
-	apt := NewAPT()
-
 	trueValue := true
 	dockerPGP := "https://download.docker.com/linux/ubuntu/gpg"
 	dockerInstall := []string{"docker-ce", "docker-ce-cli", "containerd.io"}
@@ -37,7 +35,19 @@ func TestApt(t *testing.T) {
 		Install: &hashiInstall,
 	}
 
-	commands, artifacts := apt.Prepare([]Apt{a1, a2, a3})
-	utils.Test().Equals(t, 9, len(commands))
-	utils.Test().Equals(t, 3, len(artifacts))
+	commands, artifacts := a1.Prepare()
+	utils.Test().Equals(t, 3, len(commands))
+	utils.Test().Equals(t, 1, len(artifacts))
+	utils.Test().Contains(t, *artifacts[0].Template.Data, "apt-get update")
+
+	commands, artifacts = a2.Prepare()
+	utils.Test().Equals(t, 3, len(commands))
+	utils.Test().Equals(t, 1, len(artifacts))
+	utils.Test().Contains(t, *artifacts[0].Template.Data, "docker-ce-cli")
+
+	commands, artifacts = a3.Prepare()
+	utils.Test().Equals(t, 3, len(commands))
+	utils.Test().Equals(t, 1, len(artifacts))
+	utils.Test().Contains(t, *artifacts[0].Template.Data, "nomad")
+
 }

@@ -38,14 +38,14 @@ func TestArtifacts(t *testing.T) {
 	vrs.Add("APP", "golem")
 	tpl := template.NewTemplate(srvs, *vrs, nil)
 
-	arts.Prepare(log, tpl)
+	arts.PrepareForExecution(log, tpl)
 
 	output := map[int]string{
 		0: "golem",
 		1: "golem-golem",
-		2: "golem\ngolem",
+		2: "golem-golem",
 		3: "{{ .Vars.APP }}-@golem.APP",
-		4: "{{ .Vars.APP }}\n@golem.APP",
+		4: "{{ .Vars.APP }}-@golem.APP",
 	}
 
 	for i, a := range arts {

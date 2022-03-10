@@ -53,7 +53,13 @@ func NewGolem(conf *Config) {
 		g.log = logger.NewCLILogger(int(*g.conf.LogLevel), 12)
 	}
 
+	err = g.conf.Recipes.Prepare(g.log, g.store)
+	if err != nil {
+		g.log.Fatal("golem").Msgf("%v", err)
+		os.Exit(1)
+	}
 	g.Run()
+
 	_ = g.store.Close()
 }
 
@@ -94,8 +100,14 @@ func (g *Golem) RunRecipe(name string) {
 	recipe, err := g.conf.Recipes.Search(name)
 	if err != nil {
 		g.log.Fatal("golem").Msgf("%v", err)
+		return
 	}
 
+	err = recipe.PrepareForExecution(g.log, g.tpl)
+	if err != nil {
+		g.log.Fatal("golem").Msgf("%v", err)
+		return
+	}
 	recipe.Display(g.log, g.tpl, "")
 	recipe.AskPermission(g.log)
 	recipe.Execute(g.log, g.conf.Servers, int(*g.conf.MaxParallelProcesses))
