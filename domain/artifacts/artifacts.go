@@ -16,7 +16,7 @@ func (a *Artifacts) Merge(arts Artifacts) {
 }
 
 func (a *Artifacts) Prepare(log *logger.CLILogger, tpl *template.Template) {
-	for _, art := range *a {
+	for i, art := range *a {
 		err := art.TemplatePathPopulate(tpl)
 		if err != nil {
 			log.Error("").Msgf("could not populate template path: %v", err)
@@ -64,5 +64,7 @@ func (a *Artifacts) Prepare(log *logger.CLILogger, tpl *template.Template) {
 			log.Error("").Msgf("coult not populate destination: %v", err)
 			continue
 		}
+
+		(*a)[i] = art
 	}
 }

@@ -10,24 +10,6 @@ import (
 	"github.com/sudhanshuraheja/golem/domain/vars"
 )
 
-func getArtifact(data, path, source, destination string) Artifact {
-	return Artifact{
-		Template: &ArtifactTemplate{
-			Data: &data,
-			Path: &path,
-		},
-		Source:      &source,
-		Destination: destination,
-	}
-}
-
-func getArtifactWithoutTemplate(source, destination string) Artifact {
-	return Artifact{
-		Source:      &source,
-		Destination: destination,
-	}
-}
-
 func TestArtifact(t *testing.T) {
 	log := logger.NewCLILogger(6, 8)
 
@@ -36,7 +18,7 @@ func TestArtifact(t *testing.T) {
 	vrs.Add("key", "value")
 	tpl := template.NewTemplate(srvs, *vrs, nil)
 
-	art := getArtifact("data", "@golem.key", "source", "destination")
+	art := NewArtifact("data", "@golem.key", "source", "destination")
 	err := art.TemplatePathPopulate(tpl)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, "value", *art.Template.Path)
@@ -44,13 +26,13 @@ func TestArtifact(t *testing.T) {
 	utils.Test().Equals(t, "data", artSource)
 
 	path := "https://raw.githubusercontent.com/sudhanshuraheja/golem/main/testdata/template.tpl"
-	art = getArtifact("data", path, "source", "destination")
+	art = NewArtifact("data", path, "source", "destination")
 	err = art.TemplatePathDownload(log)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, true, *art.Template.Path != path)
 
 	path = "../../testdata/template.tpl"
-	art = getArtifact("data", path, "source", "destination")
+	art = NewArtifact("data", path, "source", "destination")
 	err = art.TemplatePathToData()
 	utils.Test().Nil(t, err)
 	utils.Test().Contains(t, *art.Template.Data, "APP")
@@ -67,28 +49,28 @@ func TestArtifact(t *testing.T) {
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, true, *art.Source != "source")
 
-	art = getArtifact("data", "", "@golem.key", "destination")
+	art = NewArtifact("data", "", "@golem.key", "destination")
 	err = art.SourcePopulate(tpl)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, "value", *art.Source)
 
-	art = getArtifact("data", "", "", "@golem.key")
+	art = NewArtifact("data", "", "", "@golem.key")
 	err = art.DestinationPopulate(tpl)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, "value", art.Destination)
 
 	// Without template
-	art = getArtifactWithoutTemplate("source", "destination")
+	art = NewArtifact("", "", "source", "destination")
 	err = art.TemplatePathPopulate(tpl)
 	utils.Test().Nil(t, err)
 	artSource = art.GetSource()
 	utils.Test().Equals(t, "source", artSource)
 
-	art = getArtifactWithoutTemplate("source", "destination")
+	art = NewArtifact("", "", "source", "destination")
 	err = art.TemplatePathDownload(log)
 	utils.Test().Nil(t, err)
 
-	art = getArtifactWithoutTemplate("source", "destination")
+	art = NewArtifact("", "", "source", "destination")
 	err = art.TemplatePathToData()
 	utils.Test().Nil(t, err)
 
@@ -103,12 +85,12 @@ func TestArtifact(t *testing.T) {
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, "source", *art.Source)
 
-	art = getArtifactWithoutTemplate("@golem.key", "destination")
+	art = NewArtifact("", "", "@golem.key", "destination")
 	err = art.SourcePopulate(tpl)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, "value", *art.Source)
 
-	art = getArtifactWithoutTemplate("", "@golem.key")
+	art = NewArtifact("", "", "", "@golem.key")
 	err = art.DestinationPopulate(tpl)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, "value", art.Destination)

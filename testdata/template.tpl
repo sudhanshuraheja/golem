@@ -1,2 +1,1 @@
-{{ .Vars.APP }}
-@golem.APP
+{{ .Vars.APP }}-@golem.APP

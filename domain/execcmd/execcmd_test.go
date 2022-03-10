@@ -2,6 +2,7 @@ package execcmd
 
 import (
 	"testing"
+	"time"
 
 	"github.com/betas-in/logger"
 	"github.com/betas-in/utils"
@@ -16,6 +17,7 @@ func TestRecipeCmd(t *testing.T) {
 		commands.NewCommand("ls cmd*"),
 	})
 
+	time.Sleep(time.Second)
 	c.mu.Lock()
 	utils.Test().Equals(t, 2, len(c.output))
 	c.mu.Unlock()

@@ -20,6 +20,25 @@ type ArtifactTemplate struct {
 	Path *string `hcl:"path"`
 }
 
+func NewArtifact(data, path, source, destination string) *Artifact {
+	a := Artifact{}
+	a.Destination = destination
+	if source != "" {
+		a.Source = &source
+	}
+	if data != "" || path != "" {
+		at := ArtifactTemplate{}
+		if data != "" {
+			at.Data = &data
+		}
+		if path != "" {
+			at.Path = &path
+		}
+		a.Template = &at
+	}
+	return &a
+}
+
 func (a *Artifact) TemplatePathPopulate(tpl *template.Template) error {
 	if a.Template != nil && a.Template.Path != nil {
 		templatePath, err := tpl.Execute(*a.Template.Path)
