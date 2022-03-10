@@ -25,11 +25,20 @@ func TestArtifact(t *testing.T) {
 	artSource := art.GetSource()
 	utils.Test().Equals(t, "source", artSource)
 
+	art = NewArtifact("data", "@golem.value", "source", "destination")
+	err = art.TemplatePathPopulate(tpl)
+	utils.Test().Contains(t, err.Error(), "found templates with no matches @golem.value")
+
 	path := "https://raw.githubusercontent.com/sudhanshuraheja/golem/main/testdata/template.tpl"
 	art = NewArtifact("data", path, "source", "destination")
 	err = art.TemplatePathDownload(log)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, true, *art.Template.Path != path)
+
+	path = "https://raw.githubusercontent.com/sudhanshuraheja/golem/main/testdata/template.tpl2"
+	art = NewArtifact("data", path, "source", "destination")
+	err = art.TemplatePathDownload(log)
+	utils.Test().Contains(t, err.Error(), "recieved 404 error")
 
 	path = "../../testdata/template.tpl"
 	art = NewArtifact("data", path, "source", "destination")
@@ -37,14 +46,28 @@ func TestArtifact(t *testing.T) {
 	utils.Test().Nil(t, err)
 	utils.Test().Contains(t, *art.Template.Data, "APP")
 
+	path = "../../testdata/template.tpl2"
+	art = NewArtifact("data", path, "source", "destination")
+	err = art.TemplatePathToData()
+	utils.Test().Contains(t, err.Error(), "no such file or directory")
+
+	path = "../../testdata/template.tpl"
+	art = NewArtifact("data", path, "source", "destination")
 	err = art.TemplateDataPopulate(tpl)
-	utils.Test().Contains(t, err.Error(), "found templates with no matches")
+	utils.Test().Nil(t, err)
 
 	vrs.Add("APP", "golem")
+	path = "../../testdata/template.tpl"
+	art = NewArtifact("@golem.APP", path, "source", "destination")
 	err = art.TemplateDataPopulate(tpl)
 	utils.Test().Nil(t, err)
 	utils.Test().Contains(t, *art.Template.Data, "golem")
 
+	art = NewArtifact("@golem.train", path, "source", "destination")
+	err = art.TemplateDataPopulate(tpl)
+	utils.Test().Contains(t, err.Error(), "@golem.train")
+
+	art = NewArtifact("@golem.train", path, "source", "destination")
 	err = art.TemplateDataToSource()
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, true, *art.Source != "source")
@@ -74,13 +97,16 @@ func TestArtifact(t *testing.T) {
 	err = art.TemplatePathToData()
 	utils.Test().Nil(t, err)
 
+	art = NewArtifact("", "", "source", "destination")
 	err = art.TemplateDataPopulate(tpl)
 	utils.Test().Nil(t, err)
 
 	vrs.Add("APP", "golem")
+	art = NewArtifact("", "", "source", "destination")
 	err = art.TemplateDataPopulate(tpl)
 	utils.Test().Nil(t, err)
 
+	art = NewArtifact("", "", "source", "destination")
 	err = art.TemplateDataToSource()
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, "source", *art.Source)
@@ -90,8 +116,29 @@ func TestArtifact(t *testing.T) {
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, "value", *art.Source)
 
+	art = NewArtifact("", "", "@golem.RANDOMNESS", "destination")
+	err = art.SourcePopulate(tpl)
+	utils.Test().Contains(t, err.Error(), "@golem.RANDOMNESS")
+
+	art = NewArtifact("", "", "https://randompath", "destination")
+	err = art.SourceDownload(log)
+	utils.Test().Contains(t, err.Error(), "no such host")
+
 	art = NewArtifact("", "", "", "@golem.key")
 	err = art.DestinationPopulate(tpl)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, "value", art.Destination)
+
+	art = NewArtifact("", "", "", "@golem.RANDOMNESS")
+	err = art.DestinationPopulate(tpl)
+	utils.Test().Contains(t, err.Error(), "@golem.RANDOMNESS")
+
+	art = NewArtifact("data", "value", "source", "destination")
+	utils.Test().Equals(t, "source", art.GetSource())
+	art = NewArtifact("data", "value", "", "destination")
+	utils.Test().Equals(t, "data", art.GetSource())
+	art = NewArtifact("", "value", "", "destination")
+	utils.Test().Equals(t, "value", art.GetSource())
+	art = NewArtifact("", "", "", "destination")
+	utils.Test().Equals(t, "", art.GetSource())
 }

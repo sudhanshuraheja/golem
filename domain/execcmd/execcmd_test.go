@@ -14,11 +14,11 @@ func TestRecipeCmd(t *testing.T) {
 	c := ExecCmd{log: log}
 
 	c.Run(commands.Commands{
-		commands.NewCommand("ls cmd*"),
+		commands.NewCommand("ls execcmd*"),
 	})
 
 	time.Sleep(time.Second)
 	c.mu.Lock()
-	utils.Test().Equals(t, 2, len(c.output))
+	utils.Test().Equals(t, 3, len(c.output))
 	c.mu.Unlock()
 }

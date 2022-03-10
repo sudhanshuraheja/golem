@@ -153,37 +153,37 @@ func (a *Artifact) PrepareForExecution(log *logger.CLILogger, tpl *template.Temp
 
 	err = a.TemplatePathDownload(log)
 	if err != nil {
-		return fmt.Errorf("coult not download template path: %v", err)
+		return fmt.Errorf("could not download template path: %v", err)
 	}
 
 	err = a.TemplatePathToData()
 	if err != nil {
-		return fmt.Errorf("coult not move to template data: %v", err)
+		return fmt.Errorf("could not move to template data: %v", err)
 	}
 
 	err = a.TemplateDataPopulate(tpl)
 	if err != nil {
-		return fmt.Errorf("coult not populate template data: %v", err)
+		return fmt.Errorf("could not populate template data: %v", err)
 	}
 
 	err = a.TemplateDataToSource()
 	if err != nil {
-		return fmt.Errorf("coult not move to source: %v", err)
+		return fmt.Errorf("could not move to source: %v", err)
 	}
 
 	err = a.SourcePopulate(tpl)
 	if err != nil {
-		return fmt.Errorf("coult not populate source: %v", err)
+		return fmt.Errorf("could not populate source: %v", err)
 	}
 
 	err = a.SourceDownload(log)
 	if err != nil {
-		return fmt.Errorf("coult not download source: %v", err)
+		return fmt.Errorf("could not download source: %v", err)
 	}
 
 	err = a.DestinationPopulate(tpl)
 	if err != nil {
-		return fmt.Errorf("coult not populate destination: %v", err)
+		return fmt.Errorf("could not populate destination: %v", err)
 	}
 
 	return nil
