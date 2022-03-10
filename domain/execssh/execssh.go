@@ -42,7 +42,7 @@ func (ss *SSH) Run(cmds commands.Commands) {
 	ss.output = []ssh.Out{}
 	wait := make(chan bool)
 
-	go func(log *logger.CLILogger, wait chan bool) {
+	go func(wait chan bool) {
 		stdoutCh := ss.conn.Stdout()
 		stderrCh := ss.conn.Stderr()
 		for {
@@ -65,7 +65,7 @@ func (ss *SSH) Run(cmds commands.Commands) {
 				}
 			}
 		}
-	}(ss.log, wait)
+	}(wait)
 
 	for _, cmd := range cmds {
 		startTime := time.Now()

@@ -50,7 +50,7 @@ func NewGolem(conf *Config) {
 	g.tpl = template.NewTemplate(g.conf.Servers, *g.conf.Vars, g.store)
 
 	if g.conf.LogLevel != nil {
-		g.log = logger.NewCLILogger(int(*g.conf.LogLevel), 12)
+		g.log = logger.NewCLILogger(*g.conf.LogLevel, 12)
 	}
 
 	err = g.conf.Recipes.Prepare(g.log, g.store)
@@ -110,5 +110,5 @@ func (g *Golem) RunRecipe(name string) {
 	}
 	recipe.Display(g.log, g.tpl, "")
 	recipe.AskPermission(g.log)
-	recipe.Execute(g.log, g.conf.Servers, int(*g.conf.MaxParallelProcesses))
+	recipe.Execute(g.log, g.conf.Servers, *g.conf.MaxParallelProcesses)
 }

@@ -27,7 +27,7 @@ func NewStore(log *logger.CLILogger) *Store {
 
 	kv.bolt, err = bolt.NewBolt(golemDBPath)
 	if err != nil {
-		log.Fatal("KV").Msgf("coudl not open database: %v", err)
+		log.Fatal("KV").Msgf("could not open database: %v", err)
 		os.Exit(1)
 	}
 
@@ -127,7 +127,7 @@ func (s *Store) GetAll() (map[string]string, error) {
 func (s *Store) splitBucketAndKey(path string) (string, string, error) {
 	splits := strings.Split(path, ".")
 	if len(splits) != 2 {
-		return "", "", fmt.Errorf("was expecting bucket_name.key_name, but recieved %s", path)
+		return "", "", fmt.Errorf("was expecting bucket_name.key_name, but received %s", path)
 	}
 	return splits[0], splits[1], nil
 }

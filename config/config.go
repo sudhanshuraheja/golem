@@ -26,13 +26,13 @@ func NewConfig(path string) (*Config, error) {
 
 	parser := hclparse.NewParser()
 
-	f, diags := parser.ParseHCLFile(path)
+	file, diags := parser.ParseHCLFile(path)
 	if diags.HasErrors() {
 		showHCLDiagnostics(parser, diags)
 		return nil, diags
 	}
 
-	diags = gohcl.DecodeBody(f.Body, nil, &conf)
+	diags = gohcl.DecodeBody(file.Body, nil, &conf)
 	if diags.HasErrors() {
 		showHCLDiagnostics(parser, diags)
 		return nil, diags
@@ -47,7 +47,7 @@ func NewConfig(path string) (*Config, error) {
 }
 
 func showHCLDiagnostics(parser *hclparse.Parser, diags hcl.Diagnostics) {
-	wr := hcl.NewDiagnosticTextWriter(
+	writer := hcl.NewDiagnosticTextWriter(
 		os.Stdout,
 		parser.Files(),
 		80,
@@ -55,7 +55,7 @@ func showHCLDiagnostics(parser *hclparse.Parser, diags hcl.Diagnostics) {
 	)
 
 	for _, diag := range diags {
-		_ = wr.WriteDiagnostic(diag)
+		_ = writer.WriteDiagnostic(diag)
 	}
 }
 

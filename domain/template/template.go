@@ -86,7 +86,7 @@ func (t *Template) trim() {
 func (t *Template) replaceVars(text string) (string, error) {
 	for k, v := range t.Vars {
 		key := fmt.Sprintf("@golem.%s", k)
-		text = strings.Replace(text, key, v, -1)
+		text = strings.ReplaceAll(text, key, v)
 	}
 	return text, t.checkVars(text)
 }

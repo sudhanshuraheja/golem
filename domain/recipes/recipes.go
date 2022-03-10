@@ -36,7 +36,7 @@ func (r *Recipes) Display(log *logger.CLILogger, tpl *template.Template, query s
 
 func (r *Recipes) Search(name string) (*Recipe, error) {
 	for _, rcp := range *r {
-		if string(rcp.Name) == name {
+		if rcp.Name == name {
 			return &rcp, nil
 		}
 	}

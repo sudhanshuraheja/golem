@@ -79,9 +79,9 @@ func TestServer(t *testing.T) {
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, false, found)
 
-	found, err = s1.Search(*NewMatch("port", "=", "one"))
+	found, err = s1.Search(*NewMatch("port", "=", "22"))
 	utils.Test().Nil(t, err)
-	utils.Test().Equals(t, false, found)
+	utils.Test().Equals(t, true, found)
 
 	found, err = s1.Search(*NewMatch("tags", "contains", "one"))
 	utils.Test().Nil(t, err)

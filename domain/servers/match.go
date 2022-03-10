@@ -63,7 +63,7 @@ func (m *Match) CompareString(name string) (bool, error) {
 func (m *Match) CompareInt(name int) (bool, error) {
 	valueInt, err := strconv.Atoi(m.Value)
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 	switch m.Operator {
 	case "=":

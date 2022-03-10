@@ -267,11 +267,11 @@ func (c *connection) Upload(src, dest string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	s_info, err := s.Stat()
+	sinfo, err := s.Stat()
 	if err != nil {
 		return 0, err
 	}
-	sourceSize := s_info.Size()
+	sourceSize := sinfo.Size()
 	defer s.Close()
 
 	copied, err := io.Copy(d, s)

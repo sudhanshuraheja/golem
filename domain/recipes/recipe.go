@@ -112,12 +112,12 @@ func (r *Recipe) Execute(log *logger.CLILogger, srvs servers.Servers, procs int)
 		pool := execcmd.NewExecCmd(log)
 		pool.Start(r.Commands, r.Artifacts)
 	default:
-		log.Error(string(r.Name)).Msgf("recipe only supports ['remote', 'local'] types")
+		log.Error(r.Name).Msgf("recipe only supports ['remote', 'local'] types")
 	}
 }
 
 func (r *Recipe) Display(log *logger.CLILogger, tpl *template.Template, query string) {
-	if query != "" && !strings.Contains(string(r.Name), query) {
+	if query != "" && !strings.Contains(r.Name, query) {
 		return
 	}
 

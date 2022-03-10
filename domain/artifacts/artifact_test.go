@@ -38,7 +38,7 @@ func TestArtifact(t *testing.T) {
 	path = "https://raw.githubusercontent.com/sudhanshuraheja/golem/main/testdata/template.tpl2"
 	art = NewArtifact("data", path, "source", "destination")
 	err = art.TemplatePathDownload(log)
-	utils.Test().Contains(t, err.Error(), "recieved 404 error")
+	utils.Test().Contains(t, err.Error(), "404 error")
 
 	path = "../../testdata/template.tpl"
 	art = NewArtifact("data", path, "source", "destination")

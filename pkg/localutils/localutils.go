@@ -59,9 +59,9 @@ func Question(clog *logger.CLILogger, where, format string, v ...interface{}) st
 
 func TransferRate(bytes int64, start time.Time) string {
 	duration := time.Since(start)
-	bytesMB := float64(float64(bytes) / (1024 * 1024))
+	bytesMB := float64(bytes) / (1024 * 1024)
 	durationSec := float64(duration/time.Millisecond) / 1000
-	transferRate := float64(bytesMB / durationSec)
+	transferRate := bytesMB / durationSec
 	return fmt.Sprintf(
 		"%sMbps, %sMB, %ssec",
 		logger.CyanBold("%.3f", transferRate),

@@ -16,12 +16,12 @@ func (s *ServerProviders) Merge(sps ServerProviders) {
 	*s = append(*s, sps...)
 }
 
-func (sps *ServerProviders) Parse() (servers.Servers, error) {
+func (s *ServerProviders) Parse() (servers.Servers, error) {
 	_srvs := servers.Servers{}
 	_dips := servers.DomainIPs{}
 
-	if sps != nil {
-		for _, sp := range *sps {
+	if s != nil {
+		for _, sp := range *s {
 			switch sp.Name {
 			case "terraform":
 				srvs, dips, err := sp.Parse()

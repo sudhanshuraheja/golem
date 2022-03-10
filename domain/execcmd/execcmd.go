@@ -47,7 +47,7 @@ func (c *ExecCmd) Run(cmds commands.Commands) {
 	shell := cmd.NewCmd(name)
 
 	wait := make(chan bool)
-	go func(log *logger.CLILogger, wait chan bool) {
+	go func(wait chan bool) {
 		for {
 			select {
 			case stdout := <-shell.Stdout:
@@ -68,7 +68,7 @@ func (c *ExecCmd) Run(cmds commands.Commands) {
 				}
 			}
 		}
-	}(c.log, wait)
+	}(wait)
 
 	for _, cmd := range cmds {
 		if cmd == "" {

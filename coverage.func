@@ -66,11 +66,11 @@ github.com/sudhanshuraheja/golem/domain/kv/store.go:161:		SetUserValue			0.0%
 github.com/sudhanshuraheja/golem/domain/kv/store.go:170:		SetValue			75.0%
 github.com/sudhanshuraheja/golem/domain/kv/store.go:186:		DeleteValue			66.7%
 github.com/sudhanshuraheja/golem/domain/kv/store.go:193:		GetValue			80.0%
-github.com/sudhanshuraheja/golem/domain/recipes/recipe.go:29:		Prepare				95.2%
-github.com/sudhanshuraheja/golem/domain/recipes/recipe.go:70:		PrepareForExecution		88.2%
-github.com/sudhanshuraheja/golem/domain/recipes/recipe.go:101:		Execute				0.0%
-github.com/sudhanshuraheja/golem/domain/recipes/recipe.go:114:		Display				84.6%
-github.com/sudhanshuraheja/golem/domain/recipes/recipe.go:146:		AskPermission			80.0%
+github.com/sudhanshuraheja/golem/domain/recipes/recipe.go:34:		Prepare				95.2%
+github.com/sudhanshuraheja/golem/domain/recipes/recipe.go:75:		PrepareForExecution		88.2%
+github.com/sudhanshuraheja/golem/domain/recipes/recipe.go:106:		Execute				0.0%
+github.com/sudhanshuraheja/golem/domain/recipes/recipe.go:119:		Display				90.5%
+github.com/sudhanshuraheja/golem/domain/recipes/recipe.go:169:		AskPermission			80.0%
 github.com/sudhanshuraheja/golem/domain/recipes/recipes.go:13:		Append				100.0%
 github.com/sudhanshuraheja/golem/domain/recipes/recipes.go:19:		Merge				100.0%
 github.com/sudhanshuraheja/golem/domain/recipes/recipes.go:25:		Display				100.0%
@@ -83,7 +83,7 @@ github.com/sudhanshuraheja/golem/domain/servers/domainips.go:11:	Merge				100.0%
 github.com/sudhanshuraheja/golem/domain/servers/match.go:17:		NewMatch			100.0%
 github.com/sudhanshuraheja/golem/domain/servers/match.go:25:		CompareStringArray		87.5%
 github.com/sudhanshuraheja/golem/domain/servers/match.go:42:		CompareString			100.0%
-github.com/sudhanshuraheja/golem/domain/servers/match.go:63:		CompareInt			94.4%
+github.com/sudhanshuraheja/golem/domain/servers/match.go:63:		CompareInt			88.9%
 github.com/sudhanshuraheja/golem/domain/servers/server.go:21:		Display				100.0%
 github.com/sudhanshuraheja/golem/domain/servers/server.go:51:		GetHostName			100.0%
 github.com/sudhanshuraheja/golem/domain/servers/server.go:68:		Search				100.0%
@@ -116,7 +116,7 @@ github.com/sudhanshuraheja/golem/pkg/bolt/bolt.go:140:			FindAll				93.3%
 github.com/sudhanshuraheja/golem/pkg/bolt/bolt.go:162:			Backup				0.0%
 github.com/sudhanshuraheja/golem/pkg/cmd/cmd.go:30:			NewCmd				100.0%
 github.com/sudhanshuraheja/golem/pkg/cmd/cmd.go:38:			Run				87.5%
-github.com/sudhanshuraheja/golem/pkg/cmd/cmd.go:53:			pipes				86.7%
+github.com/sudhanshuraheja/golem/pkg/cmd/cmd.go:53:			pipes				76.7%
 github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:18:	DetectCI			0.0%
 github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:30:	StringPtrValue			66.7%
 github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:37:	ArrayPtrValue			0.0%
@@ -126,9 +126,9 @@ github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:73:	TimeInSecs			0
 github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:82:	FileCopy			0.0%
 github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:97:	TinyString			80.0%
 github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:123:	Download			0.0%
-github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:153:	Base64EncodedRandomNumber	75.0%
-github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:161:	ArrayUnique			0.0%
-github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:174:	StrPtr				0.0%
+github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:157:	Base64EncodedRandomNumber	75.0%
+github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:165:	ArrayUnique			0.0%
+github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:178:	StrPtr				0.0%
 github.com/sudhanshuraheja/golem/pkg/ssh/ssh.go:45:			NewSSHConnection		87.5%
 github.com/sudhanshuraheja/golem/pkg/ssh/ssh.go:58:			dial				70.0%
 github.com/sudhanshuraheja/golem/pkg/ssh/ssh.go:118:			getSSHSession			72.7%
@@ -140,4 +140,4 @@ github.com/sudhanshuraheja/golem/pkg/ssh/ssh.go:254:			Upload				72.7%
 github.com/sudhanshuraheja/golem/pkg/ssh/ssh.go:289:			Stdout				100.0%
 github.com/sudhanshuraheja/golem/pkg/ssh/ssh.go:293:			Stderr				100.0%
 github.com/sudhanshuraheja/golem/pkg/ssh/ssh.go:297:			Close				100.0%
-total:									(statements)			65.8%
+total:									(statements)			65.6%
