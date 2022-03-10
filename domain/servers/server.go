@@ -46,7 +46,6 @@ func (s *Server) Display(log *logger.CLILogger, query string) {
 		tags := strings.Join(*s.Tags, ", ")
 		log.Info("").Msgf("%s %s", logger.Cyan("tags"), tags)
 	}
-
 }
 
 func (s *Server) GetHostName() (string, error) {
@@ -57,6 +56,8 @@ func (s *Server) GetHostName() (string, error) {
 		host = *s.PublicIP
 	case s.HostName != nil && len(*s.HostName) > 0:
 		host = (*s.HostName)[0]
+	case s.PrivateIP != nil:
+		host = *s.PrivateIP
 	default:
 		return host, fmt.Errorf("could not find a public ip or a hostname in config")
 	}

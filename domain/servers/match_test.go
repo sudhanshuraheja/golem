@@ -2,61 +2,84 @@ package servers
 
 import (
 	"testing"
+
+	"github.com/betas-in/utils"
 )
 
 func TestMatcher(t *testing.T) {
-	// servers := []Server{
-	// 	{
-	// 		Name:     "one",
-	// 		HostName: []string{"one"},
-	// 		Port:     22,
-	// 		Tags:     []string{"one"},
-	// 	},
-	// 	{
-	// 		Name:     "two",
-	// 		PublicIP: localutils.StrPtr("127.0.0.1"),
-	// 		HostName: []string{"two"},
-	// 		Port:     22,
-	// 		Tags:     []string{"one", "two"},
-	// 	},
-	// 	{
-	// 		Name:     "three",
-	// 		HostName: []string{"three"},
-	// 		Port:     22,
-	// 		Tags:     []string{"one", "two", "three"},
-	// 	},
-	// }
+	// String array
+	list := []string{"one", "two", "three", "four", "five"}
 
-	// found, err := NewMatch("tags", "contains", "one").Find(servers)
-	// utils.Test().Nil(t, err)
-	// utils.Test().Equals(t, 3, len(found))
+	m := NewMatch("name", "contains", "one")
+	found, err := m.CompareStringArray(list)
+	utils.Test().Nil(t, err)
+	utils.Test().Equals(t, true, found)
 
-	// found, err = NewMatch("tags", "contains", "two").Find(servers)
-	// utils.Test().Nil(t, err)
-	// utils.Test().Equals(t, 2, len(found))
+	m = NewMatch("name", "not-contains", "six")
+	found, err = m.CompareStringArray(list)
+	utils.Test().Nil(t, err)
+	utils.Test().Equals(t, true, found)
 
-	// found, err = NewMatch("tags", "contains", "three").Find(servers)
-	// utils.Test().Nil(t, err)
-	// utils.Test().Equals(t, 1, len(found))
+	m = NewMatch("name", "=", "six")
+	_, err = m.CompareStringArray(list)
+	utils.Test().Contains(t, err.Error(), "operators are supported")
 
-	// found, err = NewMatch("tags", "not-contains", "two").Find(servers)
-	// utils.Test().Nil(t, err)
-	// utils.Test().Equals(t, 1, len(found))
+	// String
+	str := "abcdefghijklmnopqrstuvwxyz"
 
-	// found, err = NewMatch("public_ip", "=", "127.0.0.1").Find(servers)
-	// utils.Test().Nil(t, err)
-	// utils.Test().Equals(t, 1, len(found))
+	m = NewMatch("name", "=", "cdef")
+	found, err = m.CompareString(str)
+	utils.Test().Nil(t, err)
+	utils.Test().Equals(t, false, found)
 
-	// found, err = NewMatch("public_ip", "!=", "127.0.0.1").Find(servers)
-	// utils.Test().Nil(t, err)
-	// utils.Test().Equals(t, 2, len(found))
+	m = NewMatch("name", "!=", "cdef")
+	found, err = m.CompareString(str)
+	utils.Test().Nil(t, err)
+	utils.Test().Equals(t, true, found)
 
-	// found, err = NewMatch("port", "=", "22").Find(servers)
-	// utils.Test().Nil(t, err)
-	// utils.Test().Equals(t, 3, len(found))
+	m = NewMatch("name", "like", "cdef")
+	found, err = m.CompareString(str)
+	utils.Test().Nil(t, err)
+	utils.Test().Equals(t, true, found)
 
-	// found, err = NewMatch("port", "!=", "22").Find(servers)
-	// utils.Test().Nil(t, err)
-	// utils.Test().Equals(t, 0, len(found))
+	m = NewMatch("name", "contains", "cdef")
+	_, err = m.CompareString(str)
+	utils.Test().Contains(t, err.Error(), "operators are supported")
 
+	// Int
+	count := 50
+
+	m = NewMatch("count", "=", "50")
+	found, err = m.CompareInt(count)
+	utils.Test().Nil(t, err)
+	utils.Test().Equals(t, true, found)
+
+	m = NewMatch("count", "!=", "49")
+	found, err = m.CompareInt(count)
+	utils.Test().Nil(t, err)
+	utils.Test().Equals(t, true, found)
+
+	m = NewMatch("count", ">", "49")
+	found, err = m.CompareInt(count)
+	utils.Test().Nil(t, err)
+	utils.Test().Equals(t, true, found)
+
+	m = NewMatch("count", ">=", "49")
+	found, err = m.CompareInt(count)
+	utils.Test().Nil(t, err)
+	utils.Test().Equals(t, true, found)
+
+	m = NewMatch("count", "<", "51")
+	found, err = m.CompareInt(count)
+	utils.Test().Nil(t, err)
+	utils.Test().Equals(t, true, found)
+
+	m = NewMatch("count", "<=", "51")
+	found, err = m.CompareInt(count)
+	utils.Test().Nil(t, err)
+	utils.Test().Equals(t, true, found)
+
+	m = NewMatch("count", "contains", "51")
+	_, err = m.CompareInt(count)
+	utils.Test().Contains(t, err.Error(), "operators are supported")
 }
