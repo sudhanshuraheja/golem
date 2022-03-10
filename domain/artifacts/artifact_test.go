@@ -23,7 +23,7 @@ func TestArtifact(t *testing.T) {
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, "value", *art.Template.Path)
 	artSource := art.GetSource()
-	utils.Test().Equals(t, "data", artSource)
+	utils.Test().Equals(t, "source", artSource)
 
 	path := "https://raw.githubusercontent.com/sudhanshuraheja/golem/main/testdata/template.tpl"
 	art = NewArtifact("data", path, "source", "destination")

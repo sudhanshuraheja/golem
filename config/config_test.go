@@ -12,7 +12,7 @@ func TestServerHCL(t *testing.T) {
 	conf, err := NewConfig(path)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, 4, len(conf.Servers))
-	utils.Test().Equals(t, 1, len(*conf.Vars))
+	utils.Test().Equals(t, true, conf.Vars == nil)
 	utils.Test().Equals(t, 4, *conf.LogLevel)
 	test1, err := conf.Servers.Search(servers.Match{
 		Attribute: "name",
@@ -26,6 +26,18 @@ func TestServerHCL(t *testing.T) {
 	utils.Test().Equals(t, "sudhanshu", test1[0].User)
 	utils.Test().Equals(t, 22, test1[0].Port)
 	utils.Test().Equals(t, 4, len(*test1[0].Tags))
+
+	path = "./../testdata/badfile.hcl"
+	_, err = NewConfig(path)
+	utils.Test().Contains(t, err.Error(), "Failed to read file")
+
+	path = "./../testdata/bad.hcl"
+	_, err = NewConfig(path)
+	utils.Test().Contains(t, err.Error(), "Missing type for recipe; All recipe blocks must have 2 labels")
+
+	path = "./../testdata/bad_serverprovider.hcl"
+	_, err = NewConfig(path)
+	utils.Test().Contains(t, err.Error(), "unable to unmarshall")
 
 	path = "./../testdata/serverprovider.hcl"
 	confSP, err := NewConfig(path)
@@ -47,7 +59,7 @@ func TestServerHCL(t *testing.T) {
 
 	conf.Merge(confSP)
 	utils.Test().Equals(t, 7, len(conf.Servers))
-	utils.Test().Equals(t, 2, len(*conf.Vars))
+	utils.Test().Equals(t, 1, len(*conf.Vars))
 	utils.Test().Equals(t, 5, *conf.LogLevel)
 }
 

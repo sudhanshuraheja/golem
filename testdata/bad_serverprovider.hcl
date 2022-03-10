@@ -1,5 +1,4 @@
 loglevel = 5
-max_parallel_processes = 4
 
 vars = {
     SERVER_PROVIDERS = 1
@@ -7,8 +6,7 @@ vars = {
 
 server_provider "terraform" {
     config = [
-        "../testdata/terraform1.tfstate",
-        "../testdata/terraform2.tfstate"
+        "../testdata/bad.tfstate",
     ]
     user = "root"
     port = 22

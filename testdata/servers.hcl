@@ -1,8 +1,5 @@
 loglevel = 4
-
-vars = {
-    SERVERS = 4
-}
+max_parallel_processes = 2
 
 server "test1" {
     hostname = ["localhost"]
