@@ -122,7 +122,7 @@ func TestArtifact(t *testing.T) {
 
 	art = NewArtifact("", "", "https://randompath", "destination")
 	err = art.SourceDownload(log)
-	utils.Test().Contains(t, err.Error(), "no such host")
+	utils.Test().Contains(t, err.Error(), "dial tcp")
 
 	art = NewArtifact("", "", "", "@golem.key")
 	err = art.DestinationPopulate(tpl)
