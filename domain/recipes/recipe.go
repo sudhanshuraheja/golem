@@ -1,6 +1,7 @@
 package recipes
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -14,6 +15,10 @@ import (
 	"github.com/sudhanshuraheja/golem/domain/servers"
 	"github.com/sudhanshuraheja/golem/domain/template"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
+)
+
+var (
+	tiny = 100
 )
 
 type Recipe struct {
@@ -116,7 +121,24 @@ func (r *Recipe) Display(log *logger.CLILogger, tpl *template.Template, query st
 		return
 	}
 
-	log.Info("recipe").Msgf("%s", logger.CyanBold(r.Name))
+	match := ""
+	if r.Match != nil {
+		match = fmt.Sprintf("%s %s %s", r.Match.Attribute, r.Match.Operator, r.Match.Value)
+		match = logger.Yellow(match)
+	}
+
+	log.Info("recipe").Msgf("%s %s %s", logger.CyanBold(r.Name), r.Type, match)
+
+	for _, keyvalue := range r.KeyValues {
+		if keyvalue != nil {
+			log.Info("").Msgf(
+				"%s %s: %s",
+				logger.Yellow("kv"),
+				logger.CyanBold(keyvalue.Path),
+				keyvalue.Value,
+			)
+		}
+	}
 
 	if r.Artifacts != nil {
 		for _, artf := range r.Artifacts {
@@ -125,9 +147,9 @@ func (r *Recipe) Display(log *logger.CLILogger, tpl *template.Template, query st
 			log.Info("").Msgf(
 				"%s %s %s %s",
 				logger.Cyan("uploading"),
-				localutils.TinyString(source, 50),
+				localutils.TinyString(source, tiny),
 				logger.Cyan("to"),
-				localutils.TinyString(artf.Destination, 50),
+				localutils.TinyString(artf.Destination, tiny),
 			)
 		}
 	}
@@ -138,7 +160,8 @@ func (r *Recipe) Display(log *logger.CLILogger, tpl *template.Template, query st
 			if err != nil {
 				log.Error(r.Name).Msgf("could not parse template %s: %v", command, err)
 			}
-			log.Info("").Msgf("$ %s", localutils.TinyString(exec, 100))
+			exec = strings.TrimSuffix(exec, "\n")
+			log.Info("").Msgf("%s %s", logger.Cyan("$"), exec)
 		}
 	}
 }

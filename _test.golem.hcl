@@ -30,4 +30,9 @@ recipe "test-artifact-template" "local" {
         }
         destination = "template.parsed3"
     }
+    commands = [
+        "rm template.parsed1",
+        "rm template.parsed2",
+        "rm template.parsed3",
+    ]
 }

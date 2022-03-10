@@ -121,7 +121,7 @@ func TinyString(text string, length int) string {
 }
 
 func Download(log *logger.CLILogger, name, url string) (string, error) {
-	log.Info(name).Msgf("%s %s", logger.Cyan("downloading"), TinyString(url, 50))
+	log.Info(name).Msgf("%s %s", logger.Cyan("downloading"), TinyString(url, 100))
 
 	glog := logger.NewLogger(3, true)
 	g := getter.NewGetter(glog)
@@ -140,11 +140,15 @@ func Download(log *logger.CLILogger, name, url string) (string, error) {
 	}
 
 	log.Info(name).Msgf(
-		"%s %s %s %s %s",
-		logger.GreenBold("downloaded"),
-		TinyString(url, 50),
+		"%s %s",
+		logger.GreenBold("downloaded!"),
+		TinyString(url, 100),
+	)
+
+	log.Info(name).Msgf(
+		"         %s %s %s",
 		logger.GreenBold("to"),
-		TinyString(response.DataPath, 50),
+		TinyString(response.DataPath, 100),
 		TimeInSecs(startTime),
 	)
 	return response.DataPath, nil

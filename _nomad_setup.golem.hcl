@@ -66,7 +66,7 @@ echo '{}' | cfssl gencert -ca=@golem.NOMAD_CONFIG_PATH/certs/nomad-ca.pem -ca-ke
         {{- ($s).PrivateIP -}},
     {{- end -}}
 {{- end -}}" - | cfssljson -bare @golem.NOMAD_CONFIG_PATH/certs/server
-        EOF
+EOF
     }
     script {
         // client-key.pem -> private key
@@ -84,7 +84,7 @@ echo '{}' | cfssl gencert -ca=@golem.NOMAD_CONFIG_PATH/certs/nomad-ca.pem -ca-ke
         {{- ($s).PrivateIP -}},
     {{- end -}}
 {{ end }}" - | cfssljson -bare @golem.NOMAD_CONFIG_PATH/certs/client
-        EOF
+EOF
     }
     script {
         commands = [
