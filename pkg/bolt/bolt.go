@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"go.etcd.io/bbolt"
@@ -16,7 +17,11 @@ type Bolt struct {
 
 func NewBolt(path string) (*Bolt, error) {
 	b := &Bolt{}
-	err := b.Open(path)
+	err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
+	if err != nil {
+		return b, err
+	}
+	err = b.Open(path)
 	if err != nil {
 		return b, err
 	}
