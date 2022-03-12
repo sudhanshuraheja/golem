@@ -23,7 +23,7 @@ func NewStore(log *logger.CLILogger) *Store {
 		log.Fatal("KV").Msgf("could not find user's home directory: %v", err)
 		os.Exit(1)
 	}
-	golemDBPath := fmt.Sprintf("%s/.golem/golem.db", homeDir)
+	golemDBPath := fmt.Sprintf("%s/.config/golem/golem.db", homeDir)
 
 	kv.bolt, err = bolt.NewBolt(golemDBPath)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	"github.com/sudhanshuraheja/golem/config"
 	"github.com/sudhanshuraheja/golem/domain/kv"
 	"github.com/sudhanshuraheja/golem/domain/template"
+	"github.com/sudhanshuraheja/golem/domain/vars"
 )
 
 type Golem struct {
@@ -23,18 +24,16 @@ func NewGolem(conf *Config) {
 	g.log = logger.NewCLILogger(6, 12)
 	g.conf = &config.Config{}
 
-	files, err := conf.Detect(g.log)
+	err := conf.Init(g.log)
 	if err != nil {
 		g.log.Fatal("golem").Msgf("%v", err)
 		os.Exit(1)
 	}
 
-	if len(files) == 0 {
-		err := conf.Init(g.log)
-		if err != nil {
-			g.log.Fatal("golem").Msgf("%v", err)
-			os.Exit(1)
-		}
+	files, err := conf.Detect(g.log)
+	if err != nil {
+		g.log.Fatal("golem").Msgf("%v", err)
+		os.Exit(1)
 	}
 
 	for _, file := range files {
@@ -47,6 +46,9 @@ func NewGolem(conf *Config) {
 	}
 
 	g.store = kv.NewStore(g.log)
+	if g.conf.Vars == nil {
+		g.conf.Vars = vars.NewVars()
+	}
 	g.tpl = template.NewTemplate(g.conf.Servers, *g.conf.Vars, g.store)
 
 	if g.conf.LogLevel != nil {

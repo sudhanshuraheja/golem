@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/betas-in/logger"
+	"github.com/sudhanshuraheja/golem/pkg/localutils"
 )
 
 type Config struct {
@@ -25,18 +26,15 @@ func (c *Config) Init(log *logger.CLILogger) error {
 		return fmt.Errorf("could not create conf dir <%s>: %v", golemDir, err)
 	}
 
-	confFile := fmt.Sprintf("%s/config.golem.hcl", golemDir)
-	_, err = os.Stat(confFile)
-	if os.IsNotExist(err) {
-		file, err := os.Create(confFile)
-		if err != nil {
-			return fmt.Errorf("error creating conf file <%s>: %v", confFile, err)
-		}
-		defer file.Close()
-		log.Highlight("golem").Msgf("conf file created at %s", confFile)
-	} else if err != nil {
-		return fmt.Errorf("error checking conf file <%s>: %v", confFile, err)
+	confFile := fmt.Sprintf("%s/global.golem.hcl", golemDir)
+	created, err := localutils.Create(confFile)
+	if err != nil {
+		return err
 	}
+	if created {
+		log.Highlight("golem").Msgf("created %s", confFile)
+	}
+
 	return nil
 }
 
@@ -68,5 +66,5 @@ func (c *Config) GolemDir(log *logger.CLILogger) string {
 		log.Fatal("").Msgf("could not find user's home directory: %v", err)
 		os.Exit(1)
 	}
-	return fmt.Sprintf("%s/.golem", dirname)
+	return fmt.Sprintf("%s/.config/golem", dirname)
 }

@@ -178,3 +178,39 @@ func ArrayUnique(ar []string) []string {
 func StrPtr(s string) *string {
 	return &s
 }
+
+func Create(file string) (bool, error) {
+	_, err := os.Stat(file)
+	if os.IsNotExist(err) {
+		f, err := os.Create(file)
+		if err != nil {
+			return false, err
+		}
+		defer f.Close()
+		return true, nil
+	} else if err != nil {
+		return false, err
+	}
+	return false, nil
+}
+
+func Touch(file string) (bool, error) {
+	_, err := os.Stat(file)
+	if os.IsNotExist(err) {
+		f, err := os.Create(file)
+		if err != nil {
+			return false, err
+		}
+		defer f.Close()
+		return true, nil
+	} else if err != nil {
+		return false, err
+	} else {
+		now := time.Now().Local()
+		err = os.Chtimes(file, now, now)
+		if err != nil {
+			return false, err
+		}
+	}
+	return false, nil
+}

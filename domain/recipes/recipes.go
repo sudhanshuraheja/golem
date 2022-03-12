@@ -26,7 +26,7 @@ func (r *Recipes) Display(log *logger.CLILogger, tpl *template.Template, query s
 	log.Announce("").Msgf("list of all available recipes")
 
 	// Add system defined
-	log.Info("system").Msgf("%s", logger.Cyan("recipes"))
+	log.Info("system").Msgf("%s", logger.Cyan("list"))
 	log.Info("system").Msgf("%s", logger.Cyan("servers"))
 
 	for _, recipe := range *r {
