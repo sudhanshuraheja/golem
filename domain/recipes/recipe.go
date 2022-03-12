@@ -35,17 +35,6 @@ func (r *Recipe) Prepare(log *logger.CLILogger, store *kv.Store) error {
 	_cmds := commands.Commands{}
 	_artfs := artifacts.Artifacts{}
 
-	// KeyValues
-	for _, k := range r.KeyValues {
-		setup, err := k.Setup(store)
-		if err != nil {
-			return err
-		}
-		if setup {
-			log.Info(r.Name).Msgf("setup key %s in store", k.Path)
-		}
-	}
-
 	// Scripts
 	for _, s := range r.Scripts {
 		cmds, artfs := s.Prepare()
@@ -72,9 +61,21 @@ func (r *Recipe) Prepare(log *logger.CLILogger, store *kv.Store) error {
 	return nil
 }
 
-func (r *Recipe) PrepareForExecution(log *logger.CLILogger, tpl *template.Template) error {
+func (r *Recipe) PrepareForExecution(log *logger.CLILogger, tpl *template.Template, store *kv.Store) error {
 	_cmds := commands.Commands{}
 	_artfs := artifacts.Artifacts{}
+
+	// KeyValues
+	for _, k := range r.KeyValues {
+		setup, err := k.PrepareForExecution(store)
+		if err != nil {
+			log.Error(r.Name).Msgf("%v", err)
+			os.Exit(1)
+		}
+		if setup {
+			log.Info(r.Name).Msgf("setup key %s in store", k.Path)
+		}
+	}
 
 	// Artifacts
 	for _, a := range r.Artifacts {

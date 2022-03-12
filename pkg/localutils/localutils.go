@@ -1,7 +1,9 @@
 package localutils
 
 import (
+	"archive/tar"
 	"bufio"
+	"compress/gzip"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -213,4 +215,36 @@ func Touch(file string) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func FolderNameFromZip(path string) (string, error) {
+	handlerSrc, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer handlerSrc.Close()
+
+	gzr, err := gzip.NewReader(handlerSrc)
+	if err != nil {
+		return "", err
+	}
+	defer gzr.Close()
+
+	tarr := tar.NewReader(gzr)
+	for {
+		header, err := tarr.Next()
+		switch {
+		case err == io.EOF:
+			return "", nil
+		case err != nil:
+			return "", err
+		case header == nil:
+			continue
+		}
+
+		switch header.Typeflag {
+		case tar.TypeDir:
+			return header.Name, nil
+		}
+	}
 }

@@ -53,7 +53,7 @@ func TestRecipe(t *testing.T) {
 	utils.Test().Equals(t, 2, len(r.Artifacts))
 	utils.Test().Equals(t, 6, len(*r.Commands))
 
-	err = r.PrepareForExecution(log, tpl)
+	err = r.PrepareForExecution(log, tpl, store)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, 1, len(r.KeyValues))
 	utils.Test().Equals(t, 1, len(r.Scripts))

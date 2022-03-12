@@ -38,6 +38,18 @@ func (s *Store) Close() error {
 	return s.bolt.Close()
 }
 
+func (s *Store) Bucket(path string) error {
+	if s == nil || s.bolt == nil {
+		return fmt.Errorf("store or bbolt has not been defined yet")
+	}
+
+	err := s.bolt.CreateBucket([]byte(path))
+	if err != nil {
+		return fmt.Errorf("error creating bucket %s: %v", path, err)
+	}
+	return nil
+}
+
 func (s *Store) Set(path, value string) error {
 	if s == nil || s.bolt == nil {
 		return fmt.Errorf("store or bbolt has not been defined yet")

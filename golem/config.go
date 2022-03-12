@@ -7,7 +7,15 @@ import (
 	"strings"
 
 	"github.com/betas-in/logger"
+	"github.com/betas-in/utils"
+	"github.com/sudhanshuraheja/golem/domain/kv"
 	"github.com/sudhanshuraheja/golem/pkg/localutils"
+)
+
+var (
+	configBucket = "golemconfig"
+	tempdirKey   = "golemconfig.tempdir"
+	scriptsKey   = "golemconfig.scripts"
 )
 
 type Config struct {
@@ -38,15 +46,22 @@ func (c *Config) Init(log *logger.CLILogger) error {
 	return nil
 }
 
-func (c *Config) Detect(log *logger.CLILogger) ([]string, error) {
+func (c *Config) Detect(log *logger.CLILogger, store *kv.Store) ([]string, error) {
 	golemDir := c.GolemDir(log)
-	dirs := []string{golemDir, "."}
 
 	files := []string{}
+
+	scriptsPath, err := store.Get(scriptsKey)
+	if err != nil {
+		return files, err
+	}
+	dirs := []string{golemDir, scriptsPath, "."}
+
 	for _, dir := range dirs {
 		paths, err := ioutil.ReadDir(dir)
 		if err != nil {
-			return files, fmt.Errorf("could not read directory <%s>: %v", dir, err)
+			log.Error("golem").Msgf("could not read directory <%s>: %v", dir, err)
+			continue
 		}
 
 		for _, path := range paths {
@@ -67,4 +82,73 @@ func (c *Config) GolemDir(log *logger.CLILogger) string {
 		os.Exit(1)
 	}
 	return fmt.Sprintf("%s/.config/golem", dirname)
+}
+
+func (c *Config) SetupKV(store *kv.Store) error {
+	if err := store.Bucket(configBucket); err != nil {
+		return err
+	}
+
+	tempdir, err := store.Get(tempdirKey)
+	if err != nil {
+		return err
+	}
+	if tempdir == "" {
+		tempdir, err = ioutil.TempDir("", "golem")
+		if err != nil {
+			return err
+		}
+		if err := store.Set(tempdirKey, tempdir); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Config) Update(log *logger.CLILogger, store *kv.Store) {
+	path := "https://github.com/sudhanshuraheja/golem-scripts/tarball/main"
+	downloadPath, err := localutils.Download(log, "config", path)
+	if err != nil {
+		log.Fatal("").Msgf("%v", err)
+		os.Exit(1)
+	}
+
+	tempdir, err := store.Get(tempdirKey)
+	if err != nil {
+		log.Fatal("").Msgf("%v", err)
+		os.Exit(1)
+	}
+
+	err = utils.Zip().UntarGunzip(downloadPath, tempdir)
+	if err != nil {
+		log.Fatal("").Msgf("%v", err)
+		os.Exit(1)
+	}
+
+	folder, err := localutils.FolderNameFromZip(downloadPath)
+	if err != nil {
+		log.Fatal("").Msgf("%v", err)
+		os.Exit(1)
+	}
+
+	folderFullpath := fmt.Sprintf("%s/%s", tempdir, folder)
+	scriptsPath := fmt.Sprintf("%s/scripts", tempdir)
+	err = os.RemoveAll(scriptsPath)
+	if err != nil {
+		log.Fatal("").Msgf("%v", err)
+		os.Exit(1)
+	}
+	err = os.Rename(folderFullpath, scriptsPath)
+	if err != nil {
+		log.Fatal("").Msgf("%v", err)
+		os.Exit(1)
+	}
+
+	err = store.Set(scriptsKey, scriptsPath)
+	if err != nil {
+		log.Fatal("").Msgf("%v", err)
+		os.Exit(1)
+	}
+
+	log.Success("update").Msgf("Updated golem scripts in %s", scriptsPath)
 }

@@ -7,7 +7,7 @@ type KeyValue struct {
 	Value string `hcl:"value"`
 }
 
-func (k *KeyValue) Setup(store *Store) (bool, error) {
+func (k *KeyValue) PrepareForExecution(store *Store) (bool, error) {
 	setup := false
 	existingValue, err := store.Get(k.Path)
 	if err != nil || existingValue == "" {

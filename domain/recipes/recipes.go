@@ -56,10 +56,10 @@ func (r *Recipes) Prepare(log *logger.CLILogger, store *kv.Store) error {
 	return nil
 }
 
-func (r *Recipes) PrepareForExecution(log *logger.CLILogger, tpl *template.Template) error {
+func (r *Recipes) PrepareForExecution(log *logger.CLILogger, tpl *template.Template, store *kv.Store) error {
 	if r != nil {
 		for i, rcp := range *r {
-			err := rcp.PrepareForExecution(log, tpl)
+			err := rcp.PrepareForExecution(log, tpl, store)
 			if err != nil {
 				return err
 			}

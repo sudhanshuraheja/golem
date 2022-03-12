@@ -10,10 +10,10 @@ func (kv *KeyValues) Merge(keyValues KeyValues) {
 	*kv = append(*kv, keyValues...)
 }
 
-func (kv *KeyValues) Setup(store *Store) (bool, error) {
+func (kv *KeyValues) PrepareForExecution(store *Store) (bool, error) {
 	setup := false
 	for _, keyValue := range *kv {
-		st, err := keyValue.Setup(store)
+		st, err := keyValue.PrepareForExecution(store)
 		if err != nil {
 			return setup, err
 		}

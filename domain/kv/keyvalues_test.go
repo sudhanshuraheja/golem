@@ -24,7 +24,7 @@ func TestKeyValues(t *testing.T) {
 
 	log := logger.NewCLILogger(6, 8)
 	store := NewStore(log)
-	done, err := kvs1.Setup(store)
+	done, err := kvs1.PrepareForExecution(store)
 	utils.Test().Nil(t, err)
 	utils.Test().Equals(t, true, done)
 
