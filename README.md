@@ -252,8 +252,7 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Show version
 - [x] Merged config files in ~/.golem/*.golem and ./*.golem
 - [x] Migrate config to a separate struct with fewer pointers
-- [ ] Use ~/.config/ instead of .golem
-- [ ] Open recipe file for editing via CLI
+- [x] Use ~/.config/ instead of .golem
 
 ## Servers
 - [x] Connect to servers via SSH
@@ -272,8 +271,9 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Define variables to be used in recipes
 - [x] Create system level recipes
 - [x] Allow automatic set up of secrets using KV
+- [x] Native recipe to setup docker
 - [ ] Use namespaces for variables in recipes
-- [ ] Native recipe to setup docker
+- [ ] Parse template for KV
 - [ ] Native recipe to setup nomad without consul
 - [ ] Native recipe to setup consul
 - [ ] Native recipe to setup postgres with nomad
@@ -296,7 +296,8 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Run go templates on files before uploaded
 - [x] Run local script on all remotes without uploading
 - [ ] Upload folders to remote
-- [ ] Show progress while uploading or downloading
+- [ ] Show progress while uploading
+- [ ] Show progress while downloading
 
 ## Commands
 - [x] Create a worker pool for ssh connections
@@ -314,7 +315,7 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [ ] Increase goroutines if there are more tail tasks than routines
 - [ ] Get docker logs from remote
 
-## Others
+## Misc
 - [ ] Use hashicorp go-changelog
 - [ ] move localutils back into utils
 
