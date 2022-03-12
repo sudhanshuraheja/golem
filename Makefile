@@ -1,5 +1,6 @@
 install:
-	go run main.go go-install
+	./version.sh
+	go install
 
 test:
 	./version.sh

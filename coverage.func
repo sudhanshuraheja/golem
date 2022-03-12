@@ -116,7 +116,7 @@ github.com/sudhanshuraheja/golem/pkg/bolt/bolt.go:145:			FindAll				93.3%
 github.com/sudhanshuraheja/golem/pkg/bolt/bolt.go:167:			Backup				0.0%
 github.com/sudhanshuraheja/golem/pkg/cmd/cmd.go:30:			NewCmd				100.0%
 github.com/sudhanshuraheja/golem/pkg/cmd/cmd.go:38:			Run				87.5%
-github.com/sudhanshuraheja/golem/pkg/cmd/cmd.go:53:			pipes				76.7%
+github.com/sudhanshuraheja/golem/pkg/cmd/cmd.go:53:			pipes				83.3%
 github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:18:	DetectCI			0.0%
 github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:30:	StringPtrValue			66.7%
 github.com/sudhanshuraheja/golem/pkg/localutils/localutils.go:37:	ArrayPtrValue			0.0%
@@ -140,4 +140,4 @@ github.com/sudhanshuraheja/golem/pkg/ssh/ssh.go:254:			Upload				72.7%
 github.com/sudhanshuraheja/golem/pkg/ssh/ssh.go:289:			Stdout				100.0%
 github.com/sudhanshuraheja/golem/pkg/ssh/ssh.go:293:			Stderr				100.0%
 github.com/sudhanshuraheja/golem/pkg/ssh/ssh.go:297:			Close				100.0%
-total:									(statements)			65.6%
+total:									(statements)			65.8%
