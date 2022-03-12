@@ -11,7 +11,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.11.1
 	github.com/pkg/sftp v1.13.4
 	go.etcd.io/bbolt v1.3.6
-	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
+	golang.org/x/crypto v0.0.0-20220312131142-6068a2e6cfdc
 )
 
 require (
@@ -40,7 +40,7 @@ require (
 	github.com/rs/zerolog v1.26.1 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/zclconf/go-cty v1.10.0 // indirect
-	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9 // indirect
+	golang.org/x/sys v0.0.0-20220310020820-b874c991c1a5 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

@@ -22,13 +22,14 @@ var (
 )
 
 type Recipe struct {
-	Name      string                `hcl:"name,label"`
-	Type      string                `hcl:"type,label"`
-	Match     *servers.Match        `hcl:"match,block"`
-	KeyValues []*kv.KeyValue        `hcl:"kv,block"`
-	Scripts   []*commands.Script    `hcl:"script,block"`
-	Artifacts []*artifacts.Artifact `hcl:"artifact,block"`
-	Commands  *[]commands.Command   `hcl:"commands"`
+	Name       string                `hcl:"name,label"`
+	Type       string                `hcl:"type,label"`
+	Match      *servers.Match        `hcl:"match,block"`
+	KeyValues  []*kv.KeyValue        `hcl:"kv,block"`
+	Scripts    []*commands.Script    `hcl:"script,block"`
+	Artifacts  []*artifacts.Artifact `hcl:"artifact,block"`
+	Commands   *[]commands.Command   `hcl:"commands"`
+	SourceFile string
 }
 
 func (r *Recipe) Prepare(log *logger.CLILogger, store *kv.Store) error {
@@ -129,6 +130,7 @@ func (r *Recipe) Display(log *logger.CLILogger, tpl *template.Template, query st
 	}
 
 	log.Info("recipe").Msgf("%s %s %s", logger.CyanBold(r.Name), r.Type, match)
+	log.Info("").Msgf("%s %s", logger.Cyan("source"), r.SourceFile)
 
 	for _, keyvalue := range r.KeyValues {
 		if keyvalue != nil {

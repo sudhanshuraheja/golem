@@ -43,6 +43,9 @@ func NewGolem(conf *Config) {
 
 	for _, file := range files {
 		conf, err := config.NewConfig(file)
+		for idx := range conf.Recipes {
+			conf.Recipes[idx].SourceFile = file
+		}
 		if err != nil {
 			g.LogErrorAndExit(err)
 		}
