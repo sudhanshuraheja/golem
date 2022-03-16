@@ -7,6 +7,7 @@ import (
 	"github.com/betas-in/utils"
 	"github.com/sudhanshuraheja/golem/domain/artifacts"
 	"github.com/sudhanshuraheja/golem/domain/commands"
+	"github.com/sudhanshuraheja/golem/domain/keyvalue"
 	"github.com/sudhanshuraheja/golem/domain/kv"
 	"github.com/sudhanshuraheja/golem/domain/servers"
 	"github.com/sudhanshuraheja/golem/domain/template"
@@ -22,8 +23,8 @@ func TestRecipe(t *testing.T) {
 
 	trueValue := true
 	cmd := commands.NewCommand("ls -la script2")
-	keyvalue := kv.KeyValue{Path: "test.key", Value: "value"}
-	keyvalues := []*kv.KeyValue{&keyvalue}
+	kval := keyvalue.KeyValue{Path: "test.key", Value: "value"}
+	keyvalues := []*keyvalue.KeyValue{&kval}
 
 	script := commands.Script{
 		Apt:      []commands.Apt{{Update: &trueValue}},

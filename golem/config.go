@@ -132,7 +132,7 @@ func (c *Config) Update(log *logger.CLILogger, store *kv.Store) {
 	}
 
 	folderFullpath := fmt.Sprintf("%s/%s", tempdir, folder)
-	scriptsPath := fmt.Sprintf("%s/scripts", tempdir)
+	scriptsPath := fmt.Sprintf("%s/scripts", c.GolemDir(log))
 	err = os.RemoveAll(scriptsPath)
 	if err != nil {
 		log.Fatal("").Msgf("%v", err)

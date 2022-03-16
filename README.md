@@ -257,6 +257,7 @@ When the log level is set to `WARN`, you will not see the output of the commands
 ## Servers
 - [x] Connect to servers via SSH
 - [x] Use terraform to get list of servers
+- [ ] Parse template for match
 - [ ] Allow custom ssh key to connect to server
 - [ ] Allow password based login to ssh servers
 - [ ] Connect to a docker container instead of SSH
@@ -272,8 +273,8 @@ When the log level is set to `WARN`, you will not see the output of the commands
 - [x] Create system level recipes
 - [x] Allow automatic set up of secrets using KV
 - [x] Native recipe to setup docker
+- [x] Parse template for KV
 - [ ] Use namespaces for variables in recipes
-- [ ] Parse template for KV
 - [ ] Native recipe to setup nomad without consul
 - [ ] Native recipe to setup consul
 - [ ] Native recipe to setup postgres with nomad

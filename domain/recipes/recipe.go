@@ -11,6 +11,7 @@ import (
 	"github.com/sudhanshuraheja/golem/domain/commands"
 	"github.com/sudhanshuraheja/golem/domain/execcmd"
 	"github.com/sudhanshuraheja/golem/domain/execssh"
+	"github.com/sudhanshuraheja/golem/domain/keyvalue"
 	"github.com/sudhanshuraheja/golem/domain/kv"
 	"github.com/sudhanshuraheja/golem/domain/servers"
 	"github.com/sudhanshuraheja/golem/domain/template"
@@ -25,7 +26,7 @@ type Recipe struct {
 	Name       string                `hcl:"name,label"`
 	Type       string                `hcl:"type,label"`
 	Match      *servers.Match        `hcl:"match,block"`
-	KeyValues  []*kv.KeyValue        `hcl:"kv,block"`
+	KeyValues  []*keyvalue.KeyValue  `hcl:"kv,block"`
 	Scripts    []*commands.Script    `hcl:"script,block"`
 	Artifacts  []*artifacts.Artifact `hcl:"artifact,block"`
 	Commands   *[]commands.Command   `hcl:"commands"`
@@ -68,7 +69,7 @@ func (r *Recipe) PrepareForExecution(log *logger.CLILogger, tpl *template.Templa
 
 	// KeyValues
 	for _, k := range r.KeyValues {
-		setup, err := k.PrepareForExecution(store)
+		setup, err := k.PrepareForExecution(store, tpl)
 		if err != nil {
 			log.Error(r.Name).Msgf("%v", err)
 			os.Exit(1)
