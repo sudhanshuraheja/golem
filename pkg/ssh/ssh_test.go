@@ -1,6 +1,8 @@
 package ssh
 
 import (
+	"os"
+	"strconv"
 	"testing"
 
 	"github.com/betas-in/logger"
@@ -13,10 +15,34 @@ func TestSSH(t *testing.T) {
 		return
 	}
 
+	host := os.Getenv("GOLEM_SSH_TEST_HOST")
+	if host == "" {
+		t.Skip("integration SSH test skipped (set GOLEM_SSH_TEST_HOST to enable)")
+	}
+	user := os.Getenv("GOLEM_SSH_TEST_USER")
+	if user == "" {
+		user = os.Getenv("USER")
+	}
+	name := os.Getenv("GOLEM_SSH_TEST_NAME")
+	if name == "" {
+		name = host
+	}
+	port := 22
+	if portStr := os.Getenv("GOLEM_SSH_TEST_PORT"); portStr != "" {
+		if p, err := strconv.Atoi(portStr); err == nil {
+			port = p
+		} else {
+			t.Fatalf("invalid GOLEM_SSH_TEST_PORT: %v", err)
+		}
+	}
+	keyPath := os.Getenv("GOLEM_SSH_TEST_KEY_PATH")
+
 	log := logger.NewCLILogger(6, 8)
 
-	conn, err := NewSSHConnection("thebatch", "sudhanshu", "192.168.86.173", 22, "")
-	utils.Test().Nil(t, err)
+	conn, err := NewSSHConnection(name, user, host, port, keyPath)
+	if err != nil {
+		t.Skipf("integration SSH test skipped due to connection error: %v", err)
+	}
 
 	wait := make(chan bool)
 
